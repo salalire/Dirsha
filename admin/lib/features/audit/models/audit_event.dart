@@ -1,0 +1,43 @@
+/// Represents a single audit log event.
+///
+/// Fields align with FR-ADM-03 from the SRS:
+/// actor, action, target resource, timestamp, outcome, reference ID.
+///
+/// Endpoint: /admin/audit (not yet available — Phase 1 placeholder).
+/// TODO (Member 2): Confirm /admin/audit endpoint path, pagination, and
+/// field names before replacing the mock repository.
+class AuditEvent {
+  const AuditEvent({
+    required this.id,
+    required this.actorRole,
+    required this.action,
+    required this.targetResource,
+    required this.timestamp,
+    required this.outcome,
+    this.referenceId,
+    this.actorId,
+  });
+
+  final String id;
+  final String? actorId;
+  final String actorRole;
+  final String action;
+  final String targetResource;
+  final DateTime timestamp;
+  final String outcome;
+  final String? referenceId;
+
+  factory AuditEvent.fromJson(Map<String, dynamic> json) {
+    return AuditEvent(
+      id: json['id'] as String,
+      actorId: json['actorId'] as String?,
+      actorRole: json['actorRole'] as String? ?? 'admin',
+      action: json['action'] as String? ?? 'unknown',
+      targetResource: json['targetResource'] as String? ?? '',
+      timestamp: DateTime.tryParse(json['timestamp'] as String? ?? '') ??
+          DateTime.now(),
+      outcome: json['outcome'] as String? ?? 'unknown',
+      referenceId: json['referenceId'] as String?,
+    );
+  }
+}
