@@ -4,7 +4,7 @@ Flutter investor-facing application for the Dirsha Ethiopian digital investment 
 
 **Phase:** 1  
 **Flutter:** 3.44.7 · **Dart:** 3.12.2  
-**Status:** Foundation complete, mock repositories active, backend integration pending Member 2 API confirmation.
+**Status:** Foundation complete — Option C entry points added, santim monetary contract implemented, 147 tests passing, mock repositories active pending Member 2 API confirmation.
 
 ---
 
@@ -12,15 +12,18 @@ Flutter investor-facing application for the Dirsha Ethiopian digital investment 
 
 1. [Quick start](#quick-start)
 2. [Environment configuration](#environment-configuration)
-3. [Project structure](#project-structure)
-4. [Design system](#design-system)
-5. [Architecture](#architecture)
-6. [Mock vs live data](#mock-vs-live-data)
-7. [Authentication status](#authentication-status)
-8. [API endpoints used](#api-endpoints-used)
-9. [Quality checks](#quality-checks)
-10. [Known limitations and blockers](#known-limitations-and-blockers)
-11. [Phase 2 readiness](#phase-2-readiness)
+3. [Option C — account entry points](#option-c--account-entry-points)
+4. [Monetary representation (santim)](#monetary-representation-santim)
+5. [Project structure](#project-structure)
+6. [Design system](#design-system)
+7. [Architecture](#architecture)
+8. [Mock vs live data](#mock-vs-live-data)
+9. [Authentication status](#authentication-status)
+10. [Refresh token status](#refresh-token-status)
+11. [API endpoints used](#api-endpoints-used)
+12. [Quality checks](#quality-checks)
+13. [Known limitations and blockers](#known-limitations-and-blockers)
+14. [Phase 2 readiness](#phase-2-readiness)
 
 ---
 
@@ -76,6 +79,86 @@ flutter build apk \
 ```
 
 The mock data banner (`MOCK DATA — Not connected to live API`) is displayed on every screen while `DIRSHA_USE_MOCKS=true`. It is never shown in production builds.
+
+---
+
+## Option C — account entry points
+
+The app provides one entry point for each applicant type. The flow is:
+
+```
+Login screen
+  └── "Create account" → Role selection screen
+        ├── Investor  → Existing investor registration form (unchanged)
+        ├── Company   → Company portal entry screen
+        └── Broker    → Broker portal entry screen
+```
+
+### Investor
+
+The existing registration and authentication flow is unchanged.
+
+### Company
+
+`CompanyPortalScreen` directs company representatives to the dedicated company onboarding portal. It does **not** collect company data or submit applications. The complete onboarding workflow is a separate web portal owned by the backend and admin teams.
+
+Configure the portal URL at build time:
+
+```bash
+flutter run --dart-define=DIRSHA_COMPANY_PORTAL_URL=https://company.dirsha.com
+```
+
+If the URL is empty (the default), the screen shows a clear "not yet available" message. A broken link is never shown.
+
+**DEPENDENCY:** Portal URL must be confirmed by the project owner before setting.
+
+### Broker
+
+`BrokerPortalScreen` follows the same pattern as the company screen.
+
+```bash
+flutter run --dart-define=DIRSHA_BROKER_PORTAL_URL=https://broker.dirsha.com
+```
+
+### Security note
+
+Selecting a role on the role selection screen has **no effect on backend permissions**. All authorization is enforced by the backend on every request. The admin role is never offered in the public registration flow — admins are provisioned server-side by the project owner.
+
+---
+
+## Monetary representation (santim)
+
+Member 2 has confirmed the backend represents all ETB amounts as **integer santim** (minor units).
+
+**1 ETB = 100 santim.**
+
+| Backend value | Correct display | Wrong display |
+|---|---|---|
+| `700000` | ETB 7,000.00 | ~~ETB 700,000.00~~ |
+| `10000` | ETB 100.00 | ~~ETB 10,000.00~~ |
+| `300000` | ETB 3,000.00 | ~~ETB 300,000.00~~ |
+
+### Implementation
+
+`lib/core/money/money.dart` — `Money` value class:
+- Stores the authoritative value as `int santim`.
+- `Money.fromJson(dynamic)` accepts integer santim (live API) and decimal ETB strings (legacy mock format).
+- `money.etb` (double) is computed only for display formatting. Never used for calculations.
+- `Formatters.money(Money)` produces the correct ETB display string.
+
+### JSON field names (pending final confirmation from Member 2)
+
+| Field | Live API key | Legacy mock key |
+|---|---|---|
+| Wallet available balance | `available_minor` | `availableBalance` |
+| Wallet reserved balance | `reserved_minor` | `reservedBalance` |
+| Wallet total balance | `total_minor` | `totalBalance` |
+| Transaction amount | `amount_minor` | `amount` |
+| IPO price per share | `price_per_share_minor` | `pricePerShare` |
+| IPO min investment | `min_investment_minor` | `minInvestment` |
+| IPO max investment | `max_investment_minor` | `maxInvestment` |
+
+`fromJson` accepts both key formats so the mock UI continues to work while the live API field names are being finalised.
 
 ---
 
@@ -244,11 +327,32 @@ Mock IPO companies are labeled `[MOCK]` in their names. Mock wallet balances are
 |---------------------------------|---------------------------------|
 | Login UI + client validation    | ✅ Implemented                  |
 | Registration UI + validation    | ✅ Implemented                  |
+| Role selection (Option C)       | ✅ Implemented                  |
+| Company portal entry point      | ✅ Implemented (unavailable state) |
+| Broker portal entry point       | ✅ Implemented (unavailable state) |
 | Token storage (secure)          | ✅ FlutterSecureStorage          |
-| Token refresh on 401            | ✅ AuthInterceptor               |
+| Token refresh on 401            | ✅ AuthInterceptor (see below)   |
 | Connected to real backend       | ❌ Pending Member 2 API         |
 | Forgot password flow            | ❌ Out of scope for Phase 1     |
 | KYC / identity verification     | ❌ Out of scope for Phase 1     |
+
+---
+
+## Refresh token status
+
+`AuthInterceptor` implements automatic token refresh on 401 responses. The current implementation assumes:
+- Refresh endpoint: `POST /auth/refresh`
+- Request body: `{ "refreshToken": "..." }`
+- Response shape: `{ "accessToken": "...", "refreshToken": "..." }`
+
+**UNRESOLVED DEPENDENCY (Member 2):** The refresh token behavior and rotation strategy have not been finalized. Member 2's backend business-rules document lists this as a proposed Part B decision pending team approval.
+
+The current implementation is preserved and functional against a backend that matches the assumed shape above. It must be reviewed and potentially updated once Member 2 confirms:
+- Whether refresh tokens rotate on each use.
+- The exact refresh endpoint path and request/response schema.
+- The token expiry durations.
+
+Do not treat the current refresh implementation as confirmed against the production backend contract.
 
 ---
 
@@ -286,9 +390,9 @@ All checks run from the `mobile/` directory.
 | Command           | Result  | Notes                              |
 |-------------------|---------|------------------------------------|
 | `flutter pub get` | ✅ PASS | All dependencies resolved          |
-| `dart format .`   | ✅ PASS | 49 files formatted                 |
+| `dart format .`   | ✅ PASS | 56 files formatted                 |
 | `flutter analyze` | ✅ PASS | 0 issues                           |
-| `flutter test`    | ✅ PASS | 75 tests passed, 0 failed          |
+| `flutter test`    | ✅ PASS | 147 tests passed, 0 failed         |
 
 **Runtime test:** Cannot be confirmed in this environment (no connected device or emulator). The app must be verified on an Android emulator or physical device before any integration checkpoint.
 

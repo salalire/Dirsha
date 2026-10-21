@@ -182,7 +182,7 @@ class _DetailContent extends StatelessWidget {
           const SizedBox(height: 12),
           _TermRow(
             label: 'Price per share',
-            value: Formatters.currency(
+            value: Formatters.money(
               detail.pricePerShare,
               symbol: detail.currency,
             ),
@@ -205,7 +205,7 @@ class _DetailContent extends StatelessWidget {
             const SizedBox(height: 8),
             _TermRow(
               label: 'Minimum investment',
-              value: Formatters.currency(
+              value: Formatters.money(
                 detail.minInvestment!,
                 symbol: detail.currency,
               ),
@@ -215,7 +215,7 @@ class _DetailContent extends StatelessWidget {
             const SizedBox(height: 8),
             _TermRow(
               label: 'Maximum investment',
-              value: Formatters.currency(
+              value: Formatters.money(
                 detail.maxInvestment!,
                 symbol: detail.currency,
               ),

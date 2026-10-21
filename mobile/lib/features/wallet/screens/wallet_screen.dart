@@ -111,10 +111,7 @@ class _WalletBalanceCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                Formatters.currency(
-                  summary.totalBalance,
-                  symbol: summary.currency,
-                ),
+                Formatters.money(summary.total, symbol: summary.currency),
                 style: AppTextStyles.balanceHero,
               ),
               const SizedBox(height: 16),
@@ -125,8 +122,8 @@ class _WalletBalanceCard extends StatelessWidget {
                   Expanded(
                     child: _BalanceItem(
                       label: 'Available',
-                      amount: Formatters.currency(
-                        summary.availableBalance,
+                      amount: Formatters.money(
+                        summary.available,
                         symbol: summary.currency,
                       ),
                       icon: Icons.check_circle_outline,
@@ -137,8 +134,8 @@ class _WalletBalanceCard extends StatelessWidget {
                   Expanded(
                     child: _BalanceItem(
                       label: 'Reserved',
-                      amount: Formatters.currency(
-                        summary.reservedBalance,
+                      amount: Formatters.money(
+                        summary.reserved,
                         symbol: summary.currency,
                       ),
                       icon: Icons.lock_clock_outlined,
@@ -166,11 +163,13 @@ class _WalletBalanceCard extends StatelessWidget {
                       color: Colors.white70,
                     ),
                     const SizedBox(width: 6),
-                    Text(
-                      'Read-only in Phase 1. Deposits/withdrawals coming later.',
-                      style: AppTextStyles.labelSmall.copyWith(
-                        color: Colors.white70,
-                        fontSize: 11,
+                    Flexible(
+                      child: Text(
+                        'Read-only in Phase 1. Deposits/withdrawals coming later.',
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: Colors.white70,
+                          fontSize: 11,
+                        ),
                       ),
                     ),
                   ],
@@ -332,9 +331,12 @@ class _TransactionRow extends StatelessWidget {
                   children: [
                     StatusBadge.fromString(tx.status),
                     const SizedBox(width: 8),
-                    Text(
-                      Formatters.relativeDate(tx.createdAt),
-                      style: AppTextStyles.labelSmall,
+                    Flexible(
+                      child: Text(
+                        Formatters.relativeDate(tx.createdAt),
+                        style: AppTextStyles.labelSmall,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
@@ -342,9 +344,14 @@ class _TransactionRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            '$amountSign${Formatters.currency(tx.amount, symbol: tx.currency)}',
-            style: AppTextStyles.financialSmall.copyWith(color: amountColor),
+          Flexible(
+            child: Text(
+              '$amountSign${Formatters.money(tx.amount, symbol: tx.currency)}',
+              style: AppTextStyles.financialSmall.copyWith(color: amountColor),
+              textAlign: TextAlign.end,
+              softWrap: false,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),

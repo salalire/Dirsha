@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/theme_provider.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/widgets.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -50,6 +51,42 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundPrimary,
+      appBar: AppBar(
+        title: Text(AppConfig.appName, style: AppTextStyles.cardTitle),
+        actions: [
+          // Theme toggle — sun (switch to light) / moon (switch to dark)
+          Consumer<ThemeProvider>(
+            builder: (context, themeProvider, _) => IconButton(
+              icon: Icon(
+                themeProvider.isDark
+                    ? Icons.light_mode_rounded
+                    : Icons.dark_mode_rounded,
+              ),
+              tooltip: themeProvider.isDark
+                  ? 'Switch to light mode'
+                  : 'Switch to dark mode',
+              onPressed: () => themeProvider.toggleTheme(),
+            ),
+          ),
+          // Sign out
+          IconButton(
+            icon: const Icon(Icons.logout_rounded),
+            tooltip: 'Sign out',
+            onPressed: () async {
+              final confirmed = await ConfirmationDialog.show(
+                context,
+                title: 'Sign out',
+                message: 'Are you sure you want to sign out?',
+                confirmLabel: 'Sign out',
+                isDangerous: true,
+              );
+              if (confirmed == true && context.mounted) {
+                await context.read<AuthProvider>().logout();
+              }
+            },
+          ),
+        ],
+      ),
       body: IndexedStack(
         index: _selectedIndex,
         children: const [_DashboardTab(), _IposTab(), _WalletTab()],
@@ -228,10 +265,7 @@ class _WalletSummaryCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  Formatters.currency(
-                    summary.availableBalance,
-                    symbol: summary.currency,
-                  ),
+                  Formatters.money(summary.available, symbol: summary.currency),
                   style: AppTextStyles.financialLarge,
                 ),
                 const SizedBox(height: 12),
@@ -239,19 +273,13 @@ class _WalletSummaryCard extends StatelessWidget {
                   children: [
                     _CompactBadge(
                       label: 'Available',
-                      value: Formatters.currency(
-                        summary.availableBalance,
-                        symbol: '',
-                      ),
+                      value: Formatters.money(summary.available, symbol: ''),
                       color: AppColors.success,
                     ),
                     const SizedBox(width: 16),
                     _CompactBadge(
                       label: 'Reserved',
-                      value: Formatters.currency(
-                        summary.reservedBalance,
-                        symbol: '',
-                      ),
+                      value: Formatters.money(summary.reserved, symbol: ''),
                       color: AppColors.warning,
                     ),
                   ],
@@ -398,10 +426,7 @@ class _CompactIpoRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    Formatters.currency(
-                      ipo.pricePerShare,
-                      symbol: ipo.currency,
-                    ),
+                    Formatters.money(ipo.pricePerShare, symbol: ipo.currency),
                     style: AppTextStyles.financialSmall,
                   ),
                 ],
@@ -446,13 +471,6 @@ class _IposTabState extends State<_IposTab> {
     return SafeArea(
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text('IPO Offerings', style: AppTextStyles.screenTitle),
-            ),
-          ),
           if (AppConfig.useMockRepositories && !AppConfig.isProduction)
             const MockDataBanner(detail: 'Mock IPOs — not real offerings'),
           const SizedBox(height: 12),
@@ -530,7 +548,7 @@ class _IposTabState extends State<_IposTab> {
                                     ),
                                     const SizedBox(height: 3),
                                     Text(
-                                      Formatters.currency(
+                                      Formatters.money(
                                         ipo.pricePerShare,
                                         symbol: ipo.currency,
                                       ),
@@ -597,34 +615,6 @@ class _InlineWalletView extends StatelessWidget {
     return SafeArea(
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Wallet', style: AppTextStyles.screenTitle),
-                IconButton(
-                  icon: const Icon(
-                    Icons.logout_rounded,
-                    color: AppColors.textSecondary,
-                  ),
-                  tooltip: 'Sign out',
-                  onPressed: () async {
-                    final confirmed = await ConfirmationDialog.show(
-                      context,
-                      title: 'Sign out',
-                      message: 'Are you sure you want to sign out?',
-                      confirmLabel: 'Sign out',
-                      isDangerous: true,
-                    );
-                    if (confirmed == true && context.mounted) {
-                      await context.read<AuthProvider>().logout();
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
           if (AppConfig.useMockRepositories && !AppConfig.isProduction)
             const MockDataBanner(
               detail: 'Simulated test funds — not a real balance',
@@ -700,7 +690,7 @@ class _WalletBalanceCardFull extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            Formatters.currency(s.totalBalance, symbol: s.currency),
+            Formatters.money(s.total, symbol: s.currency),
             style: AppTextStyles.balanceHero,
           ),
           const SizedBox(height: 16),
@@ -711,10 +701,7 @@ class _WalletBalanceCardFull extends StatelessWidget {
               Expanded(
                 child: _BalancePair(
                   label: 'Available',
-                  amount: Formatters.currency(
-                    s.availableBalance,
-                    symbol: s.currency,
-                  ),
+                  amount: Formatters.money(s.available, symbol: s.currency),
                   color: AppColors.success,
                   icon: Icons.check_circle_outline,
                 ),
@@ -723,10 +710,7 @@ class _WalletBalanceCardFull extends StatelessWidget {
               Expanded(
                 child: _BalancePair(
                   label: 'Reserved',
-                  amount: Formatters.currency(
-                    s.reservedBalance,
-                    symbol: s.currency,
-                  ),
+                  amount: Formatters.money(s.reserved, symbol: s.currency),
                   color: AppColors.warning,
                   icon: Icons.lock_clock_outlined,
                 ),
@@ -745,11 +729,13 @@ class _WalletBalanceCardFull extends StatelessWidget {
               children: [
                 const Icon(Icons.info_outline, size: 13, color: Colors.white70),
                 const SizedBox(width: 6),
-                Text(
-                  'Deposits and withdrawals are not available in Phase 1.',
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: Colors.white70,
-                    fontSize: 11,
+                Flexible(
+                  child: Text(
+                    'Deposits and withdrawals are not available in Phase 1.',
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: Colors.white70,
+                      fontSize: 11,
+                    ),
                   ),
                 ),
               ],
@@ -885,9 +871,12 @@ class _TransactionSliverList extends StatelessWidget {
                         children: [
                           StatusBadge.fromString(tx.status),
                           const SizedBox(width: 8),
-                          Text(
-                            Formatters.relativeDate(tx.createdAt),
-                            style: AppTextStyles.labelSmall,
+                          Flexible(
+                            child: Text(
+                              Formatters.relativeDate(tx.createdAt),
+                              style: AppTextStyles.labelSmall,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
@@ -895,10 +884,15 @@ class _TransactionSliverList extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  '$amountSign${Formatters.currency(tx.amount, symbol: tx.currency)}',
-                  style: AppTextStyles.financialSmall.copyWith(
-                    color: amountColor,
+                Flexible(
+                  child: Text(
+                    '$amountSign${Formatters.money(tx.amount, symbol: tx.currency)}',
+                    style: AppTextStyles.financialSmall.copyWith(
+                      color: amountColor,
+                    ),
+                    textAlign: TextAlign.end,
+                    softWrap: false,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

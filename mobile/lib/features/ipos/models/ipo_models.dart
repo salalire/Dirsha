@@ -1,26 +1,22 @@
 /// IPO-related data models for Dirsha.
 ///
-/// Field names are based on the conceptual API contract in the SRS
-/// (Sections 6.4, 8.3, and the suggested API domains).
+/// Monetary contract (confirmed by Member 2):
+///   All ETB amounts are integer santim in the live API.
+///   1 ETB = 100 santim. Example: price_per_share_minor = 10000 → ETB 100.00
+///
+///   [Money] is used for all monetary fields. [Money.fromJson] accepts
+///   both integer santim (live API) and decimal ETB strings (mock data),
+///   so existing tested mock behavior is preserved without changes.
 ///
 /// DEPENDENCY ON MEMBER 2:
-/// These models will be updated to match the exact JSON field names,
-/// status enum values, and pagination shape once the API specification
-/// is published. Do not assume the field names here are final.
-///
-/// Financial values:
-/// All monetary amounts are represented as integers in minor units (cents)
-/// OR as strings to avoid floating-point precision loss, per the SRS
-/// (Section 9 data model note). The exact representation must be agreed
-/// with Member 2. Currently modelled as strings that parse to double for
-/// display only — never for calculation.
+///   Confirm final JSON field names — especially whether santim fields
+///   use the _minor suffix (e.g. price_per_share_minor) or camelCase
+///   (e.g. pricePerShareMinor). Update fromJson keys when confirmed.
 library;
 
+import 'package:dirsha_mobile/core/money/money.dart';
+
 /// An IPO as returned by GET /ipos (list) and GET /ipos/:id (detail).
-///
-/// Phase 1 displays only fields that are included in the agreed contract.
-/// Optional fields are nullable — the UI must handle missing values
-/// intentionally rather than crashing or displaying placeholders.
 class IpoSummary {
   const IpoSummary({
     required this.id,
@@ -45,14 +41,29 @@ class IpoSummary {
       title: json['title'] as String,
       companyName: json['companyName'] as String,
       status: json['status'] as String,
-      pricePerShare: json['pricePerShare'] as String,
+      // Accepts price_per_share_minor (santim int) or pricePerShare (legacy
+      // string e.g. "100.00"). Money.fromJson handles both correctly.
+      pricePerShare: Money.fromJson(
+        json['price_per_share_minor'] ?? json['pricePerShare'],
+      ),
       currency: json['currency'] as String? ?? 'ETB',
       subscriptionStartDate: _parseDate(json['subscriptionStartDate']),
       subscriptionEndDate: _parseDate(json['subscriptionEndDate']),
       totalShares: json['totalShares'] as int?,
       availableShares: json['availableShares'] as int?,
-      minInvestment: json['minInvestment'] as String?,
-      maxInvestment: json['maxInvestment'] as String?,
+      // Optional monetary fields — null when not provided.
+      minInvestment:
+          (json['min_investment_minor'] ?? json['minInvestment']) != null
+          ? Money.fromJson(
+              json['min_investment_minor'] ?? json['minInvestment'],
+            )
+          : null,
+      maxInvestment:
+          (json['max_investment_minor'] ?? json['maxInvestment']) != null
+          ? Money.fromJson(
+              json['max_investment_minor'] ?? json['maxInvestment'],
+            )
+          : null,
       logoUrl: json['logoUrl'] as String?,
       shortDescription: json['shortDescription'] as String?,
     );
@@ -67,24 +78,25 @@ class IpoSummary {
   /// ALLOCATED | LISTED | REJECTED | WITHDRAWN
   final String status;
 
-  /// Price per share as a string (e.g. "100.00") to avoid float precision
-  /// loss. Parse to double only for display; never use for calculations.
-  final String pricePerShare;
+  /// Price per share in santim. Use [Formatters.money] for display.
+  final Money pricePerShare;
   final String currency;
 
   final DateTime? subscriptionStartDate;
   final DateTime? subscriptionEndDate;
   final int? totalShares;
   final int? availableShares;
-  final String? minInvestment;
-  final String? maxInvestment;
+
+  /// Minimum subscription amount in santim. Null when not specified.
+  final Money? minInvestment;
+
+  /// Maximum subscription amount in santim. Null when not specified.
+  final Money? maxInvestment;
+
   final String? logoUrl;
   final String? shortDescription;
 
-  /// Whether the offering is currently accepting subscriptions.
   bool get isOpen => status == 'OPEN';
-
-  /// Whether the offering has not yet started.
   bool get isUpcoming => status == 'APPROVED' || status == 'UPCOMING';
 
   static DateTime? _parseDate(dynamic value) {
@@ -101,22 +113,20 @@ class IpoSummary {
     'title': title,
     'companyName': companyName,
     'status': status,
-    'pricePerShare': pricePerShare,
+    'price_per_share_minor': pricePerShare.santim,
     'currency': currency,
     'subscriptionStartDate': subscriptionStartDate?.toIso8601String(),
     'subscriptionEndDate': subscriptionEndDate?.toIso8601String(),
     'totalShares': totalShares,
     'availableShares': availableShares,
-    'minInvestment': minInvestment,
-    'maxInvestment': maxInvestment,
+    'min_investment_minor': minInvestment?.santim,
+    'max_investment_minor': maxInvestment?.santim,
     'logoUrl': logoUrl,
     'shortDescription': shortDescription,
   };
 }
 
 /// Extended IPO detail returned by GET /ipos/:id.
-///
-/// Includes all [IpoSummary] fields plus additional offering details.
 class IpoDetail extends IpoSummary {
   const IpoDetail({
     required super.id,
@@ -167,7 +177,6 @@ class IpoDetail extends IpoSummary {
     );
   }
 
-  /// Full offering description / prospectus summary.
   final String? description;
   final String? companyDescription;
   final List<IpoDocument>? documents;
@@ -175,8 +184,6 @@ class IpoDetail extends IpoSummary {
   /// Risk disclosure text — must be displayed when present.
   final String? riskDisclosure;
 
-  /// Aggregate subscription data — only present when authorized and
-  /// when the backend includes it for the requesting user's role.
   final int? subscribedShares;
   final int? allocatedShares;
 
@@ -194,9 +201,6 @@ class IpoDetail extends IpoSummary {
 }
 
 /// Metadata for a document attached to an IPO.
-///
-/// Actual file access requires an authorized presigned URL from the backend.
-/// The mobile app must NOT construct S3 URLs or bypass the backend.
 class IpoDocument {
   const IpoDocument({
     required this.id,
@@ -221,9 +225,6 @@ class IpoDocument {
 }
 
 /// Paginated list response wrapper.
-///
-/// Shape matches the expected pagination format; update if Member 2
-/// uses a different envelope (e.g. { data, meta } or { items, total }).
 class PaginatedIpos {
   const PaginatedIpos({
     required this.items,

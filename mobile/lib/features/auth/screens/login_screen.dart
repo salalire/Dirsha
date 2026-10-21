@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../router/app_router.dart';
 import '../../../shared/widgets/widgets.dart';
 import '../models/auth_models.dart';
 import '../providers/auth_provider.dart';
@@ -153,7 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Text('Welcome back', style: AppTextStyles.authHeadline),
         const SizedBox(height: 8),
         Text(
-          'Sign in to your investor account.',
+          'Sign in to your Dirsha account.',
           style: AppTextStyles.authSubtitle,
         ),
       ],
@@ -275,7 +276,7 @@ class _LoginScreenState extends State<LoginScreen> {
       children: [
         Text("Don't have an account? ", style: AppTextStyles.bodySmall),
         TextButton(
-          onPressed: () => context.push('/register'),
+          onPressed: () => context.push(AppRoutes.roleSelection),
           style: TextButton.styleFrom(
             padding: EdgeInsets.zero,
             minimumSize: Size.zero,

@@ -77,4 +77,29 @@ abstract final class AppConfig {
 
   /// Phase label — used only in development UI labels and log messages.
   static const String buildPhase = 'Phase 1';
+
+  // ---------------------------------------------------------------------------
+  // Option C — external portal URLs
+  // ---------------------------------------------------------------------------
+
+  /// URL for the company onboarding portal.
+  ///
+  /// Injected at build time via --dart-define=DIRSHA_COMPANY_PORTAL_URL.
+  /// If empty (the default), [CompanyPortalScreen] shows an "unavailable"
+  /// message rather than a broken link.
+  ///
+  /// DEPENDENCY: URL must be confirmed by the project owner before setting.
+  /// Do not invent or hardcode a production URL here.
+  static const String companyPortalUrl = String.fromEnvironment(
+    'DIRSHA_COMPANY_PORTAL_URL',
+    defaultValue: '', // Empty = portal not yet configured
+  );
+
+  /// URL for the broker registration portal.
+  ///
+  /// Same rules as [companyPortalUrl].
+  static const String brokerPortalUrl = String.fromEnvironment(
+    'DIRSHA_BROKER_PORTAL_URL',
+    defaultValue: '', // Empty = portal not yet configured
+  );
 }

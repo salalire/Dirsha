@@ -1,36 +1,53 @@
 /// Wallet and ledger data models for Dirsha.
 ///
-/// The backend is the sole authoritative source for balances and
-/// transactions. The mobile app must never calculate or modify balances
-/// independently.
+/// Monetary contract (confirmed by Member 2):
+///   All balance and transaction amounts are integer santim (minor units).
+///   1 ETB = 100 santim.
+///   Example: available_minor = 700000 means ETB 7,000.00
+///
+/// [Money] stores santim as int. Use [Formatters.money] for display.
+/// Never parse santim to double for any purpose other than display.
 ///
 /// DEPENDENCY ON MEMBER 2:
-/// - Confirm monetary representation (string, integer minor units, or decimal).
-/// - Confirm transaction type and status enum values.
-/// - Confirm pagination envelope shape.
-/// - Confirm whether GET /wallets/me or GET /wallets/:userId is used.
-///
-/// All amounts are stored as strings here to avoid floating-point
-/// precision loss. Parse to double ONLY for display formatting.
+///   - Confirm exact JSON field names (e.g. available_minor vs availableMinor).
+///   - Confirm transaction type and status enum values.
+///   - Confirm pagination envelope shape.
+///   - Confirm endpoint path: GET /wallets/me or GET /wallets/:userId.
 library;
+
+import 'package:dirsha_mobile/core/money/money.dart';
 
 /// The investor's wallet summary — returned by GET /wallets/me.
 class WalletSummary {
   const WalletSummary({
     required this.id,
     required this.currency,
-    required this.availableBalance,
-    required this.reservedBalance,
-    required this.totalBalance,
+    required this.available,
+    required this.reserved,
+    required this.total,
   });
 
+  /// Parses wallet summary from the backend JSON response.
+  ///
+  /// Accepts the confirmed santim integer field names.
+  /// Also accepts the legacy camelCase string names used in mock data
+  /// so the currently tested UI continues to work without changes.
+  ///
+  /// Field name priority (first match wins):
+  ///   available_minor > availableBalance  (santim int preferred)
+  ///   reserved_minor  > reservedBalance
+  ///   total_minor     > totalBalance
   factory WalletSummary.fromJson(Map<String, dynamic> json) {
     return WalletSummary(
       id: json['id'] as String,
       currency: json['currency'] as String? ?? 'ETB',
-      availableBalance: json['availableBalance'].toString(),
-      reservedBalance: json['reservedBalance'].toString(),
-      totalBalance: json['totalBalance'].toString(),
+      available: Money.fromJson(
+        json['available_minor'] ?? json['availableBalance'],
+      ),
+      reserved: Money.fromJson(
+        json['reserved_minor'] ?? json['reservedBalance'],
+      ),
+      total: Money.fromJson(json['total_minor'] ?? json['totalBalance']),
     );
   }
 
@@ -38,28 +55,19 @@ class WalletSummary {
   final String currency;
 
   /// Funds available for new subscriptions or operations.
-  final String availableBalance;
+  final Money available;
 
   /// Funds currently reserved for pending subscriptions or orders.
-  final String reservedBalance;
+  final Money reserved;
 
-  /// Total balance = available + reserved. Displayed for reference only;
-  /// the backend is authoritative for the actual value.
-  final String totalBalance;
-
-  /// Convenience: parses [availableBalance] for display.
-  /// Never use this value for any financial calculation.
-  double get availableBalanceDisplay =>
-      double.tryParse(availableBalance) ?? 0.0;
-
-  double get reservedBalanceDisplay => double.tryParse(reservedBalance) ?? 0.0;
-
-  double get totalBalanceDisplay => double.tryParse(totalBalance) ?? 0.0;
+  /// Total balance (authoritative value from backend).
+  final Money total;
 
   @override
   String toString() =>
-      'WalletSummary(currency: $currency, available: $availableBalance, '
-      'reserved: $reservedBalance)';
+      'WalletSummary(currency: $currency, '
+      'available: ${available.santim} santim, '
+      'reserved: ${reserved.santim} santim)';
 }
 
 /// A single ledger entry / transaction returned by GET /wallets/me/transactions.
@@ -81,7 +89,8 @@ class WalletTransaction {
       id: json['id'] as String,
       type: json['type'] as String,
       status: json['status'] as String,
-      amount: json['amount'].toString(),
+      // Accepts amount_minor (santim int) or legacy amount (string/decimal).
+      amount: Money.fromJson(json['amount_minor'] ?? json['amount']),
       currency: json['currency'] as String? ?? 'ETB',
       createdAt: DateTime.parse(json['createdAt'] as String),
       description: json['description'] as String?,
@@ -92,27 +101,27 @@ class WalletTransaction {
 
   final String id;
 
-  /// Transaction type from the agreed enum:
+  /// Transaction type — confirmed values pending Member 2:
   /// CREDIT | DEBIT | RESERVATION | RELEASE | REFUND | SETTLEMENT
-  /// (pending confirmation from Member 2)
   final String type;
 
-  /// Transaction status:
+  /// Transaction status — confirmed values pending Member 2:
   /// PENDING | COMPLETED | FAILED | REVERSED
   final String status;
 
-  /// Amount as a string — parse for display only.
-  final String amount;
+  /// Amount in santim. Use [Formatters.money] for display.
+  final Money amount;
+
   final String currency;
   final DateTime createdAt;
 
-  /// Human-readable description from the backend, e.g. "IPO subscription".
+  /// Human-readable description from the backend.
   final String? description;
 
-  /// ID of the related business object (subscription ID, order ID, etc.).
+  /// ID of the related business object.
   final String? referenceId;
 
-  /// Type of the related object: "SUBSCRIPTION", "ORDER", "ALLOCATION", etc.
+  /// Type of the related object: SUBSCRIPTION, ORDER, ALLOCATION, etc.
   final String? referenceType;
 
   /// True when this transaction reduces available balance.
@@ -123,13 +132,11 @@ class WalletTransaction {
   bool get isCredit =>
       type == 'CREDIT' || type == 'RELEASE' || type == 'REFUND';
 
-  double get amountDisplay => double.tryParse(amount) ?? 0.0;
-
   Map<String, dynamic> toJson() => {
     'id': id,
     'type': type,
     'status': status,
-    'amount': amount,
+    'amount_minor': amount.santim,
     'currency': currency,
     'createdAt': createdAt.toIso8601String(),
     'description': description,

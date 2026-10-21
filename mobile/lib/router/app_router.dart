@@ -3,8 +3,11 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../features/auth/providers/auth_provider.dart';
+import '../features/auth/screens/broker_portal_screen.dart';
+import '../features/auth/screens/company_portal_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/register_screen.dart';
+import '../features/auth/screens/role_selection_screen.dart';
 import '../features/home/screens/home_screen.dart';
 import '../features/ipos/providers/ipo_provider.dart';
 import '../features/ipos/screens/ipo_detail_screen.dart';
@@ -15,7 +18,10 @@ import '../shared/widgets/loading_indicator.dart';
 abstract final class AppRoutes {
   static const splash = '/';
   static const login = '/login';
+  static const roleSelection = '/register/role';
   static const register = '/register';
+  static const companyPortal = '/register/company';
+  static const brokerPortal = '/register/broker';
   static const home = '/home';
   static const ipoDetail = '/ipos/:id';
 
@@ -50,13 +56,21 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
       }
 
       final isAuth = status == AuthStatus.authenticated;
+      // All auth-entry routes that an authenticated user should be
+      // redirected away from.
       final isAuthRoute =
-          location == AppRoutes.login || location == AppRoutes.register;
+          location == AppRoutes.login ||
+          location == AppRoutes.register ||
+          location == AppRoutes.roleSelection ||
+          location == AppRoutes.companyPortal ||
+          location == AppRoutes.brokerPortal;
 
       // Authenticated user trying to reach auth screens → go home.
       if (isAuth && isAuthRoute) return AppRoutes.home;
 
       // Unauthenticated user trying to reach a protected route → login.
+      // Auth-entry sub-routes (roleSelection, companyPortal, brokerPortal)
+      // are accessible without authentication.
       if (!isAuth && !isAuthRoute) return AppRoutes.login;
 
       return null; // No redirect needed.
@@ -71,9 +85,29 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
       // Authentication
       // ------------------------------------------------------------------
       GoRoute(path: AppRoutes.login, builder: (_, _) => const LoginScreen()),
+
+      // Role selection — entry point from "Create account" on login screen.
+      GoRoute(
+        path: AppRoutes.roleSelection,
+        builder: (_, _) => const RoleSelectionScreen(),
+      ),
+
+      // Investor registration — navigated to from role selection.
       GoRoute(
         path: AppRoutes.register,
         builder: (_, _) => const RegisterScreen(),
+      ),
+
+      // Company portal entry — navigated to from role selection.
+      GoRoute(
+        path: AppRoutes.companyPortal,
+        builder: (_, _) => const CompanyPortalScreen(),
+      ),
+
+      // Broker portal entry — navigated to from role selection.
+      GoRoute(
+        path: AppRoutes.brokerPortal,
+        builder: (_, _) => const BrokerPortalScreen(),
       ),
 
       // ------------------------------------------------------------------

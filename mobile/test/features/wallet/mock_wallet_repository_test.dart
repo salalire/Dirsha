@@ -7,20 +7,30 @@ void main() {
   setUp(() => repo = MockWalletRepository());
 
   group('MockWalletRepository.getWalletSummary', () {
-    test('returns summary with ETB currency', () async {
-      final summary = await repo.getWalletSummary();
-      expect(summary.currency, 'ETB');
+    test('returns ETB currency', () async {
+      final s = await repo.getWalletSummary();
+      expect(s.currency, 'ETB');
     });
 
-    test('total balance is available + reserved', () async {
+    test('available + reserved equals total (santim)', () async {
       final s = await repo.getWalletSummary();
-      final total = s.availableBalanceDisplay + s.reservedBalanceDisplay;
-      expect(total, closeTo(s.totalBalanceDisplay, 0.01));
+      expect(s.available.santim + s.reserved.santim, s.total.santim);
+    });
+
+    test('available balance is ETB 7000 (700000 santim)', () async {
+      final s = await repo.getWalletSummary();
+      expect(s.available.santim, 700000);
+      expect(s.available.etb, 7000.0);
+    });
+
+    test('reserved balance is ETB 3000 (300000 santim)', () async {
+      final s = await repo.getWalletSummary();
+      expect(s.reserved.santim, 300000);
     });
 
     test('available balance is non-negative', () async {
       final s = await repo.getWalletSummary();
-      expect(s.availableBalanceDisplay, greaterThanOrEqualTo(0));
+      expect(s.available.santim, greaterThanOrEqualTo(0));
     });
   });
 
@@ -30,16 +40,14 @@ void main() {
       expect(result.items, isNotEmpty);
     });
 
-    test('transactions contain a RESERVATION entry', () async {
+    test('contains a RESERVATION transaction', () async {
       final result = await repo.getTransactions();
-      final hasReservation = result.items.any((t) => t.type == 'RESERVATION');
-      expect(hasReservation, isTrue);
+      expect(result.items.any((t) => t.type == 'RESERVATION'), isTrue);
     });
 
-    test('transactions contain a CREDIT entry', () async {
+    test('contains a CREDIT transaction', () async {
       final result = await repo.getTransactions();
-      final hasCredit = result.items.any((t) => t.type == 'CREDIT');
-      expect(hasCredit, isTrue);
+      expect(result.items.any((t) => t.type == 'CREDIT'), isTrue);
     });
 
     test('all transactions have non-empty ids', () async {
@@ -49,11 +57,20 @@ void main() {
       }
     });
 
-    test('all amounts parse to positive doubles', () async {
+    test('all amounts are positive santim', () async {
       final result = await repo.getTransactions();
       for (final tx in result.items) {
-        expect(tx.amountDisplay, greaterThan(0));
+        expect(tx.amount.santim, greaterThan(0));
       }
+    });
+
+    test('RESERVATION amount is ETB 3000 (300000 santim)', () async {
+      final result = await repo.getTransactions();
+      final reservation = result.items.firstWhere(
+        (t) => t.type == 'RESERVATION',
+      );
+      expect(reservation.amount.santim, 300000);
+      expect(reservation.amount.etb, 3000.0);
     });
   });
 }

@@ -168,7 +168,7 @@ class _IpoCard extends StatelessWidget {
               children: [
                 _InfoChip(
                   label: 'Price',
-                  value: Formatters.currency(
+                  value: Formatters.money(
                     ipo.pricePerShare,
                     symbol: ipo.currency,
                   ),

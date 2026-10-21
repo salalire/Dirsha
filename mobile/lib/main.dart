@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'core/config/app_config.dart';
 import 'core/network/api_client.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_provider.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/repositories/auth_repository.dart';
 import 'features/auth/repositories/live_auth_repository.dart';
@@ -45,20 +46,28 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
+  // Load persisted theme preference before the first frame so there
+  // is no flash of the wrong theme on startup.
+  final themeProvider = await ThemeProvider.create();
+
   // Shared secure storage instance — tokens are stored here via AuthInterceptor.
   // AndroidOptions uses EncryptedSharedPreferences by default since v9.
   const storage = FlutterSecureStorage(
     aOptions: AndroidOptions(resetOnError: true),
   );
 
-  // Build the app widget tree, deferring auth check to DirshApp.initState.
-  runApp(DirshApp(storage: storage));
+  runApp(DirshApp(storage: storage, themeProvider: themeProvider));
 }
 
 class DirshApp extends StatefulWidget {
-  const DirshApp({super.key, required this.storage});
+  const DirshApp({
+    super.key,
+    required this.storage,
+    required this.themeProvider,
+  });
 
   final FlutterSecureStorage storage;
+  final ThemeProvider themeProvider;
 
   @override
   State<DirshApp> createState() => _DirshAppState();
@@ -122,6 +131,11 @@ class _DirshAppState extends State<DirshApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // Theme — app-scoped, must be above MaterialApp so it can drive themeMode.
+        ChangeNotifierProvider<ThemeProvider>.value(
+          value: widget.themeProvider,
+        ),
+
         // Repositories — exposed so route-scoped providers (IpoDetailProvider)
         // can read them via context.read<IpoRepository>().
         Provider<AuthRepository>.value(value: _authRepository),
@@ -133,28 +147,27 @@ class _DirshAppState extends State<DirshApp> {
         ChangeNotifierProvider<IpoListProvider>.value(value: _ipoListProvider),
         ChangeNotifierProvider<WalletProvider>.value(value: _walletProvider),
       ],
-      child: MaterialApp.router(
-        title: AppConfig.appName,
-        theme: AppTheme.dark,
-        // No light theme in Phase 1 — dark emerald is the default.
-        darkTheme: AppTheme.dark,
-        themeMode: ThemeMode.dark,
-        routerConfig: _router,
-        debugShowCheckedModeBanner: false,
-        // Accessibility: enable bold text and text-scaling support.
-        builder: (context, child) {
-          return MediaQuery(
-            // Clamp text scale to prevent extremely large text from
-            // breaking financial figure layout. A max of 1.3× is a
-            // reasonable accessibility compromise for a fintech app.
-            data: MediaQuery.of(context).copyWith(
-              textScaler: MediaQuery.of(
-                context,
-              ).textScaler.clamp(minScaleFactor: 0.85, maxScaleFactor: 1.3),
-            ),
-            child: child!,
-          );
-        },
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) => MaterialApp.router(
+          title: AppConfig.appName,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          // Controlled by the user's in-app preference, persisted across
+          // restarts. Dark is the default until the user changes it.
+          themeMode: themeProvider.themeMode,
+          routerConfig: _router,
+          debugShowCheckedModeBanner: false,
+          builder: (context, child) {
+            return MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: MediaQuery.of(
+                  context,
+                ).textScaler.clamp(minScaleFactor: 0.85, maxScaleFactor: 1.3),
+              ),
+              child: child!,
+            );
+          },
+        ),
       ),
     );
   }
