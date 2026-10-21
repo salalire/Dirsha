@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:dirsha_admin/main.dart';
+import 'package:dirsha_admin/core/theme/theme_provider.dart';
 import 'package:dirsha_admin/features/auth/providers/auth_provider.dart';
 import 'package:dirsha_admin/features/auth/services/mock_auth_service.dart';
 import 'package:dirsha_admin/features/users/providers/users_provider.dart';
@@ -23,6 +24,7 @@ void main() {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
           ChangeNotifierProvider<AdminAuthProvider>.value(
               value: authProvider),
           ChangeNotifierProvider(
@@ -40,7 +42,7 @@ void main() {
     );
 
     // The app should render without throwing
-    expect(find.byType(MaterialApp), findsNothing); // Uses MaterialApp.router
-    expect(find.byType(Router), findsOneWidget);
+    expect(find.byType(DirshaAdminApp), findsOneWidget);
+    expect(find.byType(MaterialApp), findsOneWidget);
   });
 }
