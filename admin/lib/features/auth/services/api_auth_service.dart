@@ -25,8 +25,11 @@ class ApiAuthService implements AuthService {
       'password': password,
     });
 
-    final token = response['token'] as String?;
-    final userData = response['user'] as Map<String, dynamic>?;
+    final payload = (response['data'] is Map<String, dynamic>)
+        ? response['data'] as Map<String, dynamic>
+        : response;
+    final token = payload['access_token'] as String? ?? payload['token'] as String?;
+    final userData = payload['user'] as Map<String, dynamic>?;
 
     if (token == null || userData == null) {
       throw Exception('Unexpected server response: missing token or user data');

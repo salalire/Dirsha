@@ -29,13 +29,17 @@ void main() {
 
           return http.Response(
             json.encode({
-              'token': 'test-admin-jwt-token',
-              'user': {
-                'id': 'admin-uuid-1',
-                'email': 'admin@dirsha.test',
-                'full_name': 'Admin User',
-                'role': 'admin',
-                'account_status': 'active',
+              'data': {
+                'access_token': 'test-admin-jwt-token',
+                'token_type': 'Bearer',
+                'expires_in': 900,
+                'user': {
+                  'id': 'admin-uuid-1',
+                  'email': 'admin@dirsha.test',
+                  'full_name': 'Admin User',
+                  'role': 'admin',
+                  'account_status': 'active',
+                },
               },
             }),
             200,
