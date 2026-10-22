@@ -112,23 +112,34 @@ class IpoApplication {
       offeringTitle: json['offeringTitle'] as String? ??
           json['title'] as String? ??
           'Unnamed Offering',
-      companyId: json['companyId'] as String? ?? '',
-      companyName: json['companyName'] as String? ?? 'Unknown Company',
+      companyId: json['companyId'] as String? ??
+          json['company_id'] as String? ??
+          '',
+      companyName: json['companyName'] as String? ??
+          json['company_name'] as String? ??
+          'Unknown Company',
       status: _parseStatus(json['status'] as String?),
-      submittedAt: DateTime.tryParse(json['submittedAt'] as String? ?? '') ??
+      submittedAt: DateTime.tryParse(
+              json['submittedAt'] as String? ?? json['created_at'] as String? ?? '') ??
           DateTime.now(),
       reviewedAt: json['reviewedAt'] != null
           ? DateTime.tryParse(json['reviewedAt'] as String)
           : null,
       openDate: json['openDate'] != null
           ? DateTime.tryParse(json['openDate'] as String)
-          : null,
+          : (json['opens_at'] != null
+              ? DateTime.tryParse(json['opens_at'] as String)
+              : null),
       closeDate: json['closeDate'] != null
           ? DateTime.tryParse(json['closeDate'] as String)
-          : null,
-      pricePerShareSantim: json['pricePerShareSantim'] as int?
-          ?? json['pricePerShareEtb'] as int?, // legacy field name fallback
-      totalSharesOffered: json['totalSharesOffered'] as int?,
+          : (json['closes_at'] != null
+              ? DateTime.tryParse(json['closes_at'] as String)
+              : null),
+      pricePerShareSantim: json['pricePerShareSantim'] as int? ??
+          json['price_per_share_minor'] as int? ??
+          json['pricePerShareEtb'] as int?,
+      totalSharesOffered: json['totalSharesOffered'] as int? ??
+          json['total_shares'] as int?,
       reviewNotes: json['reviewNotes'] as String?,
       documents: (json['documents'] as List<dynamic>?)
               ?.map((d) =>
