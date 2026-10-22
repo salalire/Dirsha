@@ -30,14 +30,18 @@ class AuditEvent {
   factory AuditEvent.fromJson(Map<String, dynamic> json) {
     return AuditEvent(
       id: json['id'] as String,
-      actorId: json['actorId'] as String?,
-      actorRole: json['actorRole'] as String? ?? 'admin',
+      actorId: json['actorId'] as String? ?? json['actor_user_id'] as String?,
+      actorRole: json['actorRole'] as String? ?? json['actor_role'] as String? ?? 'admin',
       action: json['action'] as String? ?? 'unknown',
-      targetResource: json['targetResource'] as String? ?? '',
-      timestamp: DateTime.tryParse(json['timestamp'] as String? ?? '') ??
+      targetResource: json['targetResource'] as String? ??
+          (json['target_type'] != null
+              ? '${json['target_type']}:${json['target_id'] ?? ''}'
+              : (json['target_id'] as String? ?? '')),
+      timestamp: DateTime.tryParse(
+              json['timestamp'] as String? ?? json['created_at'] as String? ?? '') ??
           DateTime.now(),
       outcome: json['outcome'] as String? ?? 'unknown',
-      referenceId: json['referenceId'] as String?,
+      referenceId: json['referenceId'] as String? ?? json['request_id'] as String?,
     );
   }
 }

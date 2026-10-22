@@ -43,10 +43,13 @@ class AdminUser {
       id: json['id'] as String,
       email: json['email'] as String,
       displayName: json['displayName'] as String? ??
+          json['full_name'] as String? ??
           json['name'] as String? ??
           json['email'] as String,
       role: json['role'] as String? ?? 'admin',
-      accountStatus: json['accountStatus'] as String? ?? 'active',
+      accountStatus: json['accountStatus'] as String? ??
+          json['account_status'] as String? ??
+          'active',
     );
   }
 

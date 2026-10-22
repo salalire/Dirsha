@@ -178,15 +178,18 @@ class UserApplication {
     return UserApplication(
       id: json['id'] as String,
       displayName: json['displayName'] as String? ??
+          json['full_name'] as String? ??
           json['name'] as String? ??
           'Unknown',
       email: json['email'] as String? ?? '',
-      status: _parseApplicationStatus(json['status'] as String?),
+      status: _parseApplicationStatus(json['status'] as String? ?? json['verification_status'] as String?),
       role: _parseRole(json['role'] as String?),
-      accountStatus: _parseAccountStatus(json['accountStatus'] as String?),
-      verificationStatus:
-          _parseVerificationStatus(json['verificationStatus'] as String?),
-      submittedAt: DateTime.tryParse(json['submittedAt'] as String? ?? '') ??
+      accountStatus: _parseAccountStatus(
+          json['accountStatus'] as String? ?? json['account_status'] as String?),
+      verificationStatus: _parseVerificationStatus(
+          json['verificationStatus'] as String? ?? json['verification_status'] as String?),
+      submittedAt: DateTime.tryParse(
+              json['submittedAt'] as String? ?? json['created_at'] as String? ?? '') ??
           DateTime.now(),
       reviewedAt: json['reviewedAt'] != null
           ? DateTime.tryParse(json['reviewedAt'] as String)
