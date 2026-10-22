@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { createAuthenticate, requireRole } from '../../http/auth.js';
 import type { AppDeps } from '../../http/types.js';
-import { paginationSchema, parseWith } from '../../http/validate.js';
+import { idempotencyKeySchema, paginationSchema, parseWith } from '../../http/validate.js';
 import { Errors } from '../../lib/errors.js';
 import {
   creditOwnTestFunds,
@@ -10,12 +10,6 @@ import {
   listOwnTransactions,
   MAX_TEST_FUND_MINOR,
 } from './wallet.service.js';
-
-const idempotencyKeySchema = z
-  .string()
-  .min(8, 'Idempotency-Key must be at least 8 characters')
-  .max(128)
-  .regex(/^[A-Za-z0-9._:-]+$/, 'Idempotency-Key contains invalid characters');
 
 const testFundsSchema = z.strictObject({
   amount_minor: z.number().int().min(1).max(MAX_TEST_FUND_MINOR),

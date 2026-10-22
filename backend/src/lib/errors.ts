@@ -41,12 +41,16 @@ export const Errors = {
   accountSuspended: () =>
     new AppError(403, 'ACCOUNT_SUSPENDED', 'This account is suspended'),
   notFound: (message = 'Resource not found') => new AppError(404, 'NOT_FOUND', message),
+  conflict: (message = 'Conflict with current state of resource') =>
+    new AppError(409, 'CONFLICT', message),
   emailTaken: () =>
     new AppError(409, 'EMAIL_ALREADY_REGISTERED', 'An account with this email already exists'),
   rateLimited: () =>
     new AppError(429, 'RATE_LIMITED', 'Too many attempts. Please try again later'),
-  insufficientFunds: () =>
-    new AppError(422, 'INSUFFICIENT_FUNDS', 'Available balance is not enough for this operation'),
+  insufficientFunds: (message = 'Available balance is not enough for this operation') =>
+    new AppError(422, 'INSUFFICIENT_FUNDS', message),
+  ipoNotOpen: (message = 'IPO is not open for subscription') =>
+    new AppError(422, 'IPO_NOT_OPEN', message),
   idempotencyKeyReused: () =>
     new AppError(
       409,

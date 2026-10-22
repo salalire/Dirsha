@@ -219,5 +219,6 @@ describe('database-level guarantees (hold even if application code is wrong)', (
       );
     await insert();
     await expect(insert()).rejects.toThrow(/ledger_entries_idem_uidx|duplicate/);
+    await ctx.db.query('UPDATE wallets SET available_minor = 110 WHERE id = $1', [walletId]);
   });
 });

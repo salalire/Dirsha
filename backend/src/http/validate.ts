@@ -17,6 +17,12 @@ export function parseWith<T>(schema: z.ZodType<T>, data: unknown): T {
 
 export const uuidSchema = z.uuid();
 
+export const idempotencyKeySchema = z
+  .string()
+  .min(8, 'Idempotency-Key must be at least 8 characters')
+  .max(128)
+  .regex(/^[A-Za-z0-9._:-]+$/, 'Idempotency-Key contains invalid characters');
+
 /** Standard pagination query parameters. */
 export const paginationSchema = z.object({
   page: z.coerce.number().int().min(1).max(100_000).default(1),

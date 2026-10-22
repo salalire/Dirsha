@@ -9,6 +9,7 @@ import type { AppDeps } from './http/types.js';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { healthRouter } from './modules/health/health.routes.js';
 import { iposRouter } from './modules/ipos/ipos.routes.js';
+import { subscriptionsRouter } from './modules/subscriptions/subscriptions.routes.js';
 import { usersRouter } from './modules/users/users.routes.js';
 import { devRouter, walletsRouter } from './modules/wallet/wallet.routes.js';
 
@@ -65,6 +66,7 @@ export function createApp(deps: AppDeps): Express {
   app.use('/auth', authRouter(deps));
   app.use('/users', usersRouter(deps));
   app.use('/ipos', iposRouter(deps));
+  app.use('/subscriptions', subscriptionsRouter(deps));
   app.use('/wallets', walletsRouter(deps));
   if (env.ENABLE_TEST_FUNDS && env.NODE_ENV !== 'production') {
     app.use('/dev', devRouter(deps));
