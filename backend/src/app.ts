@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
 import { createErrorHandler, notFoundHandler } from './http/error-handler.js';
 import type { AppDeps } from './http/types.js';
+import { adminRouter } from './modules/admin/admin.routes.js';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { healthRouter } from './modules/health/health.routes.js';
 import { iposRouter } from './modules/ipos/ipos.routes.js';
@@ -68,6 +69,7 @@ export function createApp(deps: AppDeps): Express {
   app.use('/ipos', iposRouter(deps));
   app.use('/subscriptions', subscriptionsRouter(deps));
   app.use('/wallets', walletsRouter(deps));
+  app.use('/admin', adminRouter(deps));
   if (env.ENABLE_TEST_FUNDS && env.NODE_ENV !== 'production') {
     app.use('/dev', devRouter(deps));
   }
