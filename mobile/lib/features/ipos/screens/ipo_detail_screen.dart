@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/widgets.dart';
+import '../../subscriptions/widgets/subscription_bottom_sheet.dart';
 import '../models/ipo_models.dart';
 import '../providers/ipo_provider.dart';
 
@@ -297,23 +298,20 @@ class _DetailContent extends StatelessWidget {
   }
 
   Widget _buildSubscriptionButton(BuildContext context) {
-    // Subscription execution is out of scope for Phase 1.
-    // The button is shown as a planned feature but does not submit
-    // a real subscription. It explains its status clearly.
     final isOpen = detail.isOpen;
     return Column(
       children: [
         DirshaButton(
-          label: isOpen
-              ? 'Subscribe (Coming in Phase 2)'
-              : 'Subscriptions closed',
-          onPressed: null, // Disabled — subscription is not implemented
-          isEnabled: false,
+          label: isOpen ? 'Subscribe' : 'Subscriptions closed',
+          onPressed: isOpen
+              ? () => SubscriptionBottomSheet.show(context, ipo: detail)
+              : null,
+          isEnabled: isOpen,
         ),
         const SizedBox(height: 8),
         Text(
           isOpen
-              ? 'Subscription functionality will be available in Phase 2.'
+              ? 'Funds will be reserved from your wallet until allocation.'
               : 'This offering is not currently accepting subscriptions.',
           style: AppTextStyles.labelSmall,
           textAlign: TextAlign.center,
