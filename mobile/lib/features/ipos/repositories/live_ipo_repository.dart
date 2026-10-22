@@ -24,7 +24,7 @@ class LiveIpoRepository implements IpoRepository {
   Future<PaginatedIpos> getIpos({int page = 1, int pageSize = 20}) async {
     final data = await _client.get<Map<String, dynamic>?>(
       '/ipos',
-      queryParameters: {'page': page, 'pageSize': pageSize},
+      queryParameters: {'page': page, 'page_size': pageSize},
     );
     if (data == null) {
       throw const ParseException(message: 'IPO list response was empty.');

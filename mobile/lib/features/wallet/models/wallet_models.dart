@@ -37,17 +37,27 @@ class WalletSummary {
   ///   available_minor > availableBalance  (santim int preferred)
   ///   reserved_minor  > reservedBalance
   ///   total_minor     > totalBalance
-  factory WalletSummary.fromJson(Map<String, dynamic> json) {
+  factory WalletSummary.fromJson(Map<String, dynamic> rawJson) {
+    final json = (rawJson['data'] is Map<String, dynamic>)
+        ? rawJson['data'] as Map<String, dynamic>
+        : rawJson;
     return WalletSummary(
-      id: json['id'] as String,
+      id: (json['id'] as String?) ?? '',
       currency: json['currency'] as String? ?? 'ETB',
       available: Money.fromJson(
-        json['available_minor'] ?? json['availableBalance'],
+        json['available_minor'] ?? json['availableBalance'] ?? 0,
       ),
       reserved: Money.fromJson(
-        json['reserved_minor'] ?? json['reservedBalance'],
+        json['reserved_minor'] ?? json['reservedBalance'] ?? 0,
       ),
-      total: Money.fromJson(json['total_minor'] ?? json['totalBalance']),
+      total: Money.fromJson(
+        json['total_minor'] ??
+            json['totalBalance'] ??
+            ((json['available_minor'] is int && json['reserved_minor'] is int)
+                ? (json['available_minor'] as int) +
+                    (json['reserved_minor'] as int)
+                : 0),
+      ),
     );
   }
 
@@ -84,19 +94,79 @@ class WalletTransaction {
     this.referenceType,
   });
 
-  factory WalletTransaction.fromJson(Map<String, dynamic> json) {
+  factory WalletTransaction.fromJson(Map<String, dynamic> rawJson) {
+    final json = (rawJson['data'] is Map<String, dynamic>)
+        ? rawJson['data'] as Map<String, dynamic>
+        : rawJson;
+    final rawType = (json['type'] as String?) ?? 'test_fund_credit';
+    final normalizedType = _normalizeType(rawType);
+    final rawStatus = (json['status'] as String?) ?? 'posted';
+    final normalizedStatus = _normalizeStatus(rawStatus);
+
+    final deltaAvailable = (json['available_delta_minor'] as int?);
+    final deltaReserved = (json['reserved_delta_minor'] as int?);
+    int? resolvedMinor = json['amount_minor'] as int?;
+    if (resolvedMinor == null && deltaAvailable != null) {
+      resolvedMinor = deltaAvailable.abs();
+    } else if (resolvedMinor == null && deltaReserved != null) {
+      resolvedMinor = deltaReserved.abs();
+    }
+
+    final rawDate = json['created_at'] ?? json['createdAt'] ?? '';
+    final createdAt = DateTime.tryParse(rawDate.toString()) ?? DateTime.now();
+
     return WalletTransaction(
-      id: json['id'] as String,
-      type: json['type'] as String,
-      status: json['status'] as String,
-      // Accepts amount_minor (santim int) or legacy amount (string/decimal).
-      amount: Money.fromJson(json['amount_minor'] ?? json['amount']),
+      id: (json['id'] as String?) ?? '',
+      type: normalizedType,
+      status: normalizedStatus,
+      amount: Money.fromJson(resolvedMinor ?? json['amount'] ?? 0),
       currency: json['currency'] as String? ?? 'ETB',
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: createdAt,
       description: json['description'] as String?,
-      referenceId: json['referenceId'] as String?,
-      referenceType: json['referenceType'] as String?,
+      referenceId: (json['reference_id'] ?? json['referenceId']) as String?,
+      referenceType:
+          (json['reference_type'] ?? json['referenceType']) as String?,
     );
+  }
+
+  static String _normalizeType(String type) {
+    switch (type.toLowerCase()) {
+      case 'test_fund_credit':
+      case 'credit':
+        return 'CREDIT';
+      case 'subscription_reserve':
+      case 'reservation':
+        return 'RESERVATION';
+      case 'subscription_release':
+      case 'release':
+        return 'RELEASE';
+      case 'subscription_settle':
+      case 'settlement':
+        return 'SETTLEMENT';
+      case 'adjustment':
+      case 'debit':
+        return 'DEBIT';
+      case 'refund':
+        return 'REFUND';
+      default:
+        return type.toUpperCase();
+    }
+  }
+
+  static String _normalizeStatus(String status) {
+    switch (status.toLowerCase()) {
+      case 'posted':
+      case 'completed':
+        return 'COMPLETED';
+      case 'pending':
+        return 'PENDING';
+      case 'failed':
+        return 'FAILED';
+      case 'reversed':
+        return 'REVERSED';
+      default:
+        return status.toUpperCase();
+    }
   }
 
   final String id;
@@ -156,14 +226,19 @@ class PaginatedTransactions {
 
   factory PaginatedTransactions.fromJson(Map<String, dynamic> json) {
     final rawItems = json['items'] as List? ?? json['data'] as List? ?? [];
+    final pagination = json['pagination'] as Map<String, dynamic>?;
     return PaginatedTransactions(
       items: rawItems
           .whereType<Map<String, dynamic>>()
           .map(WalletTransaction.fromJson)
           .toList(),
-      total: json['total'] as int? ?? 0,
-      page: json['page'] as int? ?? 1,
-      pageSize: json['pageSize'] as int? ?? 20,
+      total: (pagination?['total'] ?? json['total']) as int? ?? rawItems.length,
+      page: (pagination?['page'] ?? json['page']) as int? ?? 1,
+      pageSize:
+          (pagination?['page_size'] ??
+                  pagination?['pageSize'] ??
+                  json['pageSize']) as int? ??
+              20,
     );
   }
 

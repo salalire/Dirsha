@@ -216,6 +216,10 @@ class ApiClient {
 
   String? _extractMessage(dynamic body) {
     if (body is Map<String, dynamic>) {
+      if (body['error'] is Map<String, dynamic>) {
+        final err = body['error'] as Map<String, dynamic>;
+        return err['message'] as String?;
+      }
       return body['message'] as String?;
     }
     return null;
@@ -223,6 +227,10 @@ class ApiClient {
 
   String? _extractErrorCode(dynamic body) {
     if (body is Map<String, dynamic>) {
+      if (body['error'] is Map<String, dynamic>) {
+        final err = body['error'] as Map<String, dynamic>;
+        return err['code'] as String?;
+      }
       return body['error'] as String?;
     }
     return null;
@@ -230,6 +238,21 @@ class ApiClient {
 
   Map<String, String> _extractFieldErrors(dynamic body) {
     if (body is! Map<String, dynamic>) return {};
+    if (body['error'] is Map<String, dynamic>) {
+      final err = body['error'] as Map<String, dynamic>;
+      final details = err['details'];
+      if (details is List) {
+        final map = <String, String>{};
+        for (final item in details) {
+          if (item is Map<String, dynamic> &&
+              item['field'] != null &&
+              item['message'] != null) {
+            map[item['field'].toString()] = item['message'].toString();
+          }
+        }
+        if (map.isNotEmpty) return map;
+      }
+    }
     final errors = body['errors'];
     if (errors is! Map<String, dynamic>) return {};
     return errors.map((k, v) => MapEntry(k, v.toString()));

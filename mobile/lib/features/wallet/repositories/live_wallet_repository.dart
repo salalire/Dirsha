@@ -44,7 +44,7 @@ class LiveWalletRepository implements WalletRepository {
   }) async {
     final data = await _client.get<Map<String, dynamic>?>(
       '/wallets/me/transactions',
-      queryParameters: {'page': page, 'pageSize': pageSize},
+      queryParameters: {'page': page, 'page_size': pageSize},
     );
     if (data == null) {
       throw const ParseException(

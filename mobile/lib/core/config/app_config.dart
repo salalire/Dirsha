@@ -31,9 +31,8 @@ abstract final class AppConfig {
   /// points at any real server.
   static const String apiBaseUrl = String.fromEnvironment(
     'DIRSHA_API_BASE_URL',
-    // Placeholder default — this will fail gracefully with a network error
-    // so the developer notices that the URL has not been configured.
-    defaultValue: 'http://localhost:3000/api',
+    // Default points to Member 2's local backend at root path
+    defaultValue: 'http://localhost:3000',
   );
 
   /// Current environment name: "development", "staging", or "production".

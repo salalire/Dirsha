@@ -92,5 +92,55 @@ void main() {
       expect(result.tokens.accessToken, 'tok-123');
       expect(result.user.email, 'test@dirsha.dev');
     });
+
+    test('parses backend login response envelope with snake_case fields', () {
+      final backendJson = {
+        'data': {
+          'access_token': 'jwt-backend-token-123',
+          'token_type': 'Bearer',
+          'expires_in': 900,
+          'user': {
+            'id': 'u-backend-1',
+            'email': 'investor@dirsha.test',
+            'full_name': 'Abebe Kebede',
+            'phone': '+251 911 000 000',
+            'role': 'investor',
+            'account_status': 'active',
+            'verification_status': 'unverified',
+            'created_at': '2026-10-20T18:36:40.489Z',
+          },
+        },
+      };
+      final result = AuthResult.fromJson(backendJson);
+      expect(result.tokens.accessToken, 'jwt-backend-token-123');
+      expect(result.tokens.refreshToken, isNull);
+      expect(result.user.id, 'u-backend-1');
+      expect(result.user.firstName, 'Abebe');
+      expect(result.user.lastName, 'Kebede');
+      expect(result.user.fullName, 'Abebe Kebede');
+      expect(result.user.role, 'INVESTOR');
+      expect(result.user.accountStatus, 'ACTIVE');
+      expect(result.user.isActive, isTrue);
+    });
+  });
+
+  group('RegisterRequest.toJson', () {
+    test('produces backend-compatible payload with full_name and role', () {
+      const request = RegisterRequest(
+        firstName: 'Dawit',
+        lastName: 'Alemu',
+        email: 'dawit@example.com',
+        phone: '+251911223344',
+        password: 'Password123!',
+        role: 'investor',
+      );
+      final json = request.toJson();
+      expect(json['full_name'], 'Dawit Alemu');
+      expect(json['email'], 'dawit@example.com');
+      expect(json['phone'], '+251911223344');
+      expect(json['role'], 'investor');
+      expect(json.containsKey('firstName'), isFalse);
+      expect(json.containsKey('lastName'), isFalse);
+    });
   });
 }

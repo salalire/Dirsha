@@ -22,6 +22,7 @@ class RegisterRequest {
     required this.email,
     required this.phone,
     required this.password,
+    this.role = 'investor',
   });
 
   final String firstName;
@@ -31,14 +32,18 @@ class RegisterRequest {
 
   // Password is used only to build the request map and is not stored.
   final String password;
+  final String role;
 
-  Map<String, dynamic> toJson() => {
-    'firstName': firstName,
-    'lastName': lastName,
-    'email': email,
-    'phone': phone,
-    'password': password, // sent once; never logged or stored in a model
-  };
+  Map<String, dynamic> toJson() {
+    final trimmedFullName = '$firstName $lastName'.trim();
+    return {
+      'full_name': trimmedFullName.isNotEmpty ? trimmedFullName : 'User',
+      'email': email,
+      'password': password,
+      if (phone.isNotEmpty) 'phone': phone,
+      'role': role.toLowerCase(),
+    };
+  }
 }
 
 /// Payload sent to POST /auth/login
@@ -66,16 +71,19 @@ class LoginRequest {
 class AuthTokens {
   const AuthTokens({required this.accessToken, this.refreshToken});
 
-  factory AuthTokens.fromJson(Map<String, dynamic> json) {
-    final access = json['accessToken'] as String?;
+  factory AuthTokens.fromJson(Map<String, dynamic> rawJson) {
+    final json = (rawJson['data'] is Map<String, dynamic>)
+        ? rawJson['data'] as Map<String, dynamic>
+        : rawJson;
+    final access = (json['access_token'] ?? json['accessToken']) as String?;
     if (access == null || access.isEmpty) {
-      throw FormatException(
+      throw const FormatException(
         'AuthTokens.fromJson: missing accessToken in response',
       );
     }
     return AuthTokens(
       accessToken: access,
-      refreshToken: json['refreshToken'] as String?,
+      refreshToken: (json['refresh_token'] ?? json['refreshToken']) as String?,
     );
   }
 
@@ -102,15 +110,32 @@ class UserProfile {
     this.avatarUrl,
   });
 
-  factory UserProfile.fromJson(Map<String, dynamic> json) {
+  factory UserProfile.fromJson(Map<String, dynamic> rawJson) {
+    final json = (rawJson['data'] is Map<String, dynamic>)
+        ? rawJson['data'] as Map<String, dynamic>
+        : rawJson;
+    final fullName = (json['full_name'] as String?)?.trim() ?? '';
+    final firstName = json['firstName'] as String? ??
+        (fullName.contains(' ') ? fullName.split(' ').first : fullName);
+    final lastName = json['lastName'] as String? ??
+        (fullName.contains(' ')
+            ? fullName.substring(fullName.indexOf(' ') + 1)
+            : '');
+
+    final rawRole = (json['role'] as String?)?.toUpperCase() ?? 'INVESTOR';
+    final rawStatus =
+        ((json['account_status'] ?? json['accountStatus']) as String?)
+            ?.toUpperCase() ??
+        'ACTIVE';
+
     return UserProfile(
-      id: json['id'] as String,
-      firstName: json['firstName'] as String,
-      lastName: json['lastName'] as String,
-      email: json['email'] as String,
+      id: (json['id'] as String?) ?? '',
+      firstName: firstName,
+      lastName: lastName,
+      email: (json['email'] as String?) ?? '',
       phone: (json['phone'] as String?) ?? '',
-      role: json['role'] as String? ?? 'INVESTOR',
-      accountStatus: json['accountStatus'] as String? ?? 'ACTIVE',
+      role: rawRole,
+      accountStatus: rawStatus,
       avatarUrl: json['avatarUrl'] as String?,
     );
   }
@@ -142,10 +167,17 @@ class UserProfile {
 class AuthResult {
   const AuthResult({required this.tokens, required this.user});
 
-  factory AuthResult.fromJson(Map<String, dynamic> json) {
+  factory AuthResult.fromJson(Map<String, dynamic> rawJson) {
+    final json = (rawJson['data'] is Map<String, dynamic>)
+        ? rawJson['data'] as Map<String, dynamic>
+        : rawJson;
     return AuthResult(
       tokens: AuthTokens.fromJson(json),
-      user: UserProfile.fromJson(json['user'] as Map<String, dynamic>),
+      user: UserProfile.fromJson(
+        (json['user'] is Map<String, dynamic>)
+            ? json['user'] as Map<String, dynamic>
+            : json,
+      ),
     );
   }
 

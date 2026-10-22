@@ -60,13 +60,25 @@ class LiveAuthRepository implements AuthRepository {
       throw const ParseException(message: 'Register response was empty.');
     }
     try {
-      final result = AuthResult.fromJson(data);
-      await _client.auth.saveTokens(
-        accessToken: result.tokens.accessToken,
-        refreshToken: result.tokens.refreshToken,
+      final unwrapped = (data['data'] is Map<String, dynamic>)
+          ? data['data'] as Map<String, dynamic>
+          : data;
+      if (unwrapped.containsKey('access_token') ||
+          unwrapped.containsKey('accessToken')) {
+        final result = AuthResult.fromJson(data);
+        await _client.auth.saveTokens(
+          accessToken: result.tokens.accessToken,
+          refreshToken: result.tokens.refreshToken,
+        );
+        return result;
+      }
+      // Standard backend behavior: POST /auth/register returns created user,
+      // then immediately log in with credentials to establish session
+      return await login(
+        LoginRequest(email: request.email, password: request.password),
       );
-      return result;
     } catch (e) {
+      if (e is AppException) rethrow;
       throw ParseException(
         message: 'Could not parse registration response.',
         cause: e,
@@ -80,6 +92,8 @@ class LiveAuthRepository implements AuthRepository {
       await _client.post<void>('/auth/logout');
     } on AppException {
       // Best-effort server logout. Always clear local tokens regardless.
+    } catch (_) {
+      // Ignore network errors on logout
     }
     await _client.auth.clearTokens();
   }
@@ -91,7 +105,10 @@ class LiveAuthRepository implements AuthRepository {
       throw const ParseException(message: 'User profile response was empty.');
     }
     try {
-      return UserProfile.fromJson(data);
+      final payload = (data['data'] is Map<String, dynamic>)
+          ? data['data'] as Map<String, dynamic>
+          : data;
+      return UserProfile.fromJson(payload);
     } catch (e) {
       throw ParseException(message: 'Could not parse user profile.', cause: e);
     }

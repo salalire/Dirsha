@@ -35,22 +35,32 @@ class IpoSummary {
     this.shortDescription,
   });
 
-  factory IpoSummary.fromJson(Map<String, dynamic> json) {
+  factory IpoSummary.fromJson(Map<String, dynamic> rawJson) {
+    final json = (rawJson['data'] is Map<String, dynamic>)
+        ? rawJson['data'] as Map<String, dynamic>
+        : rawJson;
+    final rawStatus = (json['status'] as String?)?.toUpperCase() ?? 'OPEN';
     return IpoSummary(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      companyName: json['companyName'] as String,
-      status: json['status'] as String,
+      id: (json['id'] as String?) ?? '',
+      title: (json['title'] as String?) ?? '',
+      companyName:
+          (json['company_name'] ?? json['companyName']) as String? ?? '',
+      status: rawStatus,
       // Accepts price_per_share_minor (santim int) or pricePerShare (legacy
       // string e.g. "100.00"). Money.fromJson handles both correctly.
       pricePerShare: Money.fromJson(
-        json['price_per_share_minor'] ?? json['pricePerShare'],
+        json['price_per_share_minor'] ?? json['pricePerShare'] ?? 0,
       ),
       currency: json['currency'] as String? ?? 'ETB',
-      subscriptionStartDate: _parseDate(json['subscriptionStartDate']),
-      subscriptionEndDate: _parseDate(json['subscriptionEndDate']),
-      totalShares: json['totalShares'] as int?,
-      availableShares: json['availableShares'] as int?,
+      subscriptionStartDate: _parseDate(
+        json['opens_at'] ?? json['subscriptionStartDate'],
+      ),
+      subscriptionEndDate: _parseDate(
+        json['closes_at'] ?? json['subscriptionEndDate'],
+      ),
+      totalShares: (json['total_shares'] ?? json['totalShares']) as int?,
+      availableShares:
+          (json['available_shares'] ?? json['availableShares']) as int?,
       // Optional monetary fields — null when not provided.
       minInvestment:
           (json['min_investment_minor'] ?? json['minInvestment']) != null
@@ -65,7 +75,8 @@ class IpoSummary {
             )
           : null,
       logoUrl: json['logoUrl'] as String?,
-      shortDescription: json['shortDescription'] as String?,
+      shortDescription:
+          (json['description'] ?? json['shortDescription']) as String?,
     );
   }
 
@@ -97,7 +108,11 @@ class IpoSummary {
   final String? shortDescription;
 
   bool get isOpen => status == 'OPEN';
-  bool get isUpcoming => status == 'APPROVED' || status == 'UPCOMING';
+  bool get isUpcoming =>
+      status == 'APPROVED' ||
+      status == 'UPCOMING' ||
+      status == 'SUBMITTED' ||
+      status == 'UNDER_REVIEW';
 
   static DateTime? _parseDate(dynamic value) {
     if (value is! String) return null;
@@ -151,7 +166,10 @@ class IpoDetail extends IpoSummary {
     this.allocatedShares,
   });
 
-  factory IpoDetail.fromJson(Map<String, dynamic> json) {
+  factory IpoDetail.fromJson(Map<String, dynamic> rawJson) {
+    final json = (rawJson['data'] is Map<String, dynamic>)
+        ? rawJson['data'] as Map<String, dynamic>
+        : rawJson;
     final base = IpoSummary.fromJson(json);
     return IpoDetail(
       id: base.id,
@@ -169,11 +187,16 @@ class IpoDetail extends IpoSummary {
       logoUrl: base.logoUrl,
       shortDescription: base.shortDescription,
       description: json['description'] as String?,
-      companyDescription: json['companyDescription'] as String?,
+      companyDescription:
+          (json['company_description'] ?? json['companyDescription'])
+              as String?,
       documents: _parseDocuments(json['documents']),
-      riskDisclosure: json['riskDisclosure'] as String?,
-      subscribedShares: json['subscribedShares'] as int?,
-      allocatedShares: json['allocatedShares'] as int?,
+      riskDisclosure:
+          (json['risk_disclosure'] ?? json['riskDisclosure']) as String?,
+      subscribedShares:
+          (json['subscribed_shares'] ?? json['subscribedShares']) as int?,
+      allocatedShares:
+          (json['allocated_shares'] ?? json['allocatedShares']) as int?,
     );
   }
 
@@ -235,14 +258,19 @@ class PaginatedIpos {
 
   factory PaginatedIpos.fromJson(Map<String, dynamic> json) {
     final rawItems = json['items'] as List? ?? json['data'] as List? ?? [];
+    final pagination = json['pagination'] as Map<String, dynamic>?;
     return PaginatedIpos(
       items: rawItems
           .whereType<Map<String, dynamic>>()
           .map(IpoSummary.fromJson)
           .toList(),
-      total: json['total'] as int? ?? 0,
-      page: json['page'] as int? ?? 1,
-      pageSize: json['pageSize'] as int? ?? 20,
+      total: (pagination?['total'] ?? json['total']) as int? ?? rawItems.length,
+      page: (pagination?['page'] ?? json['page']) as int? ?? 1,
+      pageSize:
+          (pagination?['page_size'] ??
+                  pagination?['pageSize'] ??
+                  json['pageSize']) as int? ??
+              20,
     );
   }
 
