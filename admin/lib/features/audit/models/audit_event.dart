@@ -16,6 +16,7 @@ class AuditEvent {
     required this.outcome,
     this.referenceId,
     this.actorId,
+    this.metadata,
   });
 
   final String id;
@@ -26,6 +27,7 @@ class AuditEvent {
   final DateTime timestamp;
   final String outcome;
   final String? referenceId;
+  final Map<String, dynamic>? metadata;
 
   factory AuditEvent.fromJson(Map<String, dynamic> json) {
     return AuditEvent(
@@ -42,6 +44,9 @@ class AuditEvent {
           DateTime.now(),
       outcome: json['outcome'] as String? ?? 'unknown',
       referenceId: json['referenceId'] as String? ?? json['request_id'] as String?,
+      metadata: json['metadata'] is Map<String, dynamic>
+          ? json['metadata'] as Map<String, dynamic>
+          : null,
     );
   }
 }

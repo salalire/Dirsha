@@ -41,13 +41,14 @@ export function createAuthenticate({ env, db }: Pick<AppDeps, 'env' | 'db'>): Re
   return async (req, _res, next) => {
     const header = req.header('authorization');
     const match = header ? /^Bearer\s+(\S+)$/i.exec(header) : null;
-    if (!match?.[1]) {
+    const rawToken = match?.[1] ?? (typeof req.query.token === 'string' ? req.query.token : undefined);
+    if (!rawToken) {
       throw Errors.unauthenticated();
     }
 
     let subject: string | undefined;
     try {
-      const payload = jwt.verify(match[1], env.JWT_ACCESS_SECRET, {
+      const payload = jwt.verify(rawToken, env.JWT_ACCESS_SECRET, {
         algorithms: ['HS256'],
         issuer: TOKEN_ISSUER,
         audience: TOKEN_AUDIENCE,

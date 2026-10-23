@@ -21,15 +21,15 @@ class ApiException implements Exception {
       );
 
   /// Factory: 401 Unauthorized — session expired or invalid credentials.
-  factory ApiException.unauthorized() => const ApiException(
-        message: 'Your session has expired. Please sign in again.',
+  factory ApiException.unauthorized([String? customMessage]) => ApiException(
+        message: customMessage ?? 'Your session has expired. Please sign in again.',
         statusCode: 401,
         isUnauthorized: true,
       );
 
   /// Factory: 403 Forbidden — authenticated but not permitted.
-  factory ApiException.forbidden() => const ApiException(
-        message: 'You do not have permission to perform this action.',
+  factory ApiException.forbidden([String? customMessage]) => ApiException(
+        message: customMessage ?? 'You do not have permission to perform this action.',
         statusCode: 403,
         isForbidden: true,
       );
@@ -37,15 +37,19 @@ class ApiException implements Exception {
   /// Factory: unexpected HTTP status.
   factory ApiException.fromStatus(int statusCode, String body) {
     return ApiException(
-      message: _messageFromStatus(statusCode, body),
+      message: messageFromStatus(statusCode, body),
       statusCode: statusCode,
     );
   }
 
-  static String _messageFromStatus(int code, String body) {
+  static String messageFromStatus(int code, [String? body]) {
     switch (code) {
       case 400:
         return 'Invalid request. Please check your input.';
+      case 401:
+        return 'Invalid email or password.';
+      case 403:
+        return 'You do not have permission to perform this action.';
       case 404:
         return 'The requested resource was not found.';
       case 409:
@@ -62,5 +66,5 @@ class ApiException implements Exception {
   }
 
   @override
-  String toString() => 'ApiException($statusCode): $message';
+  String toString() => message;
 }

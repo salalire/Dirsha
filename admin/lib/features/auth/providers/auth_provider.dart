@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../../core/network/api_exception.dart';
 import '../models/admin_user.dart';
 import '../services/auth_service.dart';
 
@@ -55,7 +56,11 @@ class AdminAuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      if (e is ApiException) {
+        _errorMessage = e.message;
+      } else {
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      }
       _user = null;
       _isLoading = false;
       notifyListeners();

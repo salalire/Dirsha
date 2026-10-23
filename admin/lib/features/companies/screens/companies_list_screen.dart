@@ -173,6 +173,8 @@ class _CompanyTable extends StatelessWidget {
         return StatusBadge.pending();
       case CompanyApplicationStatus.underReview:
         return StatusBadge.underReview();
+      case CompanyApplicationStatus.additionalInfoRequired:
+        return StatusBadge.additionalInfoRequired();
       case CompanyApplicationStatus.approved:
         return StatusBadge.approved();
       case CompanyApplicationStatus.rejected:
@@ -210,6 +212,8 @@ class _CompanyCard extends StatelessWidget {
         return StatusBadge.pending();
       case CompanyApplicationStatus.underReview:
         return StatusBadge.underReview();
+      case CompanyApplicationStatus.additionalInfoRequired:
+        return StatusBadge.additionalInfoRequired();
       case CompanyApplicationStatus.approved:
         return StatusBadge.approved();
       case CompanyApplicationStatus.rejected:

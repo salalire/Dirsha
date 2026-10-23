@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/config/app_config.dart';
 import '../../core/theme/app_colors.dart';
 
 /// A clearly visible banner shown at the top of pages that use mock data.
@@ -10,6 +11,8 @@ class MockDataBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!AppConfig.useMockData) return const SizedBox.shrink();
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -41,6 +44,8 @@ class MockLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!AppConfig.useMockData) return const SizedBox.shrink();
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -67,6 +72,8 @@ class MockModeBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!AppConfig.useMockData) return const SizedBox.shrink();
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(

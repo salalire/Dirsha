@@ -507,3 +507,564 @@ export async function allocateIpo(
     };
   });
 }
+
+// ── Company Application Review ───────────────────────────────────────────────
+
+export async function listCompanyApplications(
+  db: Db,
+  query: {
+    status?: string;
+    page: number;
+    page_size: number;
+  },
+): Promise<{ data: any[]; pagination: Pagination }> {
+  const offset = (query.page - 1) * query.page_size;
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+
+  if (query.status) {
+    params.push(query.status);
+    conditions.push(`c.onboarding_status = $${params.length}`);
+  }
+
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  const countRes = await db.query<{ count: string }>(
+    `SELECT count(*) FROM companies c ${whereClause}`,
+    params,
+  );
+  const total = Number(countRes.rows[0]?.count ?? 0);
+
+  params.push(query.page_size, offset);
+  const rowsRes = await db.query(
+    `SELECT
+      c.id, c.owner_user_id, c.legal_name, c.trade_name, c.registration_number,
+      c.legal_entity_type, c.country_of_incorporation, c.incorporation_date,
+      c.business_address, c.operating_address, c.business_email, c.business_phone,
+      c.website, c.industry_sector, c.description, c.tin, c.vat_number,
+      c.representative_name, c.representative_email, c.representative_phone,
+      c.representative_title, c.representative_role_description, c.authority_declaration,
+      c.onboarding_status, c.reviewed_by, c.reviewed_at, c.rejection_reason,
+      c.review_notes, c.additional_info_request, c.created_at, c.updated_at,
+      u.email AS owner_email, u.full_name AS owner_name, u.verification_status,
+      (SELECT count(*) FROM supporting_documents d WHERE d.entity_type = 'company' AND d.entity_id = c.id)::int AS documents_count
+     FROM companies c
+     JOIN users u ON u.id = c.owner_user_id
+     ${whereClause}
+     ORDER BY c.created_at DESC
+     LIMIT $${params.length - 1} OFFSET $${params.length}`,
+    params,
+  );
+
+  return {
+    data: rowsRes.rows,
+    pagination: {
+      page: query.page,
+      page_size: query.page_size,
+      total,
+    },
+  };
+}
+
+export async function getCompanyApplicationById(db: Db, companyId: string) {
+  const companyRes = await db.query(
+    `SELECT
+      c.id, c.owner_user_id, c.legal_name, c.trade_name, c.registration_number,
+      c.legal_entity_type, c.country_of_incorporation, c.incorporation_date,
+      c.business_address, c.operating_address, c.business_email, c.business_phone,
+      c.website, c.industry_sector, c.description, c.tin, c.vat_number,
+      c.representative_name, c.representative_email, c.representative_phone,
+      c.representative_title, c.representative_role_description, c.authority_declaration,
+      c.onboarding_status, c.reviewed_by, c.reviewed_at, c.rejection_reason,
+      c.review_notes, c.additional_info_request, c.created_at, c.updated_at,
+      u.email AS owner_email, u.full_name AS owner_name, u.phone AS owner_phone,
+      u.verification_status, rev.full_name AS reviewed_by_name
+     FROM companies c
+     JOIN users u ON u.id = c.owner_user_id
+     LEFT JOIN users rev ON rev.id = c.reviewed_by
+     WHERE c.id = $1`,
+    [companyId],
+  );
+  const company = companyRes.rows[0];
+  if (!company) throw Errors.notFound('Company application not found');
+
+  const docsRes = await db.query(
+    `SELECT id, document_type, file_name, file_size_bytes, mime_type, review_status, review_notes, created_at, updated_at
+     FROM supporting_documents
+     WHERE entity_type = 'company' AND entity_id = $1
+     ORDER BY created_at ASC`,
+    [companyId],
+  );
+
+  const historyRes = await db.query(
+    `SELECT h.id, h.from_status, h.to_status, h.notes, h.created_at, u.full_name AS changed_by_name
+     FROM application_status_history h
+     LEFT JOIN users u ON u.id = h.changed_by
+     WHERE h.entity_type = 'company' AND h.entity_id = $1
+     ORDER BY h.created_at DESC`,
+    [companyId],
+  );
+
+  return {
+    ...company,
+    documents: docsRes.rows,
+    status_history: historyRes.rows,
+  };
+}
+
+export async function approveCompanyApplication(
+  db: Db,
+  admin: AuthUser,
+  companyId: string,
+  opts: { notes?: string; requestId: string },
+) {
+  return await db.tx(async (client) => {
+    const companyRes = await client.query('SELECT * FROM companies WHERE id = $1 FOR UPDATE', [companyId]);
+    const company = companyRes.rows[0];
+    if (!company) throw Errors.notFound('Company application not found');
+
+    if (company.onboarding_status === 'approved') {
+      throw Errors.conflict('Company application is already approved');
+    }
+    if (company.onboarding_status === 'draft') {
+      throw Errors.conflict('Cannot approve a draft application');
+    }
+
+    const nextStatus = 'approved';
+    const updateRes = await client.query(
+      `UPDATE companies SET
+        onboarding_status = $1,
+        reviewed_by = $2,
+        reviewed_at = now(),
+        review_notes = $3,
+        additional_info_request = NULL,
+        updated_at = now()
+       WHERE id = $4 RETURNING *`,
+      [nextStatus, admin.id, opts.notes ?? null, companyId],
+    );
+
+    await client.query(
+      `UPDATE users SET verification_status = 'verified' WHERE id = $1`,
+      [company.owner_user_id],
+    );
+
+    await client.query(
+      `INSERT INTO application_status_history (
+        entity_type, entity_id, from_status, to_status, changed_by, notes
+      ) VALUES ('company', $1, $2, $3, $4, $5)`,
+      [companyId, company.onboarding_status, nextStatus, admin.id, opts.notes ?? 'Approved by administrator'],
+    );
+
+    await recordAudit(client, {
+      actorUserId: admin.id,
+      actorRole: admin.role,
+      action: 'company.approve',
+      targetType: 'company',
+      targetId: companyId,
+      outcome: 'success',
+      requestId: opts.requestId,
+      metadata: { notes: opts.notes },
+    });
+
+    return updateRes.rows[0];
+  });
+}
+
+export async function rejectCompanyApplication(
+  db: Db,
+  admin: AuthUser,
+  companyId: string,
+  opts: { reason: string; requestId: string },
+) {
+  return await db.tx(async (client) => {
+    const companyRes = await client.query('SELECT * FROM companies WHERE id = $1 FOR UPDATE', [companyId]);
+    const company = companyRes.rows[0];
+    if (!company) throw Errors.notFound('Company application not found');
+
+    if (company.onboarding_status === 'draft') {
+      throw Errors.conflict('Cannot reject a draft application');
+    }
+
+    const nextStatus = 'rejected';
+    const updateRes = await client.query(
+      `UPDATE companies SET
+        onboarding_status = $1,
+        reviewed_by = $2,
+        reviewed_at = now(),
+        rejection_reason = $3,
+        updated_at = now()
+       WHERE id = $4 RETURNING *`,
+      [nextStatus, admin.id, opts.reason, companyId],
+    );
+
+    await client.query(
+      `UPDATE users SET verification_status = 'rejected' WHERE id = $1`,
+      [company.owner_user_id],
+    );
+
+    await client.query(
+      `INSERT INTO application_status_history (
+        entity_type, entity_id, from_status, to_status, changed_by, notes
+      ) VALUES ('company', $1, $2, $3, $4, $5)`,
+      [companyId, company.onboarding_status, nextStatus, admin.id, opts.reason],
+    );
+
+    await recordAudit(client, {
+      actorUserId: admin.id,
+      actorRole: admin.role,
+      action: 'company.reject',
+      targetType: 'company',
+      targetId: companyId,
+      outcome: 'success',
+      requestId: opts.requestId,
+      metadata: { reason: opts.reason },
+    });
+
+    return updateRes.rows[0];
+  });
+}
+
+export async function requestCompanyAdditionalInfo(
+  db: Db,
+  admin: AuthUser,
+  companyId: string,
+  opts: { requestNotes: string; requestId: string },
+) {
+  return await db.tx(async (client) => {
+    const companyRes = await client.query('SELECT * FROM companies WHERE id = $1 FOR UPDATE', [companyId]);
+    const company = companyRes.rows[0];
+    if (!company) throw Errors.notFound('Company application not found');
+
+    if (company.onboarding_status === 'draft') {
+      throw Errors.conflict('Cannot request additional information for a draft application');
+    }
+
+    const nextStatus = 'additional_info_required';
+    const updateRes = await client.query(
+      `UPDATE companies SET
+        onboarding_status = $1,
+        additional_info_request = $2,
+        updated_at = now()
+       WHERE id = $3 RETURNING *`,
+      [nextStatus, opts.requestNotes, companyId],
+    );
+
+    await client.query(
+      `INSERT INTO application_status_history (
+        entity_type, entity_id, from_status, to_status, changed_by, notes
+      ) VALUES ('company', $1, $2, $3, $4, $5)`,
+      [companyId, company.onboarding_status, nextStatus, admin.id, opts.requestNotes],
+    );
+
+    await recordAudit(client, {
+      actorUserId: admin.id,
+      actorRole: admin.role,
+      action: 'company.request_info',
+      targetType: 'company',
+      targetId: companyId,
+      outcome: 'success',
+      requestId: opts.requestId,
+      metadata: { requestNotes: opts.requestNotes },
+    });
+
+    return updateRes.rows[0];
+  });
+}
+
+// ── Broker Application Review ────────────────────────────────────────────────
+
+export async function listBrokerApplications(
+  db: Db,
+  query: {
+    status?: string;
+    page: number;
+    page_size: number;
+  },
+): Promise<{ data: any[]; pagination: Pagination }> {
+  const offset = (query.page - 1) * query.page_size;
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+
+  if (query.status) {
+    params.push(query.status);
+    conditions.push(`b.onboarding_status = $${params.length}`);
+  }
+
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  const countRes = await db.query<{ count: string }>(
+    `SELECT count(*) FROM brokers b ${whereClause}`,
+    params,
+  );
+  const total = Number(countRes.rows[0]?.count ?? 0);
+
+  params.push(query.page_size, offset);
+  const rowsRes = await db.query(
+    `SELECT
+      b.id, b.owner_user_id, b.broker_type, b.legal_name, b.trade_name,
+      b.registration_number, b.tin, b.business_address, b.city, b.country,
+      b.business_email, b.business_phone, b.website, b.license_number,
+      b.license_category, b.licensing_authority, b.license_issued_date,
+      b.license_expiry_date, b.representative_name, b.representative_email,
+      b.representative_phone, b.representative_title, b.authority_declaration,
+      b.onboarding_status, b.reviewed_by, b.reviewed_at, b.rejection_reason,
+      b.review_notes, b.additional_info_request, b.created_at, b.updated_at,
+      u.email AS owner_email, u.full_name AS owner_name, u.verification_status,
+      (SELECT count(*) FROM supporting_documents d WHERE d.entity_type = 'broker' AND d.entity_id = b.id)::int AS documents_count
+     FROM brokers b
+     JOIN users u ON u.id = b.owner_user_id
+     ${whereClause}
+     ORDER BY b.created_at DESC
+     LIMIT $${params.length - 1} OFFSET $${params.length}`,
+    params,
+  );
+
+  return {
+    data: rowsRes.rows,
+    pagination: {
+      page: query.page,
+      page_size: query.page_size,
+      total,
+    },
+  };
+}
+
+export async function getBrokerApplicationById(db: Db, brokerId: string) {
+  const brokerRes = await db.query(
+    `SELECT
+      b.id, b.owner_user_id, b.broker_type, b.legal_name, b.trade_name,
+      b.registration_number, b.tin, b.business_address, b.city, b.country,
+      b.business_email, b.business_phone, b.website, b.license_number,
+      b.license_category, b.licensing_authority, b.license_issued_date,
+      b.license_expiry_date, b.representative_name, b.representative_email,
+      b.representative_phone, b.representative_title, b.authority_declaration,
+      b.onboarding_status, b.reviewed_by, b.reviewed_at, b.rejection_reason,
+      b.review_notes, b.additional_info_request, b.created_at, b.updated_at,
+      u.email AS owner_email, u.full_name AS owner_name, u.phone AS owner_phone,
+      u.verification_status, rev.full_name AS reviewed_by_name
+     FROM brokers b
+     JOIN users u ON u.id = b.owner_user_id
+     LEFT JOIN users rev ON rev.id = b.reviewed_by
+     WHERE b.id = $1`,
+    [brokerId],
+  );
+  const broker = brokerRes.rows[0];
+  if (!broker) throw Errors.notFound('Broker application not found');
+
+  const docsRes = await db.query(
+    `SELECT id, document_type, file_name, file_size_bytes, mime_type, review_status, review_notes, created_at, updated_at
+     FROM supporting_documents
+     WHERE entity_type = 'broker' AND entity_id = $1
+     ORDER BY created_at ASC`,
+    [brokerId],
+  );
+
+  const historyRes = await db.query(
+    `SELECT h.id, h.from_status, h.to_status, h.notes, h.created_at, u.full_name AS changed_by_name
+     FROM application_status_history h
+     LEFT JOIN users u ON u.id = h.changed_by
+     WHERE h.entity_type = 'broker' AND h.entity_id = $1
+     ORDER BY h.created_at DESC`,
+    [brokerId],
+  );
+
+  return {
+    ...broker,
+    documents: docsRes.rows,
+    status_history: historyRes.rows,
+  };
+}
+
+export async function approveBrokerApplication(
+  db: Db,
+  admin: AuthUser,
+  brokerId: string,
+  opts: { notes?: string; requestId: string },
+) {
+  return await db.tx(async (client) => {
+    const brokerRes = await client.query('SELECT * FROM brokers WHERE id = $1 FOR UPDATE', [brokerId]);
+    const broker = brokerRes.rows[0];
+    if (!broker) throw Errors.notFound('Broker application not found');
+
+    if (broker.onboarding_status === 'approved') {
+      throw Errors.conflict('Broker application is already approved');
+    }
+    if (broker.onboarding_status === 'draft') {
+      throw Errors.conflict('Cannot approve a draft application');
+    }
+
+    const nextStatus = 'approved';
+    const updateRes = await client.query(
+      `UPDATE brokers SET
+        onboarding_status = $1,
+        reviewed_by = $2,
+        reviewed_at = now(),
+        review_notes = $3,
+        additional_info_request = NULL,
+        updated_at = now()
+       WHERE id = $4 RETURNING *`,
+      [nextStatus, admin.id, opts.notes ?? null, brokerId],
+    );
+
+    await client.query(
+      `UPDATE users SET verification_status = 'verified' WHERE id = $1`,
+      [broker.owner_user_id],
+    );
+
+    await client.query(
+      `INSERT INTO application_status_history (
+        entity_type, entity_id, from_status, to_status, changed_by, notes
+      ) VALUES ('broker', $1, $2, $3, $4, $5)`,
+      [brokerId, broker.onboarding_status, nextStatus, admin.id, opts.notes ?? 'Approved by administrator'],
+    );
+
+    await recordAudit(client, {
+      actorUserId: admin.id,
+      actorRole: admin.role,
+      action: 'broker.approve',
+      targetType: 'broker',
+      targetId: brokerId,
+      outcome: 'success',
+      requestId: opts.requestId,
+      metadata: { notes: opts.notes },
+    });
+
+    return updateRes.rows[0];
+  });
+}
+
+export async function rejectBrokerApplication(
+  db: Db,
+  admin: AuthUser,
+  brokerId: string,
+  opts: { reason: string; requestId: string },
+) {
+  return await db.tx(async (client) => {
+    const brokerRes = await client.query('SELECT * FROM brokers WHERE id = $1 FOR UPDATE', [brokerId]);
+    const broker = brokerRes.rows[0];
+    if (!broker) throw Errors.notFound('Broker application not found');
+
+    if (broker.onboarding_status === 'draft') {
+      throw Errors.conflict('Cannot reject a draft application');
+    }
+
+    const nextStatus = 'rejected';
+    const updateRes = await client.query(
+      `UPDATE brokers SET
+        onboarding_status = $1,
+        reviewed_by = $2,
+        reviewed_at = now(),
+        rejection_reason = $3,
+        updated_at = now()
+       WHERE id = $4 RETURNING *`,
+      [nextStatus, admin.id, opts.reason, brokerId],
+    );
+
+    await client.query(
+      `UPDATE users SET verification_status = 'rejected' WHERE id = $1`,
+      [broker.owner_user_id],
+    );
+
+    await client.query(
+      `INSERT INTO application_status_history (
+        entity_type, entity_id, from_status, to_status, changed_by, notes
+      ) VALUES ('broker', $1, $2, $3, $4, $5)`,
+      [brokerId, broker.onboarding_status, nextStatus, admin.id, opts.reason],
+    );
+
+    await recordAudit(client, {
+      actorUserId: admin.id,
+      actorRole: admin.role,
+      action: 'broker.reject',
+      targetType: 'broker',
+      targetId: brokerId,
+      outcome: 'success',
+      requestId: opts.requestId,
+      metadata: { reason: opts.reason },
+    });
+
+    return updateRes.rows[0];
+  });
+}
+
+export async function requestBrokerAdditionalInfo(
+  db: Db,
+  admin: AuthUser,
+  brokerId: string,
+  opts: { requestNotes: string; requestId: string },
+) {
+  return await db.tx(async (client) => {
+    const brokerRes = await client.query('SELECT * FROM brokers WHERE id = $1 FOR UPDATE', [brokerId]);
+    const broker = brokerRes.rows[0];
+    if (!broker) throw Errors.notFound('Broker application not found');
+
+    if (broker.onboarding_status === 'draft') {
+      throw Errors.conflict('Cannot request additional information for a draft application');
+    }
+
+    const nextStatus = 'additional_info_required';
+    const updateRes = await client.query(
+      `UPDATE brokers SET
+        onboarding_status = $1,
+        additional_info_request = $2,
+        updated_at = now()
+       WHERE id = $3 RETURNING *`,
+      [nextStatus, opts.requestNotes, brokerId],
+    );
+
+    await client.query(
+      `INSERT INTO application_status_history (
+        entity_type, entity_id, from_status, to_status, changed_by, notes
+      ) VALUES ('broker', $1, $2, $3, $4, $5)`,
+      [brokerId, broker.onboarding_status, nextStatus, admin.id, opts.requestNotes],
+    );
+
+    await recordAudit(client, {
+      actorUserId: admin.id,
+      actorRole: admin.role,
+      action: 'broker.request_info',
+      targetType: 'broker',
+      targetId: brokerId,
+      outcome: 'success',
+      requestId: opts.requestId,
+      metadata: { requestNotes: opts.requestNotes },
+    });
+
+    return updateRes.rows[0];
+  });
+}
+
+// ── Document Review ──────────────────────────────────────────────────────────
+
+export async function reviewSupportingDocument(
+  db: Db,
+  admin: AuthUser,
+  docId: string,
+  opts: { status: 'approved' | 'rejected'; notes?: string; requestId: string },
+) {
+  const docRes = await db.query(
+    `UPDATE supporting_documents SET
+      review_status = $1,
+      review_notes = $2,
+      updated_at = now()
+     WHERE id = $3
+     RETURNING *`,
+    [opts.status, opts.notes ?? null, docId],
+  );
+  const doc = docRes.rows[0];
+  if (!doc) throw Errors.notFound('Document not found');
+
+  await recordAudit(db, {
+    actorUserId: admin.id,
+    actorRole: admin.role,
+    action: 'document.review',
+    targetType: 'document',
+    targetId: docId,
+    outcome: 'success',
+    requestId: opts.requestId,
+    metadata: { status: opts.status, notes: opts.notes },
+  });
+
+  return doc;
+}
+

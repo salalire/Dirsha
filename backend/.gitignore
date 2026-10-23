@@ -7,3 +7,5 @@ coverage/
 *.log
 *.pem
 *.key
+storage/documents/*
+!storage/documents/.gitkeep

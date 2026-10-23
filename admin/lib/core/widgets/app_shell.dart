@@ -160,6 +160,13 @@ class _SidebarContent extends StatelessWidget {
             expanded: expanded,
           ),
           _NavItem(
+            icon: Icons.handshake_outlined,
+            label: 'Broker Reviews',
+            route: AppRoutes.brokerReviews,
+            currentPath: currentPath,
+            expanded: expanded,
+          ),
+          _NavItem(
             icon: Icons.bar_chart_outlined,
             label: 'IPO Management',
             route: AppRoutes.ipoManagement,
@@ -290,6 +297,7 @@ class _TopBar extends StatelessWidget {
     if (currentPath.startsWith(AppRoutes.ipoManagement)) return 'IPO Management';
     if (currentPath.startsWith(AppRoutes.userReviews)) return 'User Reviews';
     if (currentPath.startsWith(AppRoutes.companyReviews)) return 'Company Reviews';
+    if (currentPath.startsWith(AppRoutes.brokerReviews)) return 'Broker Reviews';
     if (currentPath.startsWith(AppRoutes.audit)) return 'Audit / Activity';
     return 'Dashboard';
   }

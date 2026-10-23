@@ -7,6 +7,7 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'core/routing/app_router.dart';
 
+import 'features/audit/providers/audit_provider.dart';
 import 'features/audit/repositories/api_audit_repository.dart';
 import 'features/audit/repositories/audit_repository.dart';
 import 'features/audit/repositories/mock_audit_repository.dart';
@@ -19,8 +20,13 @@ import 'features/users/repositories/api_user_repository.dart';
 import 'features/users/repositories/mock_user_repository.dart';
 import 'features/users/repositories/user_repository.dart';
 import 'features/companies/providers/companies_provider.dart';
+import 'features/companies/repositories/api_company_repository.dart';
 import 'features/companies/repositories/company_repository.dart';
 import 'features/companies/repositories/mock_company_repository.dart';
+import 'features/brokers/providers/brokers_provider.dart';
+import 'features/brokers/repositories/api_broker_repository.dart';
+import 'features/brokers/repositories/broker_repository.dart';
+import 'features/brokers/repositories/mock_broker_repository.dart';
 import 'features/ipos/providers/ipos_provider.dart';
 import 'features/ipos/repositories/api_ipo_repository.dart';
 import 'features/ipos/repositories/ipo_repository.dart';
@@ -32,24 +38,30 @@ void main() async {
   final ApiClient apiClient = ApiClient();
   final AuthService authService;
   final UserRepository userRepository;
-  final CompanyRepository companyRepository = MockCompanyRepository();
+  final CompanyRepository companyRepository;
+  final BrokerRepository brokerRepository;
   final IpoRepository ipoRepository;
   final AuditRepository auditRepository;
 
   if (AppConfig.useMockData) {
     authService = MockAuthService();
     userRepository = MockUserRepository();
+    companyRepository = MockCompanyRepository();
+    brokerRepository = MockBrokerRepository();
     ipoRepository = MockIpoRepository();
     auditRepository = MockAuditRepository();
   } else {
     authService = ApiAuthService(apiClient: apiClient);
     userRepository = ApiUserRepository(apiClient: apiClient);
+    companyRepository = ApiCompanyRepository(apiClient: apiClient);
+    brokerRepository = ApiBrokerRepository(apiClient: apiClient);
     ipoRepository = ApiIpoRepository(apiClient: apiClient);
     auditRepository = ApiAuditRepository(apiClient: apiClient);
   }
 
   final authProvider = AdminAuthProvider(authService: authService);
   await authProvider.initialize();
+  apiClient.onUnauthorized = () => authProvider.signOut();
 
   runApp(
     MultiProvider(
@@ -64,7 +76,12 @@ void main() async {
             create: (_) =>
                 CompaniesProvider(repository: companyRepository)),
         ChangeNotifierProvider(
+            create: (_) =>
+                BrokersProvider(repository: brokerRepository)),
+        ChangeNotifierProvider(
             create: (_) => IposProvider(repository: ipoRepository)),
+        ChangeNotifierProvider(
+            create: (_) => AuditProvider(repository: auditRepository)),
       ],
       child: DirshaAdminApp(authProvider: authProvider),
     ),

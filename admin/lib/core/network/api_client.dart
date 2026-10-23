@@ -19,6 +19,12 @@ class ApiClient {
   final http.Client _client;
   String? _token;
 
+  /// Optional callback invoked when the server returns 401 Unauthorized.
+  void Function()? onUnauthorized;
+
+  /// Gets the currently active bearer token.
+  String? get token => _token;
+
   /// Sets the bearer token for subsequent requests.
   /// Call this after a successful sign-in.
   void setToken(String token) {
@@ -103,18 +109,36 @@ class ApiClient {
   }
 
   Map<String, dynamic> _handleResponse(http.Response response) {
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (response.body.isEmpty) return {};
+      return json.decode(response.body) as Map<String, dynamic>;
+    }
+
+    String? serverMessage;
+    try {
+      if (response.body.isNotEmpty) {
+        final decoded = json.decode(response.body);
+        if (decoded is Map<String, dynamic>) {
+          if (decoded['error'] is Map<String, dynamic>) {
+            serverMessage = decoded['error']['message'] as String?;
+          } else if (decoded['message'] is String) {
+            serverMessage = decoded['message'] as String;
+          }
+        }
+      }
+    } catch (_) {}
+
     switch (response.statusCode) {
-      case 200:
-      case 201:
-      case 204:
-        if (response.body.isEmpty) return {};
-        return json.decode(response.body) as Map<String, dynamic>;
       case 401:
-        throw ApiException.unauthorized();
+        onUnauthorized?.call();
+        throw ApiException.unauthorized(serverMessage);
       case 403:
-        throw ApiException.forbidden();
+        throw ApiException.forbidden(serverMessage);
       default:
-        throw ApiException.fromStatus(response.statusCode, response.body);
+        throw ApiException(
+          message: serverMessage ?? ApiException.messageFromStatus(response.statusCode, response.body),
+          statusCode: response.statusCode,
+        );
     }
   }
 }

@@ -7,6 +7,8 @@ abstract final class AppRoutes {
   static const String userDetail = '/user-reviews/:id';
   static const String companyReviews = '/company-reviews';
   static const String companyDetail = '/company-reviews/:id';
+  static const String brokerReviews = '/broker-reviews';
+  static const String brokerDetail = '/broker-reviews/:id';
   static const String ipoManagement = '/ipo-management';
   static const String ipoDetail = '/ipo-management/:id';
   static const String audit = '/audit';
@@ -16,6 +18,9 @@ abstract final class AppRoutes {
 
   /// Helper: build a company detail path with a real ID.
   static String companyDetailPath(String id) => '/company-reviews/$id';
+
+  /// Helper: build a broker detail path with a real ID.
+  static String brokerDetailPath(String id) => '/broker-reviews/$id';
 
   /// Helper: build an IPO detail path with a real ID.
   static String ipoDetailPath(String id) => '/ipo-management/$id';

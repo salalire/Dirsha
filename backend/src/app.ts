@@ -6,15 +6,21 @@ import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
 import { createErrorHandler, notFoundHandler } from './http/error-handler.js';
 import type { AppDeps } from './http/types.js';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { adminRouter } from './modules/admin/admin.routes.js';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { healthRouter } from './modules/health/health.routes.js';
 import { iposRouter } from './modules/ipos/ipos.routes.js';
+import { onboardingRouter } from './modules/onboarding/onboarding.routes.js';
 import { subscriptionsRouter } from './modules/subscriptions/subscriptions.routes.js';
 import { usersRouter } from './modules/users/users.routes.js';
 import { devRouter, walletsRouter } from './modules/wallet/wallet.routes.js';
 
 const REQUEST_ID_RE = /^[A-Za-z0-9._-]{8,64}$/;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const portalsDir = path.resolve(__dirname, '../../portals');
 
 /**
  * Builds the Express app from explicit dependencies (config, database, logger) so the
@@ -51,7 +57,9 @@ export function createApp(deps: AppDeps): Express {
     }),
   );
 
-  app.use(helmet());
+  app.use(helmet({
+    contentSecurityPolicy: false, // Allow portals to load Google Fonts, icons, and inline styles
+  }));
   app.use(
     cors({
       origin: (origin, cb) => cb(null, !origin || env.CORS_ORIGINS.includes(origin)),
@@ -61,7 +69,11 @@ export function createApp(deps: AppDeps): Express {
       maxAge: 600,
     }),
   );
-  app.use(express.json({ limit: '100kb' }));
+  app.use(express.json({ limit: '15mb' }));
+
+  // Static Portals for Option C Web Onboarding
+  app.use('/portal/company', express.static(path.join(portalsDir, 'company')));
+  app.use('/portal/broker', express.static(path.join(portalsDir, 'broker')));
 
   app.use('/health', healthRouter(deps.db));
   app.use('/auth', authRouter(deps));
@@ -70,6 +82,7 @@ export function createApp(deps: AppDeps): Express {
   app.use('/subscriptions', subscriptionsRouter(deps));
   app.use('/wallets', walletsRouter(deps));
   app.use('/admin', adminRouter(deps));
+  app.use('/onboarding', onboardingRouter(deps));
   if (env.ENABLE_TEST_FUNDS && env.NODE_ENV !== 'production') {
     app.use('/dev', devRouter(deps));
   }

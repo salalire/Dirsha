@@ -11,6 +11,10 @@ import 'package:dirsha_admin/features/ipos/repositories/api_ipo_repository.dart'
 import 'package:dirsha_admin/features/users/models/user_application.dart';
 import 'package:dirsha_admin/features/users/repositories/api_user_repository.dart';
 import 'package:dirsha_admin/features/audit/repositories/api_audit_repository.dart';
+import 'package:dirsha_admin/features/companies/models/company_application.dart';
+import 'package:dirsha_admin/features/companies/repositories/api_company_repository.dart';
+import 'package:dirsha_admin/features/brokers/models/broker_application.dart';
+import 'package:dirsha_admin/features/brokers/repositories/api_broker_repository.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -246,6 +250,258 @@ void main() {
       expect(ev.targetResource, 'ipo:ipo-1');
       expect(ev.outcome, 'success');
       expect(ev.referenceId, 'req-12345');
+    });
+  });
+
+  group('ApiCompanyRepository', () {
+    test('getApplications parses backend companies list', () async {
+      final mockHttp = MockClient((request) async {
+        if (request.url.path == '/admin/companies') {
+          return http.Response(
+            json.encode({
+              'data': [
+                {
+                  'id': 'cmp-100',
+                  'name': 'Ethio Cement SC',
+                  'registration_number': 'CR-998877',
+                  'tin': '0011223344',
+                  'sector': 'Manufacturing',
+                  'authorized_rep_name': 'Abebe Regassa',
+                  'authorized_rep_email': 'abebe@ethio-cement.et',
+                  'status': 'submitted',
+                  'submitted_at': '2026-10-22T10:00:00Z',
+                  'documents': [
+                    {
+                      'id': 'doc-10',
+                      'document_type': 'commercial_registration',
+                      'original_filename': 'cr.pdf',
+                      'review_status': 'pending',
+                    }
+                  ],
+                }
+              ],
+              'pagination': {'total': 1, 'page': 1, 'limit': 20},
+            }),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }
+        return http.Response('Not Found', 404);
+      });
+
+      final apiClient = ApiClient(httpClient: mockHttp);
+      final repo = ApiCompanyRepository(apiClient: apiClient);
+
+      final companies = await repo.getApplications();
+      expect(companies, hasLength(1));
+      final c = companies.first;
+      expect(c.id, 'cmp-100');
+      expect(c.companyName, 'Ethio Cement SC');
+      expect(c.representativeName, 'Abebe Regassa');
+      expect(c.representativeEmail, 'abebe@ethio-cement.et');
+      expect(c.registrationNumber, 'CR-998877');
+      expect(c.tin, '0011223344');
+      expect(c.sector, 'Manufacturing');
+      expect(c.status, CompanyApplicationStatus.pending);
+      expect(c.documents, hasLength(1));
+      expect(c.documents.first.documentType, 'commercial_registration');
+    });
+
+    test('approveApplication posts to /admin/companies/:id/approve', () async {
+      var called = false;
+      final mockHttp = MockClient((request) async {
+        if (request.url.path == '/admin/companies/cmp-100/approve' &&
+            request.method == 'POST') {
+          called = true;
+          return http.Response(
+            json.encode({'message': 'Company approved', 'data': {'id': 'cmp-100'}}),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }
+        return http.Response('Not Found', 404);
+      });
+
+      final apiClient = ApiClient(httpClient: mockHttp);
+      final repo = ApiCompanyRepository(apiClient: apiClient);
+
+      await repo.approveApplication('cmp-100', notes: 'All docs verified');
+      expect(called, isTrue);
+    });
+
+    test('rejectApplication posts to /admin/companies/:id/reject with reason', () async {
+      var called = false;
+      final mockHttp = MockClient((request) async {
+        if (request.url.path == '/admin/companies/cmp-100/reject' &&
+            request.method == 'POST') {
+          final body = json.decode(request.body) as Map<String, dynamic>;
+          expect(body['reason'], 'Invalid TIN certificate');
+          called = true;
+          return http.Response(
+            json.encode({'message': 'Company rejected', 'data': {'id': 'cmp-100'}}),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }
+        return http.Response('Not Found', 404);
+      });
+
+      final apiClient = ApiClient(httpClient: mockHttp);
+      final repo = ApiCompanyRepository(apiClient: apiClient);
+
+      await repo.rejectApplication('cmp-100', reason: 'Invalid TIN certificate');
+      expect(called, isTrue);
+    });
+
+    test('requestAdditionalInfo posts to /admin/companies/:id/request-info', () async {
+      var called = false;
+      final mockHttp = MockClient((request) async {
+        if (request.url.path == '/admin/companies/cmp-100/request-info' &&
+            request.method == 'POST') {
+          final body = json.decode(request.body) as Map<String, dynamic>;
+          expect(body['message'], 'Please re-upload a clear TIN document');
+          called = true;
+          return http.Response(
+            json.encode({'message': 'Info requested', 'data': {'id': 'cmp-100'}}),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }
+        return http.Response('Not Found', 404);
+      });
+
+      final apiClient = ApiClient(httpClient: mockHttp);
+      final repo = ApiCompanyRepository(apiClient: apiClient);
+
+      await repo.requestAdditionalInfo('cmp-100',
+          message: 'Please re-upload a clear TIN document');
+      expect(called, isTrue);
+    });
+  });
+
+  group('ApiBrokerRepository', () {
+    test('getApplications parses backend brokers list', () async {
+      final mockHttp = MockClient((request) async {
+        if (request.url.path == '/admin/brokers') {
+          return http.Response(
+            json.encode({
+              'data': [
+                {
+                  'id': 'brk-200',
+                  'applicant_name': 'Kassahun Desta',
+                  'applicant_email': 'kassahun@desta-securities.et',
+                  'broker_type': 'firm',
+                  'firm_name': 'Desta Securities SC',
+                  'license_number': 'ECMA-BRK-0099',
+                  'license_authority': 'ECMA',
+                  'jurisdiction': 'ET',
+                  'license_expiry_date': '2028-01-01T00:00:00Z',
+                  'is_license_expired': false,
+                  'status': 'under_review',
+                  'submitted_at': '2026-10-21T12:00:00Z',
+                  'documents': [
+                    {
+                      'id': 'doc-20',
+                      'document_type': 'broker_license',
+                      'original_filename': 'license.pdf',
+                      'review_status': 'approved',
+                    }
+                  ],
+                }
+              ],
+              'pagination': {'total': 1, 'page': 1, 'limit': 20},
+            }),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }
+        return http.Response('Not Found', 404);
+      });
+
+      final apiClient = ApiClient(httpClient: mockHttp);
+      final repo = ApiBrokerRepository(apiClient: apiClient);
+
+      final brokers = await repo.getApplications();
+      expect(brokers, hasLength(1));
+      final b = brokers.first;
+      expect(b.id, 'brk-200');
+      expect(b.applicantName, 'Kassahun Desta');
+      expect(b.firmName, 'Desta Securities SC');
+      expect(b.brokerType, 'firm');
+      expect(b.licenseNumber, 'ECMA-BRK-0099');
+      expect(b.isLicenseExpired, isFalse);
+      expect(b.status, BrokerApplicationStatus.underReview);
+      expect(b.documents, hasLength(1));
+    });
+
+    test('approveApplication posts to /admin/brokers/:id/approve', () async {
+      var called = false;
+      final mockHttp = MockClient((request) async {
+        if (request.url.path == '/admin/brokers/brk-200/approve' &&
+            request.method == 'POST') {
+          called = true;
+          return http.Response(
+            json.encode({'message': 'Broker approved', 'data': {'id': 'brk-200'}}),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }
+        return http.Response('Not Found', 404);
+      });
+
+      final apiClient = ApiClient(httpClient: mockHttp);
+      final repo = ApiBrokerRepository(apiClient: apiClient);
+
+      await repo.approveApplication('brk-200', notes: 'ECMA license verified');
+      expect(called, isTrue);
+    });
+
+    test('rejectApplication posts to /admin/brokers/:id/reject with reason', () async {
+      var called = false;
+      final mockHttp = MockClient((request) async {
+        if (request.url.path == '/admin/brokers/brk-200/reject' &&
+            request.method == 'POST') {
+          final body = json.decode(request.body) as Map<String, dynamic>;
+          expect(body['reason'], 'License authority unverifiable');
+          called = true;
+          return http.Response(
+            json.encode({'message': 'Broker rejected', 'data': {'id': 'brk-200'}}),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }
+        return http.Response('Not Found', 404);
+      });
+
+      final apiClient = ApiClient(httpClient: mockHttp);
+      final repo = ApiBrokerRepository(apiClient: apiClient);
+
+      await repo.rejectApplication('brk-200', reason: 'License authority unverifiable');
+      expect(called, isTrue);
+    });
+
+    test('reviewDocument posts to /admin/documents/:id/review', () async {
+      var called = false;
+      final mockHttp = MockClient((request) async {
+        if (request.url.path == '/admin/documents/doc-20/review' &&
+            request.method == 'POST') {
+          final body = json.decode(request.body) as Map<String, dynamic>;
+          expect(body['status'], 'approved');
+          called = true;
+          return http.Response(
+            json.encode({'message': 'Document review updated'}),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }
+        return http.Response('Not Found', 404);
+      });
+
+      final apiClient = ApiClient(httpClient: mockHttp);
+      final repo = ApiBrokerRepository(apiClient: apiClient);
+
+      await repo.reviewDocument('doc-20', status: 'approved');
+      expect(called, isTrue);
     });
   });
 }

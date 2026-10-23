@@ -11,7 +11,11 @@ import 'audit_repository.dart';
 
 class MockAuditRepository implements AuditRepository {
   @override
-  Future<List<AuditEvent>> getRecentEvents({int limit = 50}) async {
+  Future<List<AuditEvent>> getRecentEvents({
+    int limit = 50,
+    String? action,
+    String? actorUserId,
+  }) async {
     // Return empty list — the UI should show a placeholder/empty state
     // rather than invented audit records.
     await Future.delayed(const Duration(milliseconds: 400));

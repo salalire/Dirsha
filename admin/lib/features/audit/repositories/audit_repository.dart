@@ -5,5 +5,9 @@ import '../models/audit_event.dart';
 /// DEPENDENCY: /admin/audit endpoint (Member 2 — not yet available in Phase 1).
 /// The UI will use MockAuditRepository until the endpoint is confirmed.
 abstract class AuditRepository {
-  Future<List<AuditEvent>> getRecentEvents({int limit = 50});
+  Future<List<AuditEvent>> getRecentEvents({
+    int limit = 50,
+    String? action,
+    String? actorUserId,
+  });
 }

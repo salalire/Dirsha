@@ -83,6 +83,14 @@ The shape of each type is enforced by database `CHECK` constraints, not just by 
 - `audit_events` is append-only and records actor, role, action, target, outcome and the request id. It never contains passwords,
   tokens or secrets. Currently written for: registration, sign-in (success / failure / suspended), test-fund credits, admin provisioning.
 
+### A8. Company and Broker Onboarding & Document Verification
+- **Application Lifecycles:** 7-state onboarding lifecycle: `draft` -> `submitted` -> `under_review` -> `additional_info_required` -> `resubmitted` -> `approved` / `rejected`.
+- **Company Requirements:** Company Name, Registration Number, TIN, Legal Entity Type, Country of Incorporation, Registered Address, Business Email, Sector, Authorized Representative details with explicit authority declaration (`authority_declaration_confirmed: true`). Mandatory documents: `commercial_registration`, `tin_certificate`.
+- **Broker Requirements:** Broker Type (`firm` or `individual`), Firm Name (for firms), License Number, Licensing Authority (ECMA), Jurisdiction (`ET`), License Expiry Date (must be future). Mandatory document: `broker_license`. Expired licenses are blocked at submission and cannot be approved by administrators.
+- **Document Storage & Privacy:** Documents are stored in secure private storage outside web root with SHA-256 verification, MIME validation (PDF, PNG, JPEG), and 10MB file size limit. Access requires backend authorization (own application or admin).
+- **Administrative Decision Enforceability:** Admins review applications and supporting documents (`approved`/`rejected`). Approvals require complete mandatory documents and non-expired licenses. Rejections require an explicit recorded reason. Additional-info requests transition application to `additional_info_required` to allow applicant correction and resubmission.
+- **Role Isolation:** Only approved companies can create IPOs; only approved brokers can engage in broker activities.
+
 ---
 
 ## Part B: Decisions the team must make (before Phase 2 relies on them)

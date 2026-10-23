@@ -39,9 +39,8 @@ class CompaniesProvider extends ChangeNotifier {
   }
 
   Future<void> loadApplicationById(String id) async {
-    _isLoading = true;
+    _isLoading = _selectedApplication == null;
     _errorMessage = null;
-    _selectedApplication = null;
     notifyListeners();
     try {
       _selectedApplication = await _repository.getApplicationById(id);
@@ -62,9 +61,7 @@ class CompaniesProvider extends ChangeNotifier {
       await _repository.approveApplication(id, notes: notes);
       _submitSuccess = 'Company application approved successfully.';
       await loadApplications();
-      if (_selectedApplication?.id == id) {
-        await loadApplicationById(id);
-      }
+      await loadApplicationById(id);
       return true;
     } catch (e) {
       _submitError = e.toString().replaceFirst('Exception: ', '');
@@ -84,8 +81,49 @@ class CompaniesProvider extends ChangeNotifier {
       await _repository.rejectApplication(id, reason: reason);
       _submitSuccess = 'Company application rejected.';
       await loadApplications();
-      if (_selectedApplication?.id == id) {
-        await loadApplicationById(id);
+      await loadApplicationById(id);
+      return true;
+    } catch (e) {
+      _submitError = e.toString().replaceFirst('Exception: ', '');
+      return false;
+    } finally {
+      _isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> requestAdditionalInfo(String id, {required String message}) async {
+    _isSubmitting = true;
+    _submitError = null;
+    _submitSuccess = null;
+    notifyListeners();
+    try {
+      await _repository.requestAdditionalInfo(id, message: message);
+      _submitSuccess = 'Additional information requested from applicant.';
+      await loadApplications();
+      await loadApplicationById(id);
+      return true;
+    } catch (e) {
+      _submitError = e.toString().replaceFirst('Exception: ', '');
+      return false;
+    } finally {
+      _isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> reviewDocument(
+      String documentId, {required String status, String? notes}) async {
+    _isSubmitting = true;
+    _submitError = null;
+    _submitSuccess = null;
+    notifyListeners();
+    try {
+      await _repository.reviewDocument(documentId,
+          status: status, notes: notes);
+      _submitSuccess = 'Document review recorded as $status.';
+      if (_selectedApplication != null) {
+        await loadApplicationById(_selectedApplication!.id);
       }
       return true;
     } catch (e) {

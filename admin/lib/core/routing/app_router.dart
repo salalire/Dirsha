@@ -7,6 +7,8 @@ import '../../features/users/screens/users_list_screen.dart';
 import '../../features/users/screens/user_detail_screen.dart';
 import '../../features/companies/screens/companies_list_screen.dart';
 import '../../features/companies/screens/company_detail_screen.dart';
+import '../../features/brokers/screens/brokers_list_screen.dart';
+import '../../features/brokers/screens/broker_detail_screen.dart';
 import '../../features/ipos/screens/ipos_list_screen.dart';
 import '../../features/ipos/screens/ipo_detail_screen.dart';
 import '../../features/audit/screens/audit_screen.dart';
@@ -68,6 +70,17 @@ GoRouter createRouter(AdminAuthProvider authProvider) {
                 path: ':id',
                 builder: (context, state) => CompanyDetailScreen(
                     companyId: state.pathParameters['id']!),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: AppRoutes.brokerReviews,
+            builder: (context, state) => const BrokersListScreen(),
+            routes: [
+              GoRoute(
+                path: ':id',
+                builder: (context, state) =>
+                    BrokerDetailScreen(brokerId: state.pathParameters['id']!),
               ),
             ],
           ),

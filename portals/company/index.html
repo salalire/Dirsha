@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dirsha — Company Onboarding Portal</title>
+  <meta name="description" content="Dedicated portal for company representatives to register, submit organization profiles, and manage onboarding applications on Dirsha.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top App Header -->
+  <header class="portal-header">
+    <div class="header-container">
+      <div class="brand-wrapper">
+        <div class="brand-logo-mark">D</div>
+        <div class="brand-text">
+          <h1>Dirsha</h1>
+        </div>
+        <span class="brand-badge">Company Portal</span>
+      </div>
+
+      <div id="auth-header-section" class="user-status-pill" style="display: none;">
+        <span id="user-display-email" class="user-email-tag">representative@company.et</span>
+        <button id="btn-logout" class="btn-signout" type="button">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="portal-main">
+
+    <!-- Auth Section (shown if not logged in) -->
+    <div id="auth-section" class="auth-container">
+      <div class="auth-header">
+        <h2>Company Representative Portal</h2>
+        <p>Register or sign in to complete your company onboarding application.</p>
+      </div>
+
+      <div class="auth-tabs">
+        <div id="tab-login" class="auth-tab active" onclick="switchAuthTab('login')">Sign In</div>
+        <div id="tab-register" class="auth-tab" onclick="switchAuthTab('register')">Create Account</div>
+      </div>
+
+      <!-- Login Form -->
+      <form id="form-login" onsubmit="handleLogin(event)">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label for="login-email">Business Email <span class="required">*</span></label>
+          <input id="login-email" class="input-control" type="email" placeholder="rep@company.et" required autocomplete="username">
+        </div>
+        <div class="form-group" style="margin-bottom: 24px;">
+          <label for="login-password">Password <span class="required">*</span></label>
+          <input id="login-password" class="input-control" type="password" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <button id="btn-submit-login" class="btn btn-primary" style="width: 100%;" type="submit">Sign In to Portal</button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="form-register" style="display: none;" onsubmit="handleRegister(event)">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label for="reg-fullname">Representative Full Legal Name <span class="required">*</span></label>
+          <input id="reg-fullname" class="input-control" type="text" placeholder="e.g. Abebe Kebede" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label for="reg-email">Business Email Address <span class="required">*</span></label>
+          <input id="reg-email" class="input-control" type="email" placeholder="e.g. abebe@company.et" required autocomplete="username">
+        </div>
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label for="reg-phone">Direct Telephone Number</label>
+          <input id="reg-phone" class="input-control" type="tel" placeholder="+251 911 234 567">
+        </div>
+        <div class="form-group" style="margin-bottom: 24px;">
+          <label for="reg-password">Password (min. 8 characters) <span class="required">*</span></label>
+          <input id="reg-password" class="input-control" type="password" minlength="8" placeholder="••••••••" required autocomplete="new-password">
+        </div>
+        <button id="btn-submit-register" class="btn btn-primary" style="width: 100%;" type="submit">Register as Company Representative</button>
+      </form>
+    </div>
+
+    <!-- Application Workflow (shown if logged in) -->
+    <div id="workflow-section" style="display: none;">
+
+      <!-- Stepper Nav -->
+      <nav class="stepper-nav" aria-label="Onboarding Steps">
+        <div id="step-nav-profile" class="step-item active" onclick="goToStep('profile')">
+          <div class="step-number">1</div>
+          <div class="step-info">
+            <span class="step-title">Company Profile</span>
+            <span class="step-desc">Identity & Business Details</span>
+          </div>
+        </div>
+
+        <div id="step-nav-rep" class="step-item" onclick="goToStep('rep')">
+          <div class="step-number">2</div>
+          <div class="step-info">
+            <span class="step-title">Authorized Rep</span>
+            <span class="step-desc">Authority & Declarations</span>
+          </div>
+        </div>
+
+        <div id="step-nav-docs" class="step-item" onclick="goToStep('docs')">
+          <div class="step-number">3</div>
+          <div class="step-info">
+            <span class="step-title">Documents</span>
+            <span class="step-desc">Required Certifications</span>
+          </div>
+        </div>
+
+        <div id="step-nav-status" class="step-item" onclick="goToStep('status')">
+          <div class="step-number">4</div>
+          <div class="step-info">
+            <span class="step-title">Application Status</span>
+            <span class="step-desc">Review & Decisions</span>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Status Banner (if additional info required or rejected) -->
+      <div id="global-status-banner" style="display: none;"></div>
+
+      <!-- Step 1: Company Profile -->
+      <section id="step-panel-profile" class="panel-card">
+        <div class="panel-header">
+          <div class="panel-header-title">
+            <h2>Company Identity & Contact</h2>
+            <p>Enter the verified organization details as registered with the Ministry of Trade & Regional Integration.</p>
+          </div>
+          <div id="profile-status-badge"></div>
+        </div>
+
+        <form id="form-company-profile" onsubmit="handleSaveProfile(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="company-legal-name">Registered Legal Name <span class="required">*</span></label>
+              <input id="company-legal-name" class="input-control" type="text" placeholder="e.g. Addis Cloud Tech S.C." required>
+            </div>
+
+            <div class="form-group">
+              <label for="company-trade-name">Trading / Brand Name</label>
+              <input id="company-trade-name" class="input-control" type="text" placeholder="e.g. AddisCloud">
+            </div>
+
+            <div class="form-group">
+              <label for="company-reg-number">Commercial Registration Number <span class="required">*</span></label>
+              <input id="company-reg-number" class="input-control" type="text" placeholder="e.g. MT/AA/14/0012345/2016" required>
+            </div>
+
+            <div class="form-group">
+              <label for="company-entity-type">Legal Entity Type <span class="required">*</span></label>
+              <select id="company-entity-type" class="select-control" required>
+                <option value="plc">Private Limited Company (PLC)</option>
+                <option value="share_company">Share Company (S.C.)</option>
+                <option value="corporation">Corporation / Public Enterprise</option>
+                <option value="partnership">Partnership</option>
+                <option value="sole_proprietorship">Sole Proprietorship</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="company-country">Country of Incorporation <span class="required">*</span></label>
+              <input id="company-country" class="input-control" type="text" value="Ethiopia" required>
+            </div>
+
+            <div class="form-group">
+              <label for="company-inc-date">Incorporation Date</label>
+              <input id="company-inc-date" class="input-control" type="date">
+            </div>
+
+            <div class="form-group">
+              <label for="company-tin">Taxpayer Identification Number (TIN) <span class="required">*</span></label>
+              <input id="company-tin" class="input-control" type="text" placeholder="10-digit TIN e.g. 0012345678" required>
+            </div>
+
+            <div class="form-group">
+              <label for="company-vat">VAT Registration Number</label>
+              <input id="company-vat" class="input-control" type="text" placeholder="e.g. VAT-987654">
+            </div>
+
+            <div class="form-group">
+              <label for="company-industry">Industry / Sector</label>
+              <input id="company-industry" class="input-control" type="text" placeholder="e.g. Information Technology & Telecom">
+            </div>
+
+            <div class="form-group">
+              <label for="company-website">Corporate Website</label>
+              <input id="company-website" class="input-control" type="url" placeholder="https://www.example.et">
+            </div>
+
+            <div class="form-group-full form-group">
+              <label for="company-business-address">Registered Head Office Address <span class="required">*</span></label>
+              <input id="company-business-address" class="input-control" type="text" placeholder="Sub-city, Woreda, Building / House No, Addis Ababa" required>
+            </div>
+
+            <div class="form-group-full form-group">
+              <label for="company-operating-address">Operating / Branch Address (if different)</label>
+              <input id="company-operating-address" class="input-control" type="text" placeholder="Physical operating address">
+            </div>
+
+            <div class="form-group">
+              <label for="company-business-email">Official Corporate Email <span class="required">*</span></label>
+              <input id="company-business-email" class="input-control" type="email" placeholder="info@company.et" required>
+            </div>
+
+            <div class="form-group">
+              <label for="company-business-phone">Official Corporate Telephone <span class="required">*</span></label>
+              <input id="company-business-phone" class="input-control" type="tel" placeholder="+251 11 612 3456" required>
+            </div>
+
+            <div class="form-group-full form-group">
+              <label for="company-description">Business Activities & Description</label>
+              <textarea id="company-description" class="textarea-control" placeholder="Brief summary of company business model, principal operations, and products."></textarea>
+            </div>
+          </div>
+
+          <div class="action-bar">
+            <button id="btn-save-profile" class="btn btn-primary" type="submit">Save Profile & Continue</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Step 2: Authorized Representative -->
+      <section id="step-panel-rep" class="panel-card" style="display: none;">
+        <div class="panel-header">
+          <div class="panel-header-title">
+            <h2>Authorized Representative & Authority Declaration</h2>
+            <p>Provide evidence confirming your authority to represent the company in regulatory submissions and IPO offerings.</p>
+          </div>
+        </div>
+
+        <form id="form-rep-details" onsubmit="handleSaveRep(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="rep-name">Full Legal Name <span class="required">*</span></label>
+              <input id="rep-name" class="input-control" type="text" placeholder="Representative Full Name" required>
+            </div>
+
+            <div class="form-group">
+              <label for="rep-title">Job Title / Corporate Position <span class="required">*</span></label>
+              <input id="rep-title" class="input-control" type="text" placeholder="e.g. Chief Executive Officer, Managing Director" required>
+            </div>
+
+            <div class="form-group">
+              <label for="rep-email">Direct Work Email <span class="required">*</span></label>
+              <input id="rep-email" class="input-control" type="email" placeholder="representative@company.et" required>
+            </div>
+
+            <div class="form-group">
+              <label for="rep-phone">Direct Mobile Phone <span class="required">*</span></label>
+              <input id="rep-phone" class="input-control" type="tel" placeholder="+251 911 000 000" required>
+            </div>
+
+            <div class="form-group-full form-group">
+              <label for="rep-role-desc">Role & Relationship to Company</label>
+              <input id="rep-role-desc" class="input-control" type="text" placeholder="e.g. Appointed representative as per Board Resolution dated 01/01/2026">
+            </div>
+
+            <div class="form-group-full" style="margin-top: 12px; background: var(--bg-surface-elevated); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+              <label class="checkbox-label">
+                <input id="rep-declaration" type="checkbox" required>
+                <span>
+                  <strong>Legal Declaration of Authority:</strong>
+                  I hereby declare under penalty of perjury that I am duly authorized by the company's governing body to submit this onboarding application, submit confidential documentation, and represent the organization on the Dirsha capital market platform.
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="action-bar">
+            <button class="btn btn-secondary" type="button" onclick="goToStep('profile')">Back</button>
+            <button id="btn-save-rep" class="btn btn-primary" type="submit">Save Representative & Continue</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Step 3: Supporting Documents -->
+      <section id="step-panel-docs" class="panel-card" style="display: none;">
+        <div class="panel-header">
+          <div class="panel-header-title">
+            <h2>Required Supporting Documents</h2>
+            <p>Upload clear, legible digital copies (PDF, PNG, JPEG up to 10MB). Private storage with encrypted access.</p>
+          </div>
+        </div>
+
+        <!-- Document Category Selector and Dropzone -->
+        <div style="background: var(--bg-surface-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; margin-bottom: 24px;">
+          <div class="form-grid" style="margin-bottom: 16px;">
+            <div class="form-group">
+              <label for="doc-type-select">Document Category <span class="required">*</span></label>
+              <select id="doc-type-select" class="select-control">
+                <option value="commercial_registration">Commercial Registration Certificate (Mandatory)</option>
+                <option value="tin_certificate">TIN Certificate (Mandatory)</option>
+                <option value="memorandum_of_association">Memorandum / Articles of Association</option>
+                <option value="board_resolution">Board Authorization Resolution</option>
+                <option value="financial_statements">Audited Financial Statements</option>
+                <option value="other">Other Supporting Evidence</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="doc-file-input">Select File(s) (PDF, PNG, JPEG &le; 10MB) <span class="required">*</span></label>
+              <input id="doc-file-input" class="input-control" type="file" accept=".pdf,.png,.jpg,.jpeg" multiple>
+            </div>
+          </div>
+
+          <div id="dropzone" class="dropzone" onclick="document.getElementById('doc-file-input').click()">
+            <div class="dropzone-icon">&#8682;</div>
+            <p id="dropzone-main-text"><strong>Click to choose file(s)</strong> or drag and drop here</p>
+            <p id="dropzone-sub-text" class="sub-text">Supported: PDF, PNG, JPG (maximum 10MB per document)</p>
+          </div>
+
+          <div id="selected-files-preview" style="display: none; margin-bottom: 16px; padding: 12px 16px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-sm); font-size: 13px;"></div>
+
+          <button id="btn-upload-doc" class="btn btn-primary" type="button" onclick="handleUploadDocument()">Upload Selected Document(s)</button>
+        </div>
+
+        <!-- Uploaded Documents List -->
+        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">Uploaded Document Inventory</h3>
+        <div id="uploaded-docs-list" class="doc-list">
+          <p style="color: var(--text-muted); font-size: 13px;">No documents uploaded yet.</p>
+        </div>
+
+        <div class="action-bar">
+          <button class="btn btn-secondary" type="button" onclick="goToStep('rep')">Back</button>
+          <button class="btn btn-primary" type="button" onclick="goToStep('status')">Continue to Review & Submission</button>
+        </div>
+      </section>
+
+      <!-- Step 4: Status & Submit -->
+      <section id="step-panel-status" class="panel-card" style="display: none;">
+        <div class="panel-header">
+          <div class="panel-header-title">
+            <h2>Application Status & Submission</h2>
+            <p>Review submission readiness, view review decisions, or submit your completed application to platform administrators.</p>
+          </div>
+          <div id="final-status-badge"></div>
+        </div>
+
+        <!-- Verification / Ready Checklist -->
+        <div id="submission-readiness-checklist" style="background: var(--bg-surface-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; margin-bottom: 24px;">
+          <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 12px;">Pre-Submission Checklist</h4>
+          <div id="checklist-items" style="display: flex; flex-direction: column; gap: 8px; font-size: 13px;"></div>
+        </div>
+
+        <!-- Submit Button Card -->
+        <div id="submission-action-box" style="text-align: center; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 28px;">
+          <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Ready to Submit for Admin Review?</h3>
+          <p style="color: var(--text-secondary); font-size: 14px; max-width: 600px; margin: 0 auto 20px;">
+            Once submitted, your company profile and documents will be queued for formal compliance review by authorized administrators.
+          </p>
+          <button id="btn-submit-app" class="btn btn-primary" style="font-size: 15px; padding: 14px 32px;" type="button" onclick="handleSubmitApplication()">
+            Submit Application
+          </button>
+        </div>
+
+        <!-- Audit / History Timeline -->
+        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">Application Review History</h3>
+        <div id="status-timeline" class="timeline">
+          <p style="color: var(--text-muted); font-size: 13px;">No history recorded yet.</p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <div id="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

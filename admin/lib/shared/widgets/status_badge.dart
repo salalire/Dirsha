@@ -31,6 +31,12 @@ class StatusBadge extends StatelessWidget {
         textColor: AppColors.info,
       );
 
+  factory StatusBadge.additionalInfoRequired() => const StatusBadge(
+        label: 'Info Required',
+        color: Color(0xFFFEF3C7),
+        textColor: Color(0xFFB45309),
+      );
+
   factory StatusBadge.approved() => const StatusBadge(
         label: 'Approved',
         color: Color(0xFFDCFCE7),
@@ -67,6 +73,9 @@ class StatusBadge extends StatelessWidget {
         return StatusBadge.pending();
       case 'under_review':
         return StatusBadge.underReview();
+      case 'additional_info_required':
+      case 'info_required':
+        return StatusBadge.additionalInfoRequired();
       case 'approved':
         return StatusBadge.approved();
       case 'rejected':

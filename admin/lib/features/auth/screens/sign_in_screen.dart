@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/routing/app_routes.dart';
@@ -241,6 +242,8 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Widget _buildDemoNote(bool isDark) {
+    if (!AppConfig.useMockData) return const SizedBox.shrink();
+
     final bg = isDark ? const Color(0xFF2A1E00) : const Color(0xFFFEF3C7);
     final border =
         isDark ? const Color(0xFF78350F) : const Color(0xFFF59E0B);

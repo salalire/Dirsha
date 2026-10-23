@@ -228,19 +228,58 @@ After the backend owner runs `npm run seed` (see `backend/README.md`) the API ha
 
 Seeded IPOs: `TESTA`, `TESTB` (open), `TESTC` (listed), `TESTD` (under review), `TESTE` (draft).
 
-## 7. Not ready yet: build against mocks
+---
 
-These are in the SRS/plan but **not implemented in this baseline**. Keep them behind your mock
-repository interface and label them as mock. Planned timing is from the 6-day plan.
+## 7. Company and Broker Onboarding APIs
 
-| Needed by | Endpoint / feature | Planned |
+Implemented for Option C dedicated web portals and admin review dashboard.
+
+### 7.1 Company Onboarding (`/onboarding/company`)
+Authenticated with `role: company_rep`. Applicants can access only their own organization's records.
+
+- `GET /onboarding/company`: Returns `{ "data": { "company": <Company>, "documents": [...], "history": [...] } }`.
+- `POST /onboarding/company/draft`: Upserts draft company profile. Accepts identity, contact, tax/regulatory, and representative fields.
+- `POST /onboarding/company/submit`: Submits the application for admin review. Validates required identity, tax (`tin`), representative authority declaration (`authority_declaration_confirmed: true`), and mandatory documents (`commercial_registration`, `tin_certificate`). Transitions status to `submitted` (or `resubmitted`).
+- `POST /onboarding/company/documents`: Uploads base64 encoded document (PDF, PNG, JPEG up to 10MB). Body: `{ "document_type": "...", "original_filename": "...", "mime_type": "...", "content_base64": "..." }`. Stored in private storage with SHA-256 integrity verification.
+- `GET /onboarding/company/documents/:docId/download`: Streams private document binary to authorized applicant.
+- `DELETE /onboarding/company/documents/:docId`: Removes document if application is in `draft` or `additional_info_required`.
+
+### 7.2 Broker Onboarding (`/onboarding/broker`)
+Authenticated with `role: broker`. Applicants can access only their own broker profile.
+
+- `GET /onboarding/broker`: Returns `{ "data": { "broker": <Broker>, "documents": [...], "history": [...] } }`.
+- `POST /onboarding/broker/draft`: Upserts draft broker profile. Supports `broker_type` (`firm` or `individual`), licensing details, and contact info.
+- `POST /onboarding/broker/submit`: Submits broker application for admin review. Enforces mandatory `broker_license` document and non-expired license expiry date. Transitions status to `submitted` (or `resubmitted`).
+- `POST /onboarding/broker/documents`: Uploads supporting document (PDF, PNG, JPEG up to 10MB) to private storage.
+- `GET /onboarding/broker/documents/:docId/download`: Streams private document binary to authorized broker.
+- `DELETE /onboarding/broker/documents/:docId`: Removes document in permitted states.
+
+### 7.3 Admin Review & Decision APIs (`/admin`)
+Authenticated with `role: admin`.
+
+- `GET /admin/companies`: Lists company applications with pagination (`page`, `limit`) and filter (`status`).
+- `GET /admin/companies/:id`: Full company application detail including profile, documents, review status, and status history.
+- `POST /admin/companies/:id/approve`: Approves company. Updates status to `approved`, sets user `verification_status: verified`, logs audit event.
+- `POST /admin/companies/:id/reject`: Body: `{ "reason": "..." }` (mandatory). Sets status to `rejected`, records reason in status notes and audit log.
+- `POST /admin/companies/:id/request-info`: Body: `{ "message": "..." }` (mandatory). Sets status to `additional_info_required`, permitting applicant correction and resubmission.
+- `GET /admin/brokers`: Lists broker applications with pagination and filter.
+- `GET /admin/brokers/:id`: Full broker application detail with license expiration status, documents, and audit history.
+- `POST /admin/brokers/:id/approve`: Approves broker application. Blocks approval if license has expired. Updates status to `approved`, user `verification_status: verified`.
+- `POST /admin/brokers/:id/reject`: Body: `{ "reason": "..." }`. Rejects application with audit logging.
+- `POST /admin/brokers/:id/request-info`: Body: `{ "message": "..." }`. Requests additional information/documents.
+- `POST /admin/documents/:id/review`: Body: `{ "status": "approved" | "rejected", "notes": "..." }`. Records admin review for a supporting document.
+
+---
+
+## 8. Implemented vs Out of Scope
+
+| Component | Status | Implementation Details |
 |---|---|---|
-| Mobile + Admin | `POST /subscriptions`, `GET /subscriptions` (reserve funds, idempotent, `INSUFFICIENT_FUNDS`, `IPO_NOT_OPEN`) | Phase 2, Day 3 (22 Oct) |
-| Mobile | Subscription status/history, allocation and release/refund results | Phase 2, Day 4 (23 Oct) |
-| Admin | IPO review actions (approve/reject/open…), subscription list/detail, audit-event list | Phase 2, Day 3–4 |
-| Admin | User/company review lists and decisions | Phase 2 (needs a team decision on scope: not in the Phase 1 backend list) |
-| Mobile | Company onboarding, IPO draft/submit, document upload (S3) | Not scheduled in the 6-day plan; needs a team decision |
-| Both | **Refresh tokens** / silent re-login (FR-AUTH-07, P1) | Not in Phase 1; sessions last 15 min |
-| Both | WebSocket live updates, orders/order book, broker relationships | Out of the 6-day MVP scope (§9 of the plan) |
+| Investor Mobile App | Implemented | Flutter mobile app (Phase 1 & Phase 2 complete) |
+| Company Portal | Implemented | Dedicated web portal at `/portal/company` |
+| Broker Portal | Implemented | Dedicated web portal at `/portal/broker` |
+| Admin Review | Implemented | Live admin dashboard with company & broker review screens |
+| Private Doc Storage | Implemented | Encrypted private storage with mime/size validation |
+| Broker Trading / Relationships | Out of scope (Phase 3) | Secondary market and trading book not in scope |
+| Refresh Tokens | Deferred | 15-minute access token lifespan |
 
-When a real endpoint lands it will follow the conventions above; only the "not ready" row changes.

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dirsha — Broker Registration & Onboarding Portal</title>
+  <meta name="description" content="Dedicated web portal for capital market brokers and brokerage firms to register, submit regulatory licensing, and manage onboarding on Dirsha.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top App Header -->
+  <header class="portal-header">
+    <div class="header-container">
+      <div class="brand-wrapper">
+        <div class="brand-logo-mark">B</div>
+        <div class="brand-text">
+          <h1>Dirsha</h1>
+        </div>
+        <span class="brand-badge">Broker Portal</span>
+      </div>
+
+      <div id="auth-header-section" class="user-status-pill" style="display: none;">
+        <span id="user-display-email" class="user-email-tag">broker@firm.et</span>
+        <button id="btn-logout" class="btn-signout" type="button">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="portal-main">
+
+    <!-- Auth Section (shown if not logged in) -->
+    <div id="auth-section" class="auth-container">
+      <div class="auth-header">
+        <h2>Broker Onboarding Portal</h2>
+        <p>Register or sign in to complete your capital market broker application.</p>
+      </div>
+
+      <div class="auth-tabs">
+        <div id="tab-login" class="auth-tab active" onclick="switchAuthTab('login')">Sign In</div>
+        <div id="tab-register" class="auth-tab" onclick="switchAuthTab('register')">Create Broker Account</div>
+      </div>
+
+      <!-- Login Form -->
+      <form id="form-login" onsubmit="handleLogin(event)">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label for="login-email">Professional Email <span class="required">*</span></label>
+          <input id="login-email" class="input-control" type="email" placeholder="broker@firm.et" required autocomplete="username">
+        </div>
+        <div class="form-group" style="margin-bottom: 24px;">
+          <label for="login-password">Password <span class="required">*</span></label>
+          <input id="login-password" class="input-control" type="password" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <button id="btn-submit-login" class="btn btn-primary" style="width: 100%;" type="submit">Sign In to Broker Portal</button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="form-register" style="display: none;" onsubmit="handleRegister(event)">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label for="reg-fullname">Full Legal Name / Firm Contact <span class="required">*</span></label>
+          <input id="reg-fullname" class="input-control" type="text" placeholder="e.g. Dawit Mengistu" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label for="reg-email">Professional Email Address <span class="required">*</span></label>
+          <input id="reg-email" class="input-control" type="email" placeholder="e.g. dawit@securities.et" required autocomplete="username">
+        </div>
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label for="reg-phone">Telephone Number</label>
+          <input id="reg-phone" class="input-control" type="tel" placeholder="+251 911 500 600">
+        </div>
+        <div class="form-group" style="margin-bottom: 24px;">
+          <label for="reg-password">Password (min. 8 characters) <span class="required">*</span></label>
+          <input id="reg-password" class="input-control" type="password" minlength="8" placeholder="••••••••" required autocomplete="new-password">
+        </div>
+        <button id="btn-submit-register" class="btn btn-primary" style="width: 100%;" type="submit">Register as Broker Applicant</button>
+      </form>
+    </div>
+
+    <!-- Application Workflow (shown if logged in) -->
+    <div id="workflow-section" style="display: none;">
+
+      <!-- Stepper Nav -->
+      <nav class="stepper-nav" aria-label="Onboarding Steps">
+        <div id="step-nav-profile" class="step-item active" onclick="goToStep('profile')">
+          <div class="step-number">1</div>
+          <div class="step-info">
+            <span class="step-title">Broker Identity</span>
+            <span class="step-desc">Firm / Individual Details</span>
+          </div>
+        </div>
+
+        <div id="step-nav-license" class="step-item" onclick="goToStep('license')">
+          <div class="step-number">2</div>
+          <div class="step-info">
+            <span class="step-title">Regulatory License</span>
+            <span class="step-desc">ECMA License &amp; Dates</span>
+          </div>
+        </div>
+
+        <div id="step-nav-docs" class="step-item" onclick="goToStep('docs')">
+          <div class="step-number">3</div>
+          <div class="step-info">
+            <span class="step-title">License Documents</span>
+            <span class="step-desc">Official Certifications</span>
+          </div>
+        </div>
+
+        <div id="step-nav-status" class="step-item" onclick="goToStep('status')">
+          <div class="step-number">4</div>
+          <div class="step-info">
+            <span class="step-title">Status &amp; Decisions</span>
+            <span class="step-desc">Review &amp; Approvals</span>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Status Banner (if additional info required or rejected) -->
+      <div id="global-status-banner" style="display: none;"></div>
+
+      <!-- Step 1: Broker Profile -->
+      <section id="step-panel-profile" class="panel-card">
+        <div class="panel-header">
+          <div class="panel-header-title">
+            <h2>Broker Identity &amp; Professional Details</h2>
+            <p>Enter your professional credentials and registered office information.</p>
+          </div>
+          <div id="profile-status-badge"></div>
+        </div>
+
+        <form id="form-broker-profile" onsubmit="handleSaveProfile(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="broker-type">Broker Applicant Type <span class="required">*</span></label>
+              <select id="broker-type" class="select-control" required>
+                <option value="firm">Securities Brokerage Firm (Corporate)</option>
+                <option value="individual">Licensed Individual Broker / Dealing Agent</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="broker-legal-name">Full Legal Name / Firm Name <span class="required">*</span></label>
+              <input id="broker-legal-name" class="input-control" type="text" placeholder="e.g. Lion Capital Securities S.C." required>
+            </div>
+
+            <div class="form-group">
+              <label for="broker-trade-name">Trading / Commercial Name</label>
+              <input id="broker-trade-name" class="input-control" type="text" placeholder="e.g. Lion Securities">
+            </div>
+
+            <div class="form-group">
+              <label for="broker-reg-number">Commercial Registration Number</label>
+              <input id="broker-reg-number" class="input-control" type="text" placeholder="e.g. BRK/AA/2026/001">
+            </div>
+
+            <div class="form-group">
+              <label for="broker-tin">Taxpayer Identification Number (TIN)</label>
+              <input id="broker-tin" class="input-control" type="text" placeholder="e.g. 0098765432">
+            </div>
+
+            <div class="form-group">
+              <label for="broker-city">City <span class="required">*</span></label>
+              <input id="broker-city" class="input-control" type="text" value="Addis Ababa" required>
+            </div>
+
+            <div class="form-group-full form-group">
+              <label for="broker-business-address">Professional Office Address <span class="required">*</span></label>
+              <input id="broker-business-address" class="input-control" type="text" placeholder="Churchill Avenue, Sub-city, Addis Ababa" required>
+            </div>
+
+            <div class="form-group">
+              <label for="broker-business-email">Official Business Email <span class="required">*</span></label>
+              <input id="broker-business-email" class="input-control" type="email" placeholder="contact@securities.et" required>
+            </div>
+
+            <div class="form-group">
+              <label for="broker-business-phone">Official Contact Telephone <span class="required">*</span></label>
+              <input id="broker-business-phone" class="input-control" type="tel" placeholder="+251 11 550 0600" required>
+            </div>
+
+            <div class="form-group-full form-group">
+              <label for="broker-website">Corporate Website / Professional Profile</label>
+              <input id="broker-website" class="input-control" type="url" placeholder="https://www.lionsecurities.et">
+            </div>
+          </div>
+
+          <div class="action-bar">
+            <button id="btn-save-profile" class="btn btn-primary" type="submit">Save Broker Details &amp; Continue</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Step 2: Regulatory Licensing -->
+      <section id="step-panel-license" class="panel-card" style="display: none;">
+        <div class="panel-header">
+          <div class="panel-header-title">
+            <h2>ECMA License &amp; Regulatory Credentials</h2>
+            <p>Provide licensing details issued by the Ethiopian Capital Market Authority (ECMA).</p>
+          </div>
+        </div>
+
+        <form id="form-license-details" onsubmit="handleSaveLicense(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="broker-license-number">Broker License Number <span class="required">*</span></label>
+              <input id="broker-license-number" class="input-control" type="text" placeholder="e.g. ECMA-BRK-2026-0042" required>
+            </div>
+
+            <div class="form-group">
+              <label for="broker-license-category">License Category <span class="required">*</span></label>
+              <select id="broker-license-category" class="select-control" required>
+                <option value="securities_broker">Securities Broker</option>
+                <option value="dealing_broker">Dealing Broker / Market Maker</option>
+                <option value="investment_advisor">Investment Advisor</option>
+                <option value="underwriter">Underwriter / Sponsoring Broker</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="broker-authority">Licensing Authority <span class="required">*</span></label>
+              <input id="broker-authority" class="input-control" type="text" value="Ethiopian Capital Market Authority (ECMA)" required>
+            </div>
+
+            <div class="form-group">
+              <label for="broker-issued-date">Date of License Issuance</label>
+              <input id="broker-issued-date" class="input-control" type="date">
+            </div>
+
+            <div class="form-group">
+              <label for="broker-expiry-date">License Expiry Date <span class="required">*</span></label>
+              <input id="broker-expiry-date" class="input-control" type="date" required>
+              <span class="form-hint">License must be currently valid. Expired licenses cannot be submitted.</span>
+            </div>
+
+            <div class="form-group">
+              <label for="broker-rep-name">Authorized Representative Name</label>
+              <input id="broker-rep-name" class="input-control" type="text" placeholder="Full Name">
+            </div>
+
+            <div class="form-group-full" style="margin-top: 12px; background: var(--bg-surface-elevated); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+              <label class="checkbox-label">
+                <input id="broker-declaration" type="checkbox" required>
+                <span>
+                  <strong>Brokerage Authority Declaration:</strong>
+                  I hereby declare that the licensing information provided is authentic, valid, and in good standing with the Ethiopian Capital Market Authority (ECMA). I confirm that this firm meets the minimum regulatory capital requirements.
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="action-bar">
+            <button class="btn btn-secondary" type="button" onclick="goToStep('profile')">Back</button>
+            <button id="btn-save-license" class="btn btn-primary" type="submit">Save Licensing &amp; Continue</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Step 3: License Documents -->
+      <section id="step-panel-docs" class="panel-card" style="display: none;">
+        <div class="panel-header">
+          <div class="panel-header-title">
+            <h2>Supporting Regulatory Documents</h2>
+            <p>Upload official copies of your license and accreditation. Private, encrypted storage.</p>
+          </div>
+        </div>
+
+        <div style="background: var(--bg-surface-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; margin-bottom: 24px;">
+          <div class="form-grid" style="margin-bottom: 16px;">
+            <div class="form-group">
+              <label for="doc-type-select">Document Type <span class="required">*</span></label>
+              <select id="doc-type-select" class="select-control">
+                <option value="broker_license">Official ECMA Broker License (Mandatory)</option>
+                <option value="commercial_registration">Commercial Registration Certificate</option>
+                <option value="regulatory_approval">Regulatory Approval Letter</option>
+                <option value="representative_id">Authorized Representative Identification (KYC)</option>
+                <option value="professional_indemnity">Professional Indemnity Insurance</option>
+                <option value="other">Other Regulatory Document</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="doc-file-input">Select File(s) (PDF, PNG, JPEG &le; 10MB) <span class="required">*</span></label>
+              <input id="doc-file-input" class="input-control" type="file" accept=".pdf,.png,.jpg,.jpeg" multiple>
+            </div>
+          </div>
+
+          <div id="dropzone" class="dropzone" onclick="document.getElementById('doc-file-input').click()">
+            <div class="dropzone-icon">&#8682;</div>
+            <p id="dropzone-main-text"><strong>Click to choose file(s)</strong> or drag and drop here</p>
+            <p id="dropzone-sub-text" class="sub-text">Supported: PDF, PNG, JPG (maximum 10MB per document)</p>
+          </div>
+
+          <div id="selected-files-preview" style="display: none; margin-bottom: 16px; padding: 12px 16px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-sm); font-size: 13px;"></div>
+
+          <button id="btn-upload-doc" class="btn btn-primary" type="button" onclick="handleUploadDocument()">Upload License Document(s)</button>
+        </div>
+
+        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">Uploaded Document Inventory</h3>
+        <div id="uploaded-docs-list" class="doc-list">
+          <p style="color: var(--text-muted); font-size: 13px;">No documents uploaded yet.</p>
+        </div>
+
+        <div class="action-bar">
+          <button class="btn btn-secondary" type="button" onclick="goToStep('license')">Back</button>
+          <button class="btn btn-primary" type="button" onclick="goToStep('status')">Continue to Review &amp; Submission</button>
+        </div>
+      </section>
+
+      <!-- Step 4: Status & Decisions -->
+      <section id="step-panel-status" class="panel-card" style="display: none;">
+        <div class="panel-header">
+          <div class="panel-header-title">
+            <h2>Broker Application Status &amp; Decision</h2>
+            <p>Track administrator review, view decision records, and submit your application.</p>
+          </div>
+          <div id="final-status-badge"></div>
+        </div>
+
+        <!-- Readiness Checklist -->
+        <div id="submission-readiness-checklist" style="background: var(--bg-surface-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; margin-bottom: 24px;">
+          <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 12px;">Pre-Submission Checklist</h4>
+          <div id="checklist-items" style="display: flex; flex-direction: column; gap: 8px; font-size: 13px;"></div>
+        </div>
+
+        <!-- Submit Button Box -->
+        <div id="submission-action-box" style="text-align: center; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 28px;">
+          <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Submit Broker Application</h3>
+          <p style="color: var(--text-secondary); font-size: 14px; max-width: 600px; margin: 0 auto 20px;">
+            Your credentials will be verified against the Ethiopian Capital Market Authority (ECMA) registry by authorized platform administrators.
+          </p>
+          <button id="btn-submit-app" class="btn btn-primary" style="font-size: 15px; padding: 14px 32px;" type="button" onclick="handleSubmitApplication()">
+            Submit Broker Application
+          </button>
+        </div>
+
+        <!-- Status Timeline -->
+        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">Application Review Timeline</h3>
+        <div id="status-timeline" class="timeline">
+          <p style="color: var(--text-muted); font-size: 13px;">No history recorded yet.</p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <div id="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
