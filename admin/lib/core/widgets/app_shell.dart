@@ -174,6 +174,13 @@ class _SidebarContent extends StatelessWidget {
             expanded: expanded,
           ),
           _NavItem(
+            icon: Icons.receipt_long_outlined,
+            label: 'Subscriptions',
+            route: AppRoutes.subscriptions,
+            currentPath: currentPath,
+            expanded: expanded,
+          ),
+          _NavItem(
             icon: Icons.history_outlined,
             label: 'Audit / Activity',
             route: AppRoutes.audit,

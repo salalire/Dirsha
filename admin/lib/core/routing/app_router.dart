@@ -11,6 +11,7 @@ import '../../features/brokers/screens/brokers_list_screen.dart';
 import '../../features/brokers/screens/broker_detail_screen.dart';
 import '../../features/ipos/screens/ipos_list_screen.dart';
 import '../../features/ipos/screens/ipo_detail_screen.dart';
+import '../../features/subscriptions/screens/subscriptions_list_screen.dart';
 import '../../features/audit/screens/audit_screen.dart';
 import '../widgets/app_shell.dart';
 import 'app_routes.dart';
@@ -94,6 +95,10 @@ GoRouter createRouter(AdminAuthProvider authProvider) {
                     IpoDetailScreen(ipoId: state.pathParameters['id']!),
               ),
             ],
+          ),
+          GoRoute(
+            path: AppRoutes.subscriptions,
+            builder: (context, state) => const SubscriptionsListScreen(),
           ),
           GoRoute(
             path: AppRoutes.audit,

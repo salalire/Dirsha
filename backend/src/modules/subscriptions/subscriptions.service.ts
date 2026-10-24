@@ -28,6 +28,12 @@ export interface SubscriptionDto {
   reservation_ledger_entry_id: string | null;
   created_at: string;
   updated_at: string;
+  ipo_title?: string;
+  ipo_symbol?: string;
+  company_name?: string;
+  price_per_share_minor?: number;
+  investor_name?: string;
+  investor_email?: string;
 }
 
 export interface SubscriptionRow {
@@ -42,10 +48,16 @@ export interface SubscriptionRow {
   idempotency_key: string;
   created_at: Date;
   updated_at: Date;
+  ipo_title?: string;
+  ipo_symbol?: string;
+  company_name?: string;
+  price_per_share_minor?: string;
+  investor_name?: string;
+  investor_email?: string;
 }
 
 export function subscriptionRowToDto(r: SubscriptionRow): SubscriptionDto {
-  return {
+  const dto: SubscriptionDto = {
     id: r.id,
     ipo_id: r.ipo_id,
     investor_id: r.investor_id,
@@ -57,6 +69,15 @@ export function subscriptionRowToDto(r: SubscriptionRow): SubscriptionDto {
     created_at: r.created_at.toISOString(),
     updated_at: r.updated_at.toISOString(),
   };
+  if (r.ipo_title !== undefined) dto.ipo_title = r.ipo_title;
+  if (r.ipo_symbol !== undefined) dto.ipo_symbol = r.ipo_symbol;
+  if (r.company_name !== undefined) dto.company_name = r.company_name;
+  if (r.price_per_share_minor !== undefined && r.price_per_share_minor !== null) {
+    dto.price_per_share_minor = fromDb(r.price_per_share_minor);
+  }
+  if (r.investor_name !== undefined) dto.investor_name = r.investor_name;
+  if (r.investor_email !== undefined) dto.investor_email = r.investor_email;
+  return dto;
 }
 
 /**
@@ -290,17 +311,17 @@ export async function listSubscriptions(
 
   if (user.role !== "admin") {
     params.push(user.id);
-    conditions.push(`investor_id = $${params.length}`);
+    conditions.push(`s.investor_id = $${params.length}`);
   }
 
   if (opts.ipo_id) {
     params.push(opts.ipo_id);
-    conditions.push(`ipo_id = $${params.length}`);
+    conditions.push(`s.ipo_id = $${params.length}`);
   }
 
   if (opts.status) {
     params.push(opts.status);
-    conditions.push(`status = $${params.length}`);
+    conditions.push(`s.status = $${params.length}`);
   }
 
   const whereClause = conditions.length
@@ -310,7 +331,7 @@ export async function listSubscriptions(
   const total = fromDb(
     (
       await db.query<{ n: string }>(
-        `SELECT count(*)::bigint AS n FROM subscriptions ${whereClause}`,
+        `SELECT count(*)::bigint AS n FROM subscriptions s ${whereClause}`,
         params,
       )
     ).rows[0]?.n,
@@ -321,9 +342,19 @@ export async function listSubscriptions(
   params.push(opts.page_size, (opts.page - 1) * opts.page_size);
 
   const { rows } = await db.query<SubscriptionRow>(
-    `SELECT * FROM subscriptions
+    `SELECT s.*,
+            i.title AS ipo_title,
+            i.symbol AS ipo_symbol,
+            i.price_per_share_minor,
+            COALESCE(c.trade_name, c.legal_name) AS company_name,
+            u.full_name AS investor_name,
+            u.email AS investor_email
+     FROM subscriptions s
+     JOIN ipos i ON i.id = s.ipo_id
+     JOIN companies c ON c.id = i.company_id
+     JOIN users u ON u.id = s.investor_id
      ${whereClause}
-     ORDER BY created_at DESC, id DESC
+     ORDER BY s.created_at DESC, s.id DESC
      LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
     params,
   );
@@ -341,14 +372,25 @@ export async function getSubscription(
   id: string,
 ): Promise<SubscriptionDto | null> {
   const params: unknown[] = [id];
-  let where = "id = $1";
+  let where = "s.id = $1";
   if (user.role !== "admin") {
     params.push(user.id);
-    where += " AND investor_id = $2";
+    where += " AND s.investor_id = $2";
   }
 
   const { rows } = await db.query<SubscriptionRow>(
-    `SELECT * FROM subscriptions WHERE ${where}`,
+    `SELECT s.*,
+            i.title AS ipo_title,
+            i.symbol AS ipo_symbol,
+            i.price_per_share_minor,
+            COALESCE(c.trade_name, c.legal_name) AS company_name,
+            u.full_name AS investor_name,
+            u.email AS investor_email
+     FROM subscriptions s
+     JOIN ipos i ON i.id = s.ipo_id
+     JOIN companies c ON c.id = i.company_id
+     JOIN users u ON u.id = s.investor_id
+     WHERE ${where}`,
     params,
   );
 

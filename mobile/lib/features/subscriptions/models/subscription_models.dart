@@ -56,6 +56,12 @@ class SubscriptionModel {
     this.reservationLedgerEntryId,
     required this.createdAt,
     required this.updatedAt,
+    this.ipoTitle,
+    this.ipoSymbol,
+    this.companyName,
+    this.pricePerShareMinor,
+    this.investorName,
+    this.investorEmail,
   });
 
   final String id;
@@ -68,8 +74,35 @@ class SubscriptionModel {
   final String? reservationLedgerEntryId;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? ipoTitle;
+  final String? ipoSymbol;
+  final String? companyName;
+  final int? pricePerShareMinor;
+  final String? investorName;
+  final String? investorEmail;
 
   double get amountEtb => amountMinor / 100.0;
+  double get pricePerShareEtb => (effectivePricePerShareMinor) / 100.0;
+
+  int get effectivePricePerShareMinor {
+    if (pricePerShareMinor != null && pricePerShareMinor! > 0) {
+      return pricePerShareMinor!;
+    }
+    if (quantity > 0) {
+      return amountMinor ~/ quantity;
+    }
+    return 0;
+  }
+
+  int get unallocatedQuantity =>
+      quantity > allocatedQuantity ? quantity - allocatedQuantity : 0;
+
+  int get allocatedAmountMinor => allocatedQuantity * effectivePricePerShareMinor;
+  double get allocatedAmountEtb => allocatedAmountMinor / 100.0;
+
+  int get unallocatedRefundMinor =>
+      amountMinor > allocatedAmountMinor ? amountMinor - allocatedAmountMinor : 0;
+  double get unallocatedRefundEtb => unallocatedRefundMinor / 100.0;
 
   factory SubscriptionModel.fromJson(Map<String, dynamic> json) {
     return SubscriptionModel(
@@ -90,6 +123,15 @@ class SubscriptionModel {
           DateTime.parse((json['created_at'] ?? json['createdAt']) as String),
       updatedAt:
           DateTime.parse((json['updated_at'] ?? json['updatedAt']) as String),
+      ipoTitle: (json['ipo_title'] ?? json['ipoTitle']) as String?,
+      ipoSymbol: (json['ipo_symbol'] ?? json['ipoSymbol']) as String?,
+      companyName: (json['company_name'] ?? json['companyName']) as String?,
+      pricePerShareMinor: (json['price_per_share_minor'] ??
+              json['pricePerShareMinor'] as num?)
+          ?.toInt(),
+      investorName: (json['investor_name'] ?? json['investorName']) as String?,
+      investorEmail:
+          (json['investor_email'] ?? json['investorEmail']) as String?,
     );
   }
 }

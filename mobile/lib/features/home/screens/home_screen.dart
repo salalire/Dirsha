@@ -11,6 +11,9 @@ import '../../../shared/widgets/widgets.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../ipos/models/ipo_models.dart';
 import '../../ipos/providers/ipo_provider.dart';
+import '../../portfolio/providers/portfolio_provider.dart';
+import '../../portfolio/screens/portfolio_screen.dart';
+import '../../subscriptions/providers/subscription_provider.dart';
 import '../../wallet/providers/wallet_provider.dart';
 
 /// Investor dashboard — the main landing screen after sign-in.
@@ -31,10 +34,11 @@ class _HomeScreenState extends State<HomeScreen> {
   // the protected setState directly.
   void switchTab(int index) => setState(() => _selectedIndex = index);
 
-  static const _tabs = ['Dashboard', 'IPOs', 'Wallet'];
+  static const _tabs = ['Dashboard', 'IPOs', 'Portfolio', 'Wallet'];
   static const _icons = [
     Icons.dashboard_outlined,
     Icons.business_center_outlined,
+    Icons.pie_chart_outline_rounded,
     Icons.account_balance_wallet_outlined,
   ];
 
@@ -44,6 +48,8 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<WalletProvider>().load();
       context.read<IpoListProvider>().load();
+      context.read<PortfolioProvider>().load();
+      context.read<SubscriptionProvider>().loadSubscriptions();
     });
   }
 
@@ -89,7 +95,12 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: IndexedStack(
         index: _selectedIndex,
-        children: const [_DashboardTab(), _IposTab(), _WalletTab()],
+        children: const [
+          _DashboardTab(),
+          _IposTab(),
+          PortfolioScreen(),
+          _WalletTab(),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
@@ -122,6 +133,8 @@ class _DashboardTab extends StatelessWidget {
           await Future.wait([
             context.read<WalletProvider>().refresh(),
             context.read<IpoListProvider>().refresh(),
+            context.read<PortfolioProvider>().refresh(),
+            context.read<SubscriptionProvider>().refresh(),
           ]);
         },
         child: SingleChildScrollView(
@@ -139,6 +152,43 @@ class _DashboardTab extends StatelessWidget {
               _buildGreeting(user?.firstName),
               const SizedBox(height: 20),
               _WalletSummaryCard(),
+              const SizedBox(height: 16),
+              // Quick action buttons for Portfolio and Subscriptions
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        final homeState = context
+                            .findAncestorStateOfType<_HomeScreenState>();
+                        homeState?.switchTab(2);
+                      },
+                      icon: const Icon(Icons.pie_chart_outline, size: 16),
+                      label: const Text('My Portfolio'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textPrimary,
+                        side: const BorderSide(color: AppColors.cardElevated),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        backgroundColor: AppColors.cardSurface,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => context.push('/subscriptions'),
+                      icon: const Icon(Icons.receipt_long_outlined, size: 16),
+                      label: const Text('Subscriptions'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textPrimary,
+                        side: const BorderSide(color: AppColors.cardElevated),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        backgroundColor: AppColors.cardSurface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 28),
               SectionHeader(
                 title: 'IPO Opportunities',

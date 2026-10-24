@@ -31,6 +31,10 @@ import 'features/ipos/providers/ipos_provider.dart';
 import 'features/ipos/repositories/api_ipo_repository.dart';
 import 'features/ipos/repositories/ipo_repository.dart';
 import 'features/ipos/repositories/mock_ipo_repository.dart';
+import 'features/subscriptions/providers/subscriptions_provider.dart';
+import 'features/subscriptions/repositories/api_subscription_repository.dart';
+import 'features/subscriptions/repositories/mock_subscription_repository.dart';
+import 'features/subscriptions/repositories/subscription_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +46,7 @@ void main() async {
   final BrokerRepository brokerRepository;
   final IpoRepository ipoRepository;
   final AuditRepository auditRepository;
+  final SubscriptionsRepository subscriptionsRepository;
 
   if (AppConfig.useMockData) {
     authService = MockAuthService();
@@ -50,6 +55,7 @@ void main() async {
     brokerRepository = MockBrokerRepository();
     ipoRepository = MockIpoRepository();
     auditRepository = MockAuditRepository();
+    subscriptionsRepository = MockSubscriptionsRepository();
   } else {
     authService = ApiAuthService(apiClient: apiClient);
     userRepository = ApiUserRepository(apiClient: apiClient);
@@ -57,6 +63,8 @@ void main() async {
     brokerRepository = ApiBrokerRepository(apiClient: apiClient);
     ipoRepository = ApiIpoRepository(apiClient: apiClient);
     auditRepository = ApiAuditRepository(apiClient: apiClient);
+    subscriptionsRepository =
+        ApiSubscriptionsRepository(apiClient: apiClient);
   }
 
   final authProvider = AdminAuthProvider(authService: authService);
@@ -70,6 +78,7 @@ void main() async {
         ChangeNotifierProvider<AdminAuthProvider>.value(value: authProvider),
         Provider<ApiClient>.value(value: apiClient),
         Provider<AuditRepository>.value(value: auditRepository),
+        Provider<SubscriptionsRepository>.value(value: subscriptionsRepository),
         ChangeNotifierProvider(
             create: (_) => UsersProvider(repository: userRepository)),
         ChangeNotifierProvider(
@@ -80,6 +89,9 @@ void main() async {
                 BrokersProvider(repository: brokerRepository)),
         ChangeNotifierProvider(
             create: (_) => IposProvider(repository: ipoRepository)),
+        ChangeNotifierProvider(
+            create: (_) =>
+                SubscriptionsProvider(repository: subscriptionsRepository)),
         ChangeNotifierProvider(
             create: (_) => AuditProvider(repository: auditRepository)),
       ],

@@ -11,6 +11,8 @@ import '../../../shared/widgets/info_card.dart';
 import '../../../shared/widgets/confirmation_dialog.dart';
 import '../models/ipo_application.dart';
 import '../providers/ipos_provider.dart';
+import '../../subscriptions/models/subscription_model.dart';
+import '../../subscriptions/repositories/subscription_repository.dart';
 
 class IpoDetailScreen extends StatefulWidget {
   const IpoDetailScreen({super.key, required this.ipoId});
@@ -318,6 +320,13 @@ class _IpoDetailContent extends StatelessWidget {
             ),
           ),
         ],
+        if (ipo.status == IpoStatus.open ||
+            ipo.status == IpoStatus.closed ||
+            ipo.status == IpoStatus.allocated ||
+            ipo.status == IpoStatus.listed) ...[
+          const SizedBox(height: 24),
+          _IpoSubscriptionsBreakdown(ipo: ipo),
+        ],
       ],
     );
   }
@@ -481,3 +490,320 @@ class _FeedbackBanner extends StatelessWidget {
     );
   }
 }
+
+class _IpoSubscriptionsBreakdown extends StatefulWidget {
+  const _IpoSubscriptionsBreakdown({required this.ipo});
+  final IpoApplication ipo;
+
+  @override
+  State<_IpoSubscriptionsBreakdown> createState() =>
+      _IpoSubscriptionsBreakdownState();
+}
+
+class _IpoSubscriptionsBreakdownState
+    extends State<_IpoSubscriptionsBreakdown> {
+  bool _isLoading = true;
+  String? _error;
+  List<AdminSubscription> _subscriptions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant _IpoSubscriptionsBreakdown oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.ipo.id != widget.ipo.id ||
+        oldWidget.ipo.status != widget.ipo.status) {
+      _load();
+    }
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final repo = context.read<SubscriptionsRepository>();
+      final list = await repo.getSubscriptions(ipoId: widget.ipo.id);
+      if (mounted) {
+        setState(() {
+          _subscriptions = list;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString().replaceFirst('Exception: ', '');
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cs = theme.colorScheme;
+
+    final totalRequested =
+        _subscriptions.fold(0, (sum, s) => sum + s.quantity);
+    final totalAllocated =
+        _subscriptions.fold(0, (sum, s) => sum + s.allocatedQuantity);
+    final offered = widget.ipo.totalSharesOffered ?? 0;
+    final oversubRatio = offered > 0 ? (totalRequested / offered) * 100.0 : 0.0;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isDark ? AppColors.darkBorder : AppColors.border,
+        ),
+      ),
+      color: isDark ? AppColors.darkSurface : AppColors.surface,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Subscriptions & Allocation Oversight (FR-ALC-01..03)',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: cs.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Monitor subscriber demand, allocation ratios, and escrow settlement status.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: cs.onSurface.withAlpha(150),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh, size: 20),
+                  tooltip: 'Refresh Subscriptions',
+                  onPressed: _load,
+                ),
+              ],
+            ),
+            const Divider(height: 24),
+            Row(
+              children: [
+                _buildMiniMetric(
+                  context,
+                  'Subscribers',
+                  '${_subscriptions.length}',
+                  Icons.people_outline,
+                  AppColors.info,
+                ),
+                const SizedBox(width: 12),
+                _buildMiniMetric(
+                  context,
+                  'Requested Shares',
+                  '$totalRequested',
+                  Icons.how_to_vote_outlined,
+                  AppColors.primary,
+                ),
+                const SizedBox(width: 12),
+                _buildMiniMetric(
+                  context,
+                  'Oversubscription',
+                  '${oversubRatio.toStringAsFixed(1)}%',
+                  Icons.trending_up,
+                  oversubRatio >= 100 ? AppColors.accent : AppColors.primaryLight,
+                ),
+                const SizedBox(width: 12),
+                _buildMiniMetric(
+                  context,
+                  'Allocated Shares',
+                  '$totalAllocated',
+                  Icons.pie_chart_outline,
+                  AppColors.success,
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            if (_isLoading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: LoadingIndicator(message: 'Loading subscriptions…'),
+              )
+            else if (_error != null)
+              ErrorState(
+                message: _error!,
+                onRetry: _load,
+              )
+            else if (_subscriptions.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Center(
+                  child: Text(
+                    'No investor subscriptions have been submitted for this IPO yet.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: cs.onSurface.withAlpha(160),
+                    ),
+                  ),
+                ),
+              )
+            else
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  dataRowMinHeight: 56,
+                  dataRowMaxHeight: 68,
+                  headingRowColor: WidgetStateProperty.all(
+                    isDark
+                        ? const Color(0xFF1E293B)
+                        : const Color(0xFFF8FAFC),
+                  ),
+                  columns: const [
+                    DataColumn(label: Text('Investor')),
+                    DataColumn(label: Text('Requested')),
+                    DataColumn(label: Text('Allocated')),
+                    DataColumn(label: Text('Committed Amount')),
+                    DataColumn(label: Text('Status')),
+                    DataColumn(label: Text('Refund / Release')),
+                  ],
+                  rows: _subscriptions.map((sub) {
+                    return DataRow(
+                      cells: [
+                        DataCell(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(sub.investorName,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12)),
+                              Text(sub.investorEmail,
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: cs.onSurface.withAlpha(140))),
+                            ],
+                          ),
+                        ),
+                        DataCell(Text('${sub.quantity} shares')),
+                        DataCell(
+                          Text(
+                            sub.isSettled
+                                ? '${sub.allocatedQuantity} shares'
+                                : 'Pending',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: sub.isSettled
+                                  ? (sub.allocatedQuantity > 0
+                                      ? AppColors.success
+                                      : AppColors.error)
+                                  : null,
+                            ),
+                          ),
+                        ),
+                        DataCell(Text(
+                            EtbFormatter.formatSantim(sub.totalAmountMinor))),
+                        DataCell(
+                          StatusBadge(
+                            label: sub.status.label,
+                            color: sub.isSettled
+                                ? const Color(0xFFDCFCE7)
+                                : const Color(0xFFFEF3C7),
+                            textColor: sub.isSettled
+                                ? AppColors.success
+                                : const Color(0xFF92400E),
+                          ),
+                        ),
+                        DataCell(
+                          sub.isSettled && sub.unallocatedQuantity > 0
+                              ? Text(
+                                  'Refunded: ${EtbFormatter.formatSantim(sub.unallocatedRefundMinor)}',
+                                  style: const TextStyle(
+                                      color: AppColors.warning,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600),
+                                )
+                              : sub.isSettled
+                                  ? const Text('Fully Settled',
+                                      style: TextStyle(
+                                          color: AppColors.success,
+                                          fontSize: 11))
+                                  : const Text('In Escrow',
+                                      style: TextStyle(fontSize: 11)),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMiniMetric(
+    BuildContext context,
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    final cs = Theme.of(context).colorScheme;
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: color.withAlpha(20),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: cs.onSurface.withAlpha(160),
+                    ),
+                  ),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: cs.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

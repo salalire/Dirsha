@@ -211,6 +211,46 @@ Headers: `Idempotency-Key` (required). Body: `{ "amount_minor": 1000000 }` (inte
 
 The mobile app should expose this only behind a clearly labelled **test mode** that is off in release builds.
 
+### `GET /portfolio`
+Investors only. Authenticated. Returns current shareholdings resulting from allocated IPO subscriptions and aggregated portfolio valuation (FR-PORT-01..04).
+`200`:
+```json
+{
+  "data": {
+    "summary": {
+      "total_positions": 1,
+      "total_shares": 50,
+      "total_valuation_minor": 500000,
+      "currency": "ETB",
+      "valuation_source": "ipo_offering_price",
+      "as_of": "2026-10-24T23:00:00.000Z"
+    },
+    "holdings": [
+      {
+        "ipo_id": "…",
+        "subscription_id": "…",
+        "company_id": "…",
+        "company_name": "Demo Holdings PLC",
+        "symbol": "DEMO",
+        "title": "Demo Holdings Offering",
+        "allocated_quantity": 50,
+        "price_per_share_minor": 10000,
+        "total_value_minor": 500000,
+        "currency": "ETB",
+        "valuation_source": "ipo_offering_price",
+        "allocated_at": "2026-10-24T22:30:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+### `GET /subscriptions`
+Auth required. Query: `status` (enum: `reserved`, `allocated`, `partially_allocated`, `released`, `cancelled`), `ipo_id` (UUID), `page`, `page_size`.
+- Investors see only their own subscriptions.
+- Admins see all subscriptions with investor name and email for management oversight.
+- Subscriptions are enriched with joined IPO title, symbol, price per share, and company name.
+
 ---
 
 ## 6. Test accounts for local development

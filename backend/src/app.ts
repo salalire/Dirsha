@@ -13,6 +13,7 @@ import { authRouter } from './modules/auth/auth.routes.js';
 import { healthRouter } from './modules/health/health.routes.js';
 import { iposRouter } from './modules/ipos/ipos.routes.js';
 import { onboardingRouter } from './modules/onboarding/onboarding.routes.js';
+import { portfolioRouter } from './modules/portfolio/portfolio.routes.js';
 import { subscriptionsRouter } from './modules/subscriptions/subscriptions.routes.js';
 import { usersRouter } from './modules/users/users.routes.js';
 import { devRouter, walletsRouter } from './modules/wallet/wallet.routes.js';
@@ -80,6 +81,7 @@ export function createApp(deps: AppDeps): Express {
   app.use('/users', usersRouter(deps));
   app.use('/ipos', iposRouter(deps));
   app.use('/subscriptions', subscriptionsRouter(deps));
+  app.use('/portfolio', portfolioRouter(deps));
   app.use('/wallets', walletsRouter(deps));
   app.use('/admin', adminRouter(deps));
   app.use('/onboarding', onboardingRouter(deps));

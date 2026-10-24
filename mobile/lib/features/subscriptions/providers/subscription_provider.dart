@@ -11,12 +11,18 @@ class SubscriptionProvider extends ChangeNotifier {
   final SubscriptionRepository _repository;
 
   bool _isSubmitting = false;
+  bool _isLoading = false;
   Object? _error;
   SubscriptionModel? _lastCreated;
+  List<SubscriptionModel> _subscriptions = [];
+  SubscriptionStatus? _statusFilter;
 
   bool get isSubmitting => _isSubmitting;
+  bool get isLoading => _isLoading;
   Object? get error => _error;
   SubscriptionModel? get lastCreated => _lastCreated;
+  List<SubscriptionModel> get subscriptions => List.unmodifiable(_subscriptions);
+  SubscriptionStatus? get statusFilter => _statusFilter;
 
   String? get errorMessage {
     if (_error == null) return null;
@@ -32,6 +38,43 @@ class SubscriptionProvider extends ChangeNotifier {
   bool get isInsufficientFunds => errorCode == 'INSUFFICIENT_FUNDS';
   bool get isIpoNotOpen => errorCode == 'IPO_NOT_OPEN';
   bool get isConflict => errorCode == 'CONFLICT';
+
+  Future<void> loadSubscriptions({
+    String? ipoId,
+    SubscriptionStatus? status,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    _statusFilter = status;
+    notifyListeners();
+
+    try {
+      final list = await _repository.getSubscriptions(
+        ipoId: ipoId,
+        status: status,
+      );
+      _subscriptions = list;
+    } catch (e) {
+      _error = e;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> refresh() async {
+    await loadSubscriptions(status: _statusFilter);
+  }
+
+  Future<SubscriptionModel?> getSubscriptionDetails(String id) async {
+    try {
+      return await _repository.getSubscriptionById(id);
+    } catch (e) {
+      _error = e;
+      notifyListeners();
+      return null;
+    }
+  }
 
   Future<SubscriptionModel?> submitSubscription({
     required String ipoId,
@@ -51,6 +94,8 @@ class SubscriptionProvider extends ChangeNotifier {
         idempotencyKey: idempotencyKey,
       );
       _lastCreated = sub;
+      // Prepend to subscriptions list if loaded
+      _subscriptions = [sub, ..._subscriptions.where((s) => s.id != sub.id)];
       return sub;
     } on AppException catch (e) {
       _error = e;

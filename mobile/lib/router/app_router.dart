@@ -12,6 +12,8 @@ import '../features/home/screens/home_screen.dart';
 import '../features/ipos/providers/ipo_provider.dart';
 import '../features/ipos/screens/ipo_detail_screen.dart';
 import '../features/ipos/repositories/ipo_repository.dart';
+import '../features/subscriptions/screens/my_subscriptions_screen.dart';
+import '../features/subscriptions/screens/subscription_detail_screen.dart';
 import '../shared/widgets/loading_indicator.dart';
 
 /// Route name constants — use these instead of string literals in screens.
@@ -24,9 +26,14 @@ abstract final class AppRoutes {
   static const brokerPortal = '/register/broker';
   static const home = '/home';
   static const ipoDetail = '/ipos/:id';
+  static const subscriptions = '/subscriptions';
+  static const subscriptionDetail = '/subscriptions/:id';
 
   /// Builds the ipoDetail path for a given [id].
   static String ipoDetailPath(String id) => '/ipos/$id';
+
+  /// Builds the subscriptionDetail path for a given [id].
+  static String subscriptionDetailPath(String id) => '/subscriptions/$id';
 }
 
 /// Builds the application router.
@@ -131,6 +138,25 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
                 IpoDetailProvider(repository: ctx.read<IpoRepository>()),
             child: IpoDetailScreen(ipoId: id),
           );
+        },
+      ),
+
+      // ------------------------------------------------------------------
+      // Subscriptions list — /subscriptions
+      // ------------------------------------------------------------------
+      GoRoute(
+        path: AppRoutes.subscriptions,
+        builder: (_, _) => const MySubscriptionsScreen(),
+      ),
+
+      // ------------------------------------------------------------------
+      // Subscription detail & allocation outcome — /subscriptions/:id
+      // ------------------------------------------------------------------
+      GoRoute(
+        path: AppRoutes.subscriptionDetail,
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return SubscriptionDetailScreen(subscriptionId: id);
         },
       ),
     ],

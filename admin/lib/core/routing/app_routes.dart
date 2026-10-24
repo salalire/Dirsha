@@ -11,6 +11,7 @@ abstract final class AppRoutes {
   static const String brokerDetail = '/broker-reviews/:id';
   static const String ipoManagement = '/ipo-management';
   static const String ipoDetail = '/ipo-management/:id';
+  static const String subscriptions = '/subscriptions';
   static const String audit = '/audit';
 
   /// Helper: build a user detail path with a real ID.

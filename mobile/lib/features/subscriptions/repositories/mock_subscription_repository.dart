@@ -10,7 +10,40 @@ class MockSubscriptionRepository implements SubscriptionRepository {
       : _walletRepository = walletRepository;
 
   final WalletRepository? _walletRepository;
-  final List<SubscriptionModel> _subscriptions = [];
+  final List<SubscriptionModel> _subscriptions = [
+    SubscriptionModel(
+      id: 'sub-mock-001',
+      ipoId: 'ipo-open-1',
+      investorId: 'mock-investor',
+      quantity: 50,
+      amountMinor: 500000,
+      allocatedQuantity: 40,
+      status: SubscriptionStatus.partiallyAllocated,
+      reservationLedgerEntryId: 'ledger-mock-1',
+      createdAt: DateTime.now().subtract(const Duration(days: 3)),
+      updatedAt: DateTime.now().subtract(const Duration(days: 1)),
+      ipoTitle: 'Ethio Telecom Public Offering (TEST DATA)',
+      ipoSymbol: 'ETHTEL',
+      companyName: 'Ethio Telecom SC',
+      pricePerShareMinor: 10000,
+    ),
+    SubscriptionModel(
+      id: 'sub-mock-002',
+      ipoId: 'ipo-open-2',
+      investorId: 'mock-investor',
+      quantity: 25,
+      amountMinor: 250000,
+      allocatedQuantity: 0,
+      status: SubscriptionStatus.reserved,
+      reservationLedgerEntryId: 'ledger-mock-2',
+      createdAt: DateTime.now().subtract(const Duration(hours: 12)),
+      updatedAt: DateTime.now().subtract(const Duration(hours: 12)),
+      ipoTitle: 'Awash Bank Growth Offering (TEST DATA)',
+      ipoSymbol: 'AWASH',
+      companyName: 'Awash International Bank SC',
+      pricePerShareMinor: 10000,
+    ),
+  ];
   final Map<String, SubscriptionModel> _idempotentStore = {};
 
   @override

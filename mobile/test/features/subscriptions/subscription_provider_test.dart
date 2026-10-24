@@ -71,5 +71,22 @@ void main() {
       expect(provider.isConflict, isTrue);
       expect(provider.errorCode, 'CONFLICT');
     });
+
+    test('loadSubscriptions retrieves list and populates subscriptions', () async {
+      await provider.loadSubscriptions();
+
+      expect(provider.isLoading, isFalse);
+      expect(provider.subscriptions.isNotEmpty, isTrue);
+      expect(provider.error, isNull);
+    });
+
+    test('getSubscriptionDetails fetches existing subscription by id', () async {
+      await provider.loadSubscriptions();
+      final firstId = provider.subscriptions.first.id;
+
+      final details = await provider.getSubscriptionDetails(firstId);
+      expect(details, isNotNull);
+      expect(details!.id, firstId);
+    });
   });
 }
