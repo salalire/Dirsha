@@ -1,18 +1,18 @@
-import { randomUUID } from 'node:crypto';
-import type { Db } from '../../db/pool.js';
-import type { AuthUser } from '../../http/types.js';
-import type { Pagination } from '../../http/validate.js';
-import { Errors } from '../../lib/errors.js';
-import { fromDb } from '../../lib/money.js';
-import { recordAudit } from '../audit/audit.service.js';
-import { applyLedgerEntry } from '../wallet/ledger.js';
+import { randomUUID } from "node:crypto";
+import type { Db } from "../../db/pool.js";
+import type { AuthUser } from "../../http/types.js";
+import type { Pagination } from "../../http/validate.js";
+import { Errors } from "../../lib/errors.js";
+import { fromDb } from "../../lib/money.js";
+import { recordAudit } from "../audit/audit.service.js";
+import { applyLedgerEntry } from "../wallet/ledger.js";
 
 export const SUBSCRIPTION_STATUSES = [
-  'reserved',
-  'allocated',
-  'partially_allocated',
-  'released',
-  'cancelled',
+  "reserved",
+  "allocated",
+  "partially_allocated",
+  "released",
+  "cancelled",
 ] as const;
 
 export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
@@ -80,7 +80,7 @@ export async function createSubscription(
     requestId: string;
   },
 ): Promise<{ subscription: SubscriptionDto; replayed: boolean }> {
-  if (user.accountStatus !== 'active') {
+  if (user.accountStatus !== "active") {
     throw Errors.accountSuspended();
   }
 
@@ -103,27 +103,37 @@ export async function createSubscription(
   ).rows[0];
 
   if (!ipo) {
-    throw Errors.notFound('IPO not found');
+    throw Errors.notFound("IPO not found");
   }
 
   const now = new Date();
-  if (ipo.status !== 'open' || now < ipo.opens_at || now >= ipo.closes_at) {
-    throw Errors.ipoNotOpen('IPO is not open for subscription');
+  if (ipo.status !== "open" || now < ipo.opens_at || now >= ipo.closes_at) {
+    throw Errors.ipoNotOpen("IPO is not open for subscription");
   }
 
   const minShares =
-    ipo.min_shares_per_subscription !== null ? fromDb(ipo.min_shares_per_subscription) : null;
+    ipo.min_shares_per_subscription !== null
+      ? fromDb(ipo.min_shares_per_subscription)
+      : null;
   const maxShares =
-    ipo.max_shares_per_subscription !== null ? fromDb(ipo.max_shares_per_subscription) : null;
+    ipo.max_shares_per_subscription !== null
+      ? fromDb(ipo.max_shares_per_subscription)
+      : null;
 
   if (minShares !== null && input.quantity < minShares) {
     throw Errors.validation([
-      { field: 'quantity', message: `Quantity must be at least ${minShares} shares` },
+      {
+        field: "quantity",
+        message: `Quantity must be at least ${minShares} shares`,
+      },
     ]);
   }
   if (maxShares !== null && input.quantity > maxShares) {
     throw Errors.validation([
-      { field: 'quantity', message: `Quantity cannot exceed ${maxShares} shares` },
+      {
+        field: "quantity",
+        message: `Quantity cannot exceed ${maxShares} shares`,
+      },
     ]);
   }
 
@@ -131,10 +141,23 @@ export async function createSubscription(
   const amountMinor = input.quantity * pricePerShare;
 
   return db.tx(async (client) => {
+    // 0. Lock the IPO row (shared) and re-check it is still open INSIDE the transaction.
+    //    Allocation/close take FOR UPDATE on the same row, so a subscription can never
+    //    slip in after allocation has read the list of reserved subscriptions.
+    const locked = (
+      await client.query<{ status: string; closes_at: Date }>(
+        "SELECT status, closes_at FROM ipos WHERE id = $1 FOR SHARE",
+        [input.ipoId],
+      )
+    ).rows[0];
+    if (!locked || locked.status !== "open" || new Date() >= locked.closes_at) {
+      throw Errors.ipoNotOpen("IPO is not open for subscription");
+    }
+
     // 1. Idempotency check:
     const existing = (
       await client.query<SubscriptionRow>(
-        'SELECT * FROM subscriptions WHERE investor_id = $1 AND idempotency_key = $2',
+        "SELECT * FROM subscriptions WHERE investor_id = $1 AND idempotency_key = $2",
         [user.id, input.idempotencyKey],
       )
     ).rows[0];
@@ -161,19 +184,21 @@ export async function createSubscription(
     ).rows[0];
 
     if (activeSub) {
-      throw Errors.conflict('An active subscription already exists for this IPO');
+      throw Errors.conflict(
+        "An active subscription already exists for this IPO",
+      );
     }
 
     // 3. Investor wallet
     const wallet = (
       await client.query<{ id: string }>(
-        'SELECT id FROM wallets WHERE user_id = $1',
+        "SELECT id FROM wallets WHERE user_id = $1",
         [user.id],
       )
     ).rows[0];
 
     if (!wallet) {
-      throw Errors.notFound('Wallet not found');
+      throw Errors.notFound("Wallet not found");
     }
 
     const subscriptionId = randomUUID();
@@ -181,49 +206,61 @@ export async function createSubscription(
     // 4. Reserve funds atomically (locks wallet row FOR UPDATE, throws INSUFFICIENT_FUNDS if needed)
     const { entry: ledgerEntry } = await applyLedgerEntry(client, {
       walletId: wallet.id,
-      entryType: 'subscription_reserve',
+      entryType: "subscription_reserve",
       availableDeltaMinor: -amountMinor,
       reservedDeltaMinor: amountMinor,
-      referenceType: 'subscription',
+      referenceType: "subscription",
       referenceId: subscriptionId,
       idempotencyKey: input.idempotencyKey,
       initiatedByUserId: user.id,
-      initiatedByType: 'user',
+      initiatedByType: "user",
       description: `Subscription reservation for ${input.quantity} shares`,
     });
 
-    // 5. Insert subscription record
-    const inserted = (
-      await client.query<SubscriptionRow>(
-        `INSERT INTO subscriptions
+    // 5. Insert subscription record. The partial unique index is the last line of defence
+    //    against two concurrent requests (different keys) both passing check 2 above;
+    //    the transaction rolls back, so the reservation made in step 4 is undone too.
+    let inserted: SubscriptionRow | undefined;
+    try {
+      inserted = (
+        await client.query<SubscriptionRow>(
+          `INSERT INTO subscriptions
            (id, ipo_id, investor_id, quantity, amount_minor,
             allocated_quantity, status, reservation_ledger_entry_id, idempotency_key)
          VALUES ($1, $2, $3, $4, $5, 0, 'reserved', $6, $7)
          RETURNING *`,
-        [
-          subscriptionId,
-          input.ipoId,
-          user.id,
-          input.quantity,
-          amountMinor,
-          ledgerEntry.id,
-          input.idempotencyKey,
-        ],
-      )
-    ).rows[0];
+          [
+            subscriptionId,
+            input.ipoId,
+            user.id,
+            input.quantity,
+            amountMinor,
+            ledgerEntry.id,
+            input.idempotencyKey,
+          ],
+        )
+      ).rows[0];
+    } catch (err) {
+      if ((err as { code?: string }).code === "23505") {
+        throw Errors.conflict(
+          "An active subscription already exists for this IPO",
+        );
+      }
+      throw err;
+    }
 
     if (!inserted) {
-      throw new Error('Subscription insert returned no row');
+      throw new Error("Subscription insert returned no row");
     }
 
     // 6. Record audit event
     await recordAudit(client, {
       actorUserId: user.id,
       actorRole: user.role,
-      action: 'subscription.create',
-      targetType: 'subscription',
+      action: "subscription.create",
+      targetType: "subscription",
       targetId: subscriptionId,
-      outcome: 'success',
+      outcome: "success",
       requestId: input.requestId,
       metadata: {
         ipo_id: input.ipoId,
@@ -251,7 +288,7 @@ export async function listSubscriptions(
   const conditions: string[] = [];
   const params: unknown[] = [];
 
-  if (user.role !== 'admin') {
+  if (user.role !== "admin") {
     params.push(user.id);
     conditions.push(`investor_id = $${params.length}`);
   }
@@ -266,7 +303,9 @@ export async function listSubscriptions(
     conditions.push(`status = $${params.length}`);
   }
 
-  const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+  const whereClause = conditions.length
+    ? `WHERE ${conditions.join(" AND ")}`
+    : "";
 
   const total = fromDb(
     (
@@ -302,10 +341,10 @@ export async function getSubscription(
   id: string,
 ): Promise<SubscriptionDto | null> {
   const params: unknown[] = [id];
-  let where = 'id = $1';
-  if (user.role !== 'admin') {
+  let where = "id = $1";
+  if (user.role !== "admin") {
     params.push(user.id);
-    where += ' AND investor_id = $2';
+    where += " AND investor_id = $2";
   }
 
   const { rows } = await db.query<SubscriptionRow>(
