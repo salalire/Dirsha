@@ -44,7 +44,9 @@ class AuthProvider extends ChangeNotifier {
   Future<void> checkAuthStatus() async {
     _setLoading(true);
     try {
-      final user = await _repository.getCurrentUser();
+      final user = await _repository.getCurrentUser().timeout(
+        const Duration(seconds: 4),
+      );
       _user = user;
       _status = AuthStatus.authenticated;
     } on UnauthorizedException {
@@ -52,6 +54,10 @@ class AuthProvider extends ChangeNotifier {
       _user = null;
     } on AppException {
       // Network error or server error — treat as unauthenticated for startup.
+      _status = AuthStatus.unauthenticated;
+      _user = null;
+    } catch (_) {
+      // Catch any other error/exception so startup never hangs indefinitely.
       _status = AuthStatus.unauthenticated;
       _user = null;
     } finally {

@@ -10,4 +10,7 @@ abstract interface class WalletRepository {
     int page = 1,
     int pageSize = 20,
   });
+
+  /// Credits simulated test funds to the wallet (dev/test only).
+  Future<void> addTestFunds(int amountMinor);
 }

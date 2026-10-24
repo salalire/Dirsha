@@ -65,13 +65,15 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
           location == AppRoutes.companyPortal ||
           location == AppRoutes.brokerPortal;
 
-      // Authenticated user trying to reach auth screens → go home.
-      if (isAuth && isAuthRoute) return AppRoutes.home;
+      // Authenticated user on splash or auth screens → go home.
+      if (isAuth && (isAuthRoute || location == AppRoutes.splash)) {
+        return AppRoutes.home;
+      }
 
-      // Unauthenticated user trying to reach a protected route → login.
-      // Auth-entry sub-routes (roleSelection, companyPortal, brokerPortal)
-      // are accessible without authentication.
-      if (!isAuth && !isAuthRoute) return AppRoutes.login;
+      // Unauthenticated user on splash or trying to reach a protected route → login.
+      if (!isAuth && (location == AppRoutes.splash || !isAuthRoute)) {
+        return AppRoutes.login;
+      }
 
       return null; // No redirect needed.
     },

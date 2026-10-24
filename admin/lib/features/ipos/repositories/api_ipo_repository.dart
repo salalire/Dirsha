@@ -20,7 +20,10 @@ class ApiIpoRepository implements IpoRepository {
   @override
   Future<IpoApplication> getApplicationById(String id) async {
     final response = await _apiClient.get('/ipos/$id');
-    return IpoApplication.fromJson(response);
+    final data = response['data'] is Map<String, dynamic>
+        ? response['data'] as Map<String, dynamic>
+        : response;
+    return IpoApplication.fromJson(data);
   }
 
   @override
@@ -37,5 +40,19 @@ class ApiIpoRepository implements IpoRepository {
     await _apiClient.post('/admin/ipos/$id/reject', {
       'reason': reason,
     });
+  }
+
+  @override
+  Future<void> closeIpo(String id, {String? reason}) async {
+    final body = <String, dynamic>{};
+    if (reason != null && reason.isNotEmpty) {
+      body['reason'] = reason;
+    }
+    await _apiClient.post('/admin/ipos/$id/close', body);
+  }
+
+  @override
+  Future<void> allocateIpo(String id) async {
+    await _apiClient.post('/admin/ipos/$id/allocate', {});
   }
 }

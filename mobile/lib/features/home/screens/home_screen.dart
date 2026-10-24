@@ -718,6 +718,45 @@ class _WalletBalanceCardFull extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white.withValues(alpha: 0.18),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  side: const BorderSide(color: Colors.white38),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+              ),
+              icon: const Icon(Icons.add_circle_outline, size: 16),
+              label: const Text(
+                'Add Test Funds (+10,000 ETB)',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              ),
+              onPressed: () async {
+                try {
+                  await provider.addTestFunds(1000000);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Added 10,000 ETB in test funds!'),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error adding test funds: $e')),
+                    );
+                  }
+                }
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
@@ -731,7 +770,7 @@ class _WalletBalanceCardFull extends StatelessWidget {
                 const SizedBox(width: 6),
                 Flexible(
                   child: Text(
-                    'Deposits and withdrawals are not available in Phase 1.',
+                    'Deposits and withdrawals are simulated for testing.',
                     style: AppTextStyles.labelSmall.copyWith(
                       color: Colors.white70,
                       fontSize: 11,

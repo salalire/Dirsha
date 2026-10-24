@@ -70,4 +70,9 @@ class MockWalletRepository implements WalletRepository {
       pageSize: pageSize,
     );
   }
+
+  @override
+  Future<void> addTestFunds(int amountMinor) async {
+    await Future.delayed(_delay);
+  }
 }

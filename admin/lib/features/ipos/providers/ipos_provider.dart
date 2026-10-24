@@ -97,6 +97,50 @@ class IposProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> closeIpo(String id, {String? reason}) async {
+    _isSubmitting = true;
+    _submitError = null;
+    _submitSuccess = null;
+    notifyListeners();
+    try {
+      await _repository.closeIpo(id, reason: reason);
+      _submitSuccess = 'IPO closed successfully.';
+      await loadApplications();
+      if (_selectedApplication?.id == id) {
+        await loadApplicationById(id);
+      }
+      return true;
+    } catch (e) {
+      _submitError = e.toString().replaceFirst('Exception: ', '');
+      return false;
+    } finally {
+      _isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> allocateIpo(String id) async {
+    _isSubmitting = true;
+    _submitError = null;
+    _submitSuccess = null;
+    notifyListeners();
+    try {
+      await _repository.allocateIpo(id);
+      _submitSuccess = 'Shares allocated successfully.';
+      await loadApplications();
+      if (_selectedApplication?.id == id) {
+        await loadApplicationById(id);
+      }
+      return true;
+    } catch (e) {
+      _submitError = e.toString().replaceFirst('Exception: ', '');
+      return false;
+    } finally {
+      _isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
   void clearFeedback() {
     _submitError = null;
     _submitSuccess = null;

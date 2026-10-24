@@ -106,9 +106,12 @@ class IpoApplication {
   final String? reviewNotes;
   final List<IpoDocumentMetadata> documents;
 
-  factory IpoApplication.fromJson(Map<String, dynamic> json) {
+  factory IpoApplication.fromJson(Map<String, dynamic> rawJson) {
+    final json = (rawJson['data'] is Map<String, dynamic>)
+        ? rawJson['data'] as Map<String, dynamic>
+        : rawJson;
     return IpoApplication(
-      id: json['id'] as String,
+      id: (json['id'] as String?) ?? '',
       offeringTitle: json['offeringTitle'] as String? ??
           json['title'] as String? ??
           'Unnamed Offering',
@@ -135,11 +138,11 @@ class IpoApplication {
           : (json['closes_at'] != null
               ? DateTime.tryParse(json['closes_at'] as String)
               : null),
-      pricePerShareSantim: json['pricePerShareSantim'] as int? ??
-          json['price_per_share_minor'] as int? ??
-          json['pricePerShareEtb'] as int?,
-      totalSharesOffered: json['totalSharesOffered'] as int? ??
-          json['total_shares'] as int?,
+      pricePerShareSantim: (json['pricePerShareSantim'] as num?)?.toInt() ??
+          (json['price_per_share_minor'] as num?)?.toInt() ??
+          (json['pricePerShareEtb'] as num?)?.toInt(),
+      totalSharesOffered: (json['totalSharesOffered'] as num?)?.toInt() ??
+          (json['total_shares'] as num?)?.toInt(),
       reviewNotes: json['reviewNotes'] as String?,
       documents: (json['documents'] as List<dynamic>?)
               ?.map((d) =>
@@ -177,9 +180,15 @@ class IpoApplication {
   }
 
   /// Returns true if the Approve/Reject actions should be shown.
-  /// In Phase 1, only Submitted and Under Review states are actionable.
   bool get isReviewable =>
       status == IpoStatus.submitted || status == IpoStatus.underReview;
+
+  /// Returns true if the IPO is currently open and can be closed.
+  bool get isClosable => status == IpoStatus.open;
+
+  /// Returns true if the IPO can be allocated (status is open or closed).
+  bool get isAllocatable =>
+      status == IpoStatus.open || status == IpoStatus.closed;
 }
 
 class IpoDocumentMetadata {

@@ -246,6 +246,55 @@ class _IpoDetailContent extends StatelessWidget {
               ],
             ],
           ),
+        ] else if (ipo.isClosable || ipo.isAllocatable) ...[
+          Text('Lifecycle Actions',
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurface)),
+          const SizedBox(height: 4),
+          Text(
+            'Manage the subscription window and execute allocation of shares to subscribers.',
+            style: TextStyle(
+                fontSize: 12, color: cs.onSurface.withAlpha(160)),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              if (ipo.isClosable) ...[
+                ElevatedButton.icon(
+                  onPressed: provider.isSubmitting
+                      ? null
+                      : () => _handleClose(context),
+                  icon: const Icon(Icons.lock_clock_outlined, size: 18),
+                  label: const Text('Close IPO'),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.warning),
+                ),
+                const SizedBox(width: 12),
+              ],
+              if (ipo.isAllocatable) ...[
+                ElevatedButton.icon(
+                  onPressed: provider.isSubmitting
+                      ? null
+                      : () => _handleAllocate(context),
+                  icon: const Icon(Icons.pie_chart_outline, size: 18),
+                  label: const Text('Allocate Shares'),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary),
+                ),
+                const SizedBox(width: 12),
+              ],
+              if (provider.isSubmitting) ...[
+                const SizedBox(width: 16),
+                const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: AppColors.primary)),
+              ],
+            ],
+          ),
         ] else ...[
           Container(
             padding: const EdgeInsets.all(12),
@@ -300,6 +349,33 @@ class _IpoDetailContent extends StatelessWidget {
       onConfirm: (reason) => context
           .read<IposProvider>()
           .reject(ipo.id, reason: reason ?? ''),
+    );
+    if (context.mounted) context.read<IposProvider>().clearFeedback();
+  }
+
+  Future<void> _handleClose(BuildContext context) async {
+    await showConfirmationDialog(
+      context,
+      title: 'Close IPO Subscriptions',
+      content: 'Close subscription window for "${ipo.offeringTitle}"?\n\n'
+          'Investors will no longer be able to submit new subscriptions.',
+      confirmLabel: 'Close IPO',
+      reasonFieldLabel: 'Reason (optional)',
+      onConfirm: (reason) =>
+          context.read<IposProvider>().closeIpo(ipo.id, reason: reason),
+    );
+    if (context.mounted) context.read<IposProvider>().clearFeedback();
+  }
+
+  Future<void> _handleAllocate(BuildContext context) async {
+    await showConfirmationDialog(
+      context,
+      title: 'Allocate Shares',
+      content: 'Run share allocation for "${ipo.offeringTitle}"?\n\n'
+          'Subscriptions will be settled, allocated shares will be recorded, and unallocated funds will be released back to investors.',
+      confirmLabel: 'Allocate Shares',
+      onConfirm: (_) =>
+          context.read<IposProvider>().allocateIpo(ipo.id),
     );
     if (context.mounted) context.read<IposProvider>().clearFeedback();
   }

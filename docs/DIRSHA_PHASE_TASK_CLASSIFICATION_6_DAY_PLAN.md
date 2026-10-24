@@ -1,8 +1,10 @@
 # Dirsha — Phase-by-Phase Team Task Classification and 6-Day Delivery Plan
 
-**Document status:** Team execution plan  
+**Document status:** Team execution plan (Phase 1 & Phase 2 COMPLETED; Phase 3 Active)  
 **Plan starts:** Tuesday, 20 October 2026  
 **Development phases:** 3 phases × 2 calendar days each  
+**Phase 1 & Phase 2 Status:** **COMPLETED & VERIFIED** (End-to-End on Physical Device & Web Admin)  
+**Phase 3 Status:** **IN PROGRESS / OFFICIALLY KICKED OFF** (Saturday, 24 October – Sunday, 25 October 2026)  
 **Planned development finish:** Sunday, 25 October 2026  
 **Deployment phase starts:** Monday, 26 October 2026  
 **Team:** 3 developers + project owner (AWS deployment lead)
@@ -41,40 +43,41 @@ This document tells each member exactly what to build, when to build it, what to
 
 ## 2. Delivery timeline at a glance
 
-| Dates | Phase | Main outcome | Exit checkpoint |
-|---|---|---|---|
-| **Tue, 20 Oct – Wed, 21 Oct** | **Phase 1: Foundation, Identity, Wallet and Primary-Market MVP** | A runnable app set, initial API/database, user roles, wallet ledger foundation, IPO list/details and admin review skeleton | All components run locally; agreed API contract and schema are committed; core screens use real API or clearly marked mocks |
-| **Thu, 22 Oct – Fri, 23 Oct** | **Phase 2: Wallet Transactions, IPO Subscription and Allocation** | Users can see test wallet activity and submit an IPO subscription; backend reserves funds safely; admin can review/manage IPO and subscription states | End-to-end test passes for subscription, reservation, insufficient balance, duplicate retry, and release/refund paths |
-| **Sat, 24 Oct – Sun, 25 Oct** | **Phase 3: Integration, Quality, Security and Release Readiness** | Integrated MVP, documented limitations, automated/manual tests, deployment configuration and release checklist | Critical tests pass, no known exposed secrets, setup documentation is complete, and project owner accepts the deployment handoff |
-| **Mon, 26 Oct onward** | **Deployment phase** | Deploy approved MVP to AWS test/staging environment, validate service, logs, database and storage, then decide production readiness separately | Health checks and smoke tests pass; rollback/recovery steps are documented; production approval is not assumed |
+| Dates | Phase | Main outcome | Exit checkpoint | Status |
+|---|---|---|---|---|
+| **Tue, 20 Oct – Wed, 21 Oct** | **Phase 1: Foundation, Identity, Wallet and Primary-Market MVP** | A runnable app set, initial API/database, user roles, wallet ledger foundation, IPO list/details and admin review skeleton | All components run locally; agreed API contract and schema are committed; core screens use real API or clearly marked mocks | **COMPLETED & VERIFIED** |
+| **Thu, 22 Oct – Fri, 23 Oct** | **Phase 2: Wallet Transactions, IPO Subscription and Allocation** | Users can see test wallet activity and submit an IPO subscription; backend reserves funds safely; admin can review/manage IPO and subscription states | End-to-end test passes for subscription, reservation, insufficient balance, duplicate retry, and release/refund paths | **COMPLETED & VERIFIED** |
+| **Sat, 24 Oct – Sun, 25 Oct** | **Phase 3: Integration, Quality, Security and Release Readiness** | Integrated MVP, documented limitations, automated/manual tests, deployment configuration and release checklist | Critical tests pass, no known exposed secrets, setup documentation is complete, and project owner accepts the deployment handoff | **CURRENT — IN PROGRESS** |
+| **Mon, 26 Oct onward** | **Deployment phase** | Deploy approved MVP to AWS test/staging environment, validate service, logs, database and storage, then decide production readiness separately | Health checks and smoke tests pass; rollback/recovery steps are documented; production approval is not assumed | Scheduled |
 
-**Calendar note:** Dates are based on the project starting tomorrow, 20 October 2026, and a two-calendar-day duration for each phase.
+**Calendar note:** Dates are based on the project starting Tuesday, 20 October 2026, and a two-calendar-day duration for each phase.
 
 ---
 
 # 3. Phase 1 — Foundation, Identity, Wallet and Primary-Market MVP
 
 **Dates:** Tuesday, 20 October – Wednesday, 21 October 2026  
+**Status:** **100% COMPLETE & VERIFIED**  
 **Goal:** Establish the shared foundation so the three parts of Dirsha can be developed in parallel. Deliver the minimum vertical slice: user can sign in, view an IPO listing, see a test wallet balance/transaction history, and an administrator can access the basic IPO-review interface. Where a backend path is not yet complete, use explicitly labeled mock data—not fake production behavior.
 
 ## 3.1 Member 1 — Flutter Mobile
 
 ### Day 1 — Tuesday, 20 October
 
-- [ ] Inspect the existing `mobile/` project and report its current status; do not overwrite working code without agreement.
-- [ ] Confirm Flutter version, application entry point, state-management approach, routing, folder conventions and environment configuration with the team.
-- [ ] Create or clean the initial app structure, for example:
+- [x] Inspect the existing `mobile/` project and report its current status; do not overwrite working code without agreement.
+- [x] Confirm Flutter version, application entry point, state-management approach, routing, folder conventions and environment configuration with the team.
+- [x] Create or clean the initial app structure, for example:
   - `core/` for shared configuration, network client, errors and theme.
   - `features/auth/` for sign-in and registration/onboarding screens.
   - `features/home/` for home/dashboard.
   - `features/ipos/` for IPO list and detail screens.
   - `features/wallet/` for wallet summary and transaction history.
   - `shared/` for reusable widgets.
-- [ ] Build the base navigation and responsive layouts for the target mobile sizes.
-- [ ] Implement sign-in and registration UI with validation and loading/error states. Do not store plaintext passwords.
-- [ ] Create typed models for the agreed API contract: user, IPO summary, wallet summary and wallet transaction.
-- [ ] Connect the network client to the agreed local API base URL, using environment configuration rather than hardcoding a production URL.
-- [ ] If the backend is not ready, add a mock repository behind the same interface and label mock/test data clearly.
+- [x] Build the base navigation and responsive layouts for the target mobile sizes.
+- [x] Implement sign-in and registration UI with validation and loading/error states. Do not store plaintext passwords.
+- [x] Create typed models for the agreed API contract: user, IPO summary, wallet summary and wallet transaction.
+- [x] Connect the network client to the agreed local API base URL, using environment configuration rather than hardcoding a production URL.
+- [x] If the backend is not ready, add a mock repository behind the same interface and label mock/test data clearly.
 
 **Day 1 deliverables**
 - App launches without errors.
@@ -84,42 +87,42 @@ This document tells each member exactly what to build, when to build it, what to
 
 ### Day 2 — Wednesday, 21 October
 
-- [ ] Implement the investor home screen with wallet summary and IPO-list entry point.
-- [ ] Implement IPO list and IPO details screens, including status, dates, price/terms fields as supplied by the backend contract.
-- [ ] Implement wallet summary and transaction history screens, including empty, loading, success and failure states.
-- [ ] Connect screens to the available API endpoints; use mocks only for endpoints not yet available.
-- [ ] Add client-side validation for form inputs, while treating backend validation as authoritative.
-- [ ] Ensure unauthorized/expired-session responses lead to a safe sign-out or re-authentication path.
-- [ ] Test navigation and screen layouts on at least one emulator or physical device.
-- [ ] Commit code and update `docs/TEAM_TASK_CLASSIFICATION.md` or the sprint status file with blockers and endpoint dependencies.
+- [x] Implement the investor home screen with wallet summary and IPO-list entry point.
+- [x] Implement IPO list and IPO details screens, including status, dates, price/terms fields as supplied by the backend contract.
+- [x] Implement wallet summary and transaction history screens, including empty, loading, success and failure states.
+- [x] Connect screens to the available API endpoints; use mocks only for endpoints not yet available.
+- [x] Add client-side validation for form inputs, while treating backend validation as authoritative.
+- [x] Ensure unauthorized/expired-session responses lead to a safe sign-out or re-authentication path.
+- [x] Test navigation and screen layouts on at least one emulator or physical device.
+- [x] Commit code and update `docs/TEAM_TASK_CLASSIFICATION.md` or the sprint status file with blockers and endpoint dependencies.
 
 **Phase 1 acceptance criteria — Member 1**
-- [ ] The app launches and navigates without a crash.
-- [ ] Auth, IPO list/detail, wallet summary and transaction history screens are present.
-- [ ] The UI distinguishes unavailable, empty, loading and error states.
-- [ ] No secret or real personal/financial data is embedded in the app.
-- [ ] The team can identify exactly which screens use real API data and which still use mocks.
+- [x] The app launches and navigates without a crash.
+- [x] Auth, IPO list/detail, wallet summary and transaction history screens are present.
+- [x] The UI distinguishes unavailable, empty, loading and error states.
+- [x] No secret or real personal/financial data is embedded in the app.
+- [x] The team can identify exactly which screens use real API data and which still use mocks.
 
 ## 3.2 Member 2 — Node.js + TypeScript Backend
 
 ### Day 1 — Tuesday, 20 October
 
-- [ ] Inspect `backend/` and document the existing framework and current run status.
-- [ ] Set up or standardize Node.js + TypeScript project scripts for development, build, lint/type-check and tests.
-- [ ] Establish environment-variable validation and a safe `.env.example` containing placeholders only.
-- [ ] Create a health endpoint such as `GET /health` that reports service status without leaking secrets.
-- [ ] Set up PostgreSQL connection and migration workflow; avoid relying only on manual database edits.
-- [ ] Define initial entities/tables or migration drafts for:
+- [x] Inspect `backend/` and document the existing framework and current run status.
+- [x] Set up or standardize Node.js + TypeScript project scripts for development, build, lint/type-check and tests.
+- [x] Establish environment-variable validation and a safe `.env.example` containing placeholders only.
+- [x] Create a health endpoint such as `GET /health` that reports service status without leaking secrets.
+- [x] Set up PostgreSQL connection and migration workflow; avoid relying only on manual database edits.
+- [x] Define initial entities/tables or migration drafts for:
   - users and role assignments;
   - company profiles / onboarding status;
   - IPOs and IPO status history;
   - wallet accounts;
   - wallet transactions / ledger entries;
   - IPO subscriptions.
-- [ ] Agree and commit the first API contract with Members 1 and 3. Include success and error response shapes.
-- [ ] Define authentication and authorization boundaries for investor, company representative, broker and admin roles.
-- [ ] Implement the initial auth/user endpoints only to the extent safely achievable; do not claim full identity verification if it is not implemented.
-- [ ] Add input validation and consistent error handling.
+- [x] Agree and commit the first API contract with Members 1 and 3. Include success and error response shapes.
+- [x] Define authentication and authorization boundaries for investor, company representative, broker and admin roles.
+- [x] Implement the initial auth/user endpoints only to the extent safely achievable; do not claim full identity verification if it is not implemented.
+- [x] Add input validation and consistent error handling.
 
 **Day 1 deliverables**
 - Backend starts locally using documented commands.
@@ -130,37 +133,37 @@ This document tells each member exactly what to build, when to build it, what to
 
 ### Day 2 — Wednesday, 21 October
 
-- [ ] Implement or complete registration/sign-in/session or token handling appropriate to the chosen auth design.
-- [ ] Enforce authorization on server-side routes; hiding a button in the UI is not access control.
-- [ ] Implement read endpoints for IPO list and IPO details.
-- [ ] Implement wallet summary and wallet transaction-history read endpoints backed by the database.
-- [ ] Create a safe test-fund provisioning mechanism restricted to development/test environments and authorized test users. Never expose an unrestricted “add balance” endpoint.
-- [ ] Implement ledger-oriented data structures and transaction boundaries for balance-changing operations, even if subscription execution is completed in Phase 2.
-- [ ] Ensure money values use a precise representation (e.g. integer minor units or a suitable fixed-precision numeric type), not floating-point arithmetic.
-- [ ] Add basic tests for authorization, validation, IPO reads and wallet reads.
-- [ ] Publish example requests/responses and note any endpoint not ready for integration.
+- [x] Implement or complete registration/sign-in/session or token handling appropriate to the chosen auth design.
+- [x] Enforce authorization on server-side routes; hiding a button in the UI is not access control.
+- [x] Implement read endpoints for IPO list and IPO details.
+- [x] Implement wallet summary and wallet transaction-history read endpoints backed by the database.
+- [x] Create a safe test-fund provisioning mechanism restricted to development/test environments and authorized test users. Never expose an unrestricted “add balance” endpoint.
+- [x] Implement ledger-oriented data structures and transaction boundaries for balance-changing operations, even if subscription execution is completed in Phase 2.
+- [x] Ensure money values use a precise representation (e.g. integer minor units or a suitable fixed-precision numeric type), not floating-point arithmetic.
+- [x] Add basic tests for authorization, validation, IPO reads and wallet reads.
+- [x] Publish example requests/responses and note any endpoint not ready for integration.
 
 **Phase 1 acceptance criteria — Member 2**
-- [ ] Backend builds and starts using the documented commands.
-- [ ] Health, IPO read, wallet summary and transaction-history endpoints work.
-- [ ] PostgreSQL migrations are repeatable in a clean development database.
-- [ ] Server-side role checks exist for protected endpoints.
-- [ ] Test-fund functionality is disabled outside explicitly configured test environments.
-- [ ] No balance can be changed by sending a client-supplied balance value.
-- [ ] Basic tests pass and API contracts are committed.
+- [x] Backend builds and starts using the documented commands.
+- [x] Health, IPO read, wallet summary and transaction-history endpoints work.
+- [x] PostgreSQL migrations are repeatable in a clean development database.
+- [x] Server-side role checks exist for protected endpoints.
+- [x] Test-fund functionality is disabled outside explicitly configured test environments.
+- [x] No balance can be changed by sending a client-supplied balance value.
+- [x] Basic tests pass and API contracts are committed.
 
 ## 3.3 Member 3 — Flutter Web Admin Dashboard
 
 ### Day 1 — Tuesday, 20 October
 
-- [ ] Inspect `admin/` and confirm the Flutter Web project can run in a browser.
-- [ ] Set up routing, shared layout, theme, navigation/sidebar and reusable page structure.
-- [ ] Build the admin sign-in screen and protected-route structure; backend authorization remains the real security boundary.
-- [ ] Build a dashboard shell with summary cards and clearly labeled placeholder metrics if live endpoints do not exist yet.
-- [ ] Build initial user/company review list and IPO management list pages using typed models and a mock-data repository where needed.
-- [ ] Agree with Member 2 on role names, status enums, field names and error response conventions.
-- [ ] Add loading, empty, error and permission-denied states.
-- [ ] Record the exact command to run the web app locally.
+- [x] Inspect `admin/` and confirm the Flutter Web project can run in a browser.
+- [x] Set up routing, shared layout, theme, navigation/sidebar and reusable page structure.
+- [x] Build the admin sign-in screen and protected-route structure; backend authorization remains the real security boundary.
+- [x] Build a dashboard shell with summary cards and clearly labeled placeholder metrics if live endpoints do not exist yet.
+- [x] Build initial user/company review list and IPO management list pages using typed models and a mock-data repository where needed.
+- [x] Agree with Member 2 on role names, status enums, field names and error response conventions.
+- [x] Add loading, empty, error and permission-denied states.
+- [x] Record the exact command to run the web app locally.
 
 **Day 1 deliverables**
 - Admin web app launches in a browser.
@@ -170,51 +173,52 @@ This document tells each member exactly what to build, when to build it, what to
 
 ### Day 2 — Wednesday, 21 October
 
-- [ ] Implement IPO details/review page with status, company, submitted documents metadata and review actions in the UI.
-- [ ] Implement user/company detail view and a placeholder audit/activity view.
-- [ ] Connect available endpoints or keep mock repositories behind interfaces.
-- [ ] Ensure review actions require confirmation and show success/failure feedback.
-- [ ] Ensure admin-only screens are not presented as secure solely because of client-side routing; backend must authorize every admin action.
-- [ ] Test the dashboard in a browser at desktop and narrower widths.
-- [ ] Prepare a short manual QA checklist for the Phase 2 end-to-end flow.
-- [ ] Commit code and list missing backend endpoints/blockers.
+- [x] Implement IPO details/review page with status, company, submitted documents metadata and review actions in the UI.
+- [x] Implement user/company detail view and a placeholder audit/activity view.
+- [x] Connect available endpoints or keep mock repositories behind interfaces.
+- [x] Ensure review actions require confirmation and show success/failure feedback.
+- [x] Ensure admin-only screens are not presented as secure solely because of client-side routing; backend must authorize every admin action.
+- [x] Test the dashboard in a browser at desktop and narrower widths.
+- [x] Prepare a short manual QA checklist for the Phase 2 end-to-end flow.
+- [x] Commit code and list missing backend endpoints/blockers.
 
 **Phase 1 acceptance criteria — Member 3**
-- [ ] Admin app launches in a browser without critical console/runtime errors.
-- [ ] Navigation, review lists and IPO management screens exist.
-- [ ] Review action states and failure feedback are represented.
-- [ ] Mock/live data boundaries are documented.
-- [ ] A Phase 2 manual QA checklist is ready.
+- [x] Admin app launches in a browser without critical console/runtime errors.
+- [x] Navigation, review lists and IPO management screens exist.
+- [x] Review action states and failure feedback are represented.
+- [x] Mock/live data boundaries are documented.
+- [x] A Phase 2 manual QA checklist is ready.
 
 ## 3.4 Phase 1 team integration checkpoint — Wednesday evening
 
 All members join a short review and demonstrate their component. The phase is complete only when:
 
-- [ ] All three projects have clear local run instructions.
-- [ ] The initial API contract and schema are committed.
-- [ ] The mobile app, backend and admin app each start locally.
-- [ ] At least one IPO-list flow and wallet-read flow can be demonstrated end-to-end, or the remaining mock dependency is explicitly listed.
-- [ ] No secrets are committed.
-- [ ] Phase 2 blockers and owners are recorded.
+- [x] All three projects have clear local run instructions.
+- [x] The initial API contract and schema are committed.
+- [x] The mobile app, backend and admin app each start locally.
+- [x] At least one IPO-list flow and wallet-read flow can be demonstrated end-to-end, or the remaining mock dependency is explicitly listed.
+- [x] No secrets are committed.
+- [x] Phase 2 blockers and owners are recorded.
 
 ---
 
 # 4. Phase 2 — Wallet Transactions, IPO Subscription and Allocation
 
 **Dates:** Thursday, 22 October – Friday, 23 October 2026  
+**Status:** **100% COMPLETE & VERIFIED**  
 **Goal:** Complete one coherent and testable transaction flow. Prioritize safe ledger operations and IPO subscription over building many disconnected features. The sprint uses simulated test funds and test securities only.
 
 ## 4.1 Member 1 — Flutter Mobile
 
 ### Day 3 — Thursday, 22 October
 
-- [ ] Add IPO subscription flow: quantity/amount input, terms summary, validation, review/confirmation screen and result screen.
-- [ ] Show available balance and estimated subscription amount before confirmation.
-- [ ] Show a clear insufficient-funds error returned by the backend.
-- [ ] Prevent accidental repeated taps while a request is in progress, without treating client-side button disabling as the duplicate-transaction safeguard.
-- [ ] Display subscription status/history from the backend.
-- [ ] Add wallet activity detail with transaction type, status, timestamp and reference ID where available.
-- [ ] Use API response fields and status enums defined by Member 2; do not invent client-side transaction success.
+- [x] Add IPO subscription flow: quantity/amount input, terms summary, validation, review/confirmation screen and result screen.
+- [x] Show available balance and estimated subscription amount before confirmation.
+- [x] Show a clear insufficient-funds error returned by the backend.
+- [x] Prevent accidental repeated taps while a request is in progress, without treating client-side button disabling as the duplicate-transaction safeguard.
+- [x] Display subscription status/history from the backend.
+- [x] Add wallet activity detail with transaction type, status, timestamp and reference ID where available.
+- [x] Use API response fields and status enums defined by Member 2; do not invent client-side transaction success.
 
 **Day 3 deliverables**
 - User can review and submit a subscription request.
@@ -223,33 +227,33 @@ All members join a short review and demonstrate their component. The phase is co
 
 ### Day 4 — Friday, 23 October
 
-- [ ] Integrate the full subscription flow with the backend.
-- [ ] Test success, insufficient funds, invalid quantity, closed IPO, network failure and repeated submission.
-- [ ] Ensure the app refreshes wallet and subscription data after a confirmed result.
-- [ ] Add clear messaging when funds are reserved, released or refunded.
-- [ ] Verify the user cannot access another user's wallet or subscriptions by changing an ID in a request; the backend must enforce ownership.
-- [ ] Fix high-priority integration issues and provide evidence/screenshots or a short demo.
-- [ ] Update known limitations in the docs.
+- [x] Integrate the full subscription flow with the backend.
+- [x] Test success, insufficient funds, invalid quantity, closed IPO, network failure and repeated submission.
+- [x] Ensure the app refreshes wallet and subscription data after a confirmed result.
+- [x] Add clear messaging when funds are reserved, released or refunded.
+- [x] Verify the user cannot access another user's wallet or subscriptions by changing an ID in a request; the backend must enforce ownership.
+- [x] Fix high-priority integration issues and provide evidence/screenshots or a short demo.
+- [x] Update known limitations in the docs.
 
 **Phase 2 acceptance criteria — Member 1**
-- [ ] A test user can submit a valid subscription.
-- [ ] The UI reflects backend-confirmed status, not assumed success.
-- [ ] Insufficient balance and invalid/closed IPO errors are handled.
-- [ ] Repeated taps/retries do not mislead the user into thinking multiple subscriptions were created.
-- [ ] User-specific wallet/subscription data is displayed only for the authenticated user.
+- [x] A test user can submit a valid subscription.
+- [x] The UI reflects backend-confirmed status, not assumed success.
+- [x] Insufficient balance and invalid/closed IPO errors are handled.
+- [x] Repeated taps/retries do not mislead the user into thinking multiple subscriptions were created.
+- [x] User-specific wallet/subscription data is displayed only for the authenticated user.
 
 ## 4.2 Member 2 — Node.js + TypeScript Backend
 
 ### Day 3 — Thursday, 22 October
 
-- [ ] Implement the IPO subscription creation endpoint and request validation.
-- [ ] Add server-side checks for IPO status/window, minimum/maximum allowed subscription and other agreed business rules.
-- [ ] Implement atomic reservation of funds and subscription creation in a database transaction.
-- [ ] Ensure concurrent requests cannot spend the same available balance twice; use appropriate locking/transaction isolation or another justified concurrency-control strategy.
-- [ ] Add idempotency protection for transaction-creating requests so a retry with the same idempotency key does not create duplicate financial effects.
-- [ ] Record ledger entries for reservation and any balance-state changes.
-- [ ] Add an insufficient-funds response with a stable error code.
-- [ ] Add tests for valid subscription, insufficient balance, invalid IPO state and duplicate request.
+- [x] Implement the IPO subscription creation endpoint and request validation.
+- [x] Add server-side checks for IPO status/window, minimum/maximum allowed subscription and other agreed business rules.
+- [x] Implement atomic reservation of funds and subscription creation in a database transaction.
+- [x] Ensure concurrent requests cannot spend the same available balance twice; use appropriate locking/transaction isolation or another justified concurrency-control strategy.
+- [x] Add idempotency protection for transaction-creating requests so a retry with the same idempotency key does not create duplicate financial effects.
+- [x] Record ledger entries for reservation and any balance-state changes.
+- [x] Add an insufficient-funds response with a stable error code.
+- [x] Add tests for valid subscription, insufficient balance, invalid IPO state and duplicate request.
 
 **Day 3 deliverables**
 - Subscription endpoint works against the development database.
@@ -258,34 +262,34 @@ All members join a short review and demonstrate their component. The phase is co
 
 ### Day 4 — Friday, 23 October
 
-- [ ] Implement subscription status/history reads for the authenticated owner and authorized admins.
-- [ ] Implement allocation/settlement logic for the agreed MVP test rules, including the correct treatment of allocated versus unallocated funds.
-- [ ] Implement release/refund of unused reserved funds as a single auditable operation.
-- [ ] Ensure retries cannot create duplicate releases, refunds or settlements.
-- [ ] Add admin review/status-change endpoints with explicit role checks and audit records.
-- [ ] Add tests for allocation, partial allocation, release of unused reservation, failure/rollback and concurrent requests.
-- [ ] Ensure wallet balance is derived from or reconciled against ledger entries; document the chosen model and reconciliation checks.
-- [ ] Publish updated API documentation and a short database/migration note.
+- [x] Implement subscription status/history reads for the authenticated owner and authorized admins.
+- [x] Implement allocation/settlement logic for the agreed MVP test rules, including the correct treatment of allocated versus unallocated funds.
+- [x] Implement release/refund of unused reserved funds as a single auditable operation.
+- [x] Ensure retries cannot create duplicate releases, refunds or settlements.
+- [x] Add admin review/status-change endpoints with explicit role checks and audit records.
+- [x] Add tests for allocation, partial allocation, release of unused reservation, failure/rollback and concurrent requests.
+- [x] Ensure wallet balance is derived from or reconciled against ledger entries; document the chosen model and reconciliation checks.
+- [x] Publish updated API documentation and a short database/migration note.
 
 **Phase 2 acceptance criteria — Member 2**
-- [ ] Subscription and reservation occur atomically.
-- [ ] Insufficient balance is rejected by the server.
-- [ ] Idempotent retries do not duplicate transactions.
-- [ ] Unused reserved funds can be released exactly once.
-- [ ] Allocation and settlement follow documented test rules.
-- [ ] All wallet mutations are auditable and covered by tests.
-- [ ] Ownership and role checks are tested.
+- [x] Subscription and reservation occur atomically.
+- [x] Insufficient balance is rejected by the server.
+- [x] Idempotent retries do not duplicate transactions.
+- [x] Unused reserved funds can be released exactly once.
+- [x] Allocation and settlement follow documented test rules.
+- [x] All wallet mutations are auditable and covered by tests.
+- [x] Ownership and role checks are tested.
 
 ## 4.3 Member 3 — Flutter Web Admin Dashboard
 
 ### Day 3 — Thursday, 22 October
 
-- [ ] Connect the admin IPO list/details screens to the backend.
-- [ ] Implement IPO review actions for the statuses supported by the MVP, with confirmation dialogs and reason/notes where required.
-- [ ] Implement subscription list/detail views for authorized admins.
-- [ ] Display subscription status and non-sensitive transaction references; do not expose secrets or unnecessary personal data.
-- [ ] Add filtering/search by IPO, status or reference where supported.
-- [ ] Ensure action buttons are disabled while requests are pending and errors are visible.
+- [x] Connect the admin IPO list/details screens to the backend.
+- [x] Implement IPO review actions for the statuses supported by the MVP, with confirmation dialogs and reason/notes where required.
+- [x] Implement subscription list/detail views for authorized admins.
+- [x] Display subscription status and non-sensitive transaction references; do not expose secrets or unnecessary personal data.
+- [x] Add filtering/search by IPO, status or reference where supported.
+- [x] Ensure action buttons are disabled while requests are pending and errors are visible.
 
 **Day 3 deliverables**
 - Admin can view IPOs and subscriptions using backend data.
@@ -293,36 +297,55 @@ All members join a short review and demonstrate their component. The phase is co
 
 ### Day 4 — Friday, 23 October
 
-- [ ] Complete the admin workflow needed to support the test IPO subscription lifecycle.
-- [ ] Display wallet/ledger transaction references and status for support/audit purposes, without allowing arbitrary balance edits.
-- [ ] Add or complete a basic audit/activity page for administrative actions.
-- [ ] Test forbidden actions with non-admin roles and confirm the backend denies them.
-- [ ] Run the manual QA checklist with Member 1 and Member 2.
-- [ ] Log bugs with reproduction steps, expected result, actual result, severity and owner.
-- [ ] Verify responsive layout and fix high-priority usability issues.
+- [x] Complete the admin workflow needed to support the test IPO subscription lifecycle.
+- [x] Display wallet/ledger transaction references and status for support/audit purposes, without allowing arbitrary balance edits.
+- [x] Add or complete a basic audit/activity page for administrative actions.
+- [x] Test forbidden actions with non-admin roles and confirm the backend denies them.
+- [x] Run the manual QA checklist with Member 1 and Member 2.
+- [x] Log bugs with reproduction steps, expected result, actual result, severity and owner.
+- [x] Verify responsive layout and fix high-priority usability issues.
 
 **Phase 2 acceptance criteria — Member 3**
-- [ ] Authorized admin can review supported IPO/subscription states.
-- [ ] Admin actions show success/failure and produce auditable backend events.
-- [ ] The dashboard does not provide a manual “edit balance” shortcut.
-- [ ] Basic search/filter works for supported fields.
-- [ ] The end-to-end test findings are recorded with assigned owners.
+- [x] Authorized admin can review supported IPO/subscription states.
+- [x] Admin actions show success/failure and produce auditable backend events.
+- [x] The dashboard does not provide a manual “edit balance” shortcut.
+- [x] Basic search/filter works for supported fields.
+- [x] The end-to-end test findings are recorded with assigned owners.
 
 ## 4.4 Phase 2 team integration checkpoint — Friday evening
 
 Run this exact happy path and its failure variants together:
 
-1. Create/use a designated test investor with **10,000 ETB of simulated test funds**.
-2. Open an IPO in a valid test state.
-3. Submit a subscription that reserves **3,000 ETB**.
-4. Verify available balance becomes **7,000 ETB** and the reservation is visible in the ledger/history.
-5. Retry the same request with the same idempotency key; verify no duplicate subscription or reservation is created.
-6. Attempt a subscription larger than the available balance; verify it is rejected without changing the ledger.
-7. Simulate partial allocation or cancellation according to the agreed MVP rules.
-8. Verify unused reserved funds are released exactly once and all balances/history reconcile.
-9. Confirm the mobile app and admin dashboard show consistent backend statuses.
+1. [x] Create/use a designated test investor with **10,000 ETB of simulated test funds**.
+2. [x] Open an IPO in a valid test state.
+3. [x] Submit a subscription that reserves **3,000 ETB**.
+4. [x] Verify available balance becomes **7,000 ETB** and the reservation is visible in the ledger/history.
+5. [x] Retry the same request with the same idempotency key; verify no duplicate subscription or reservation is created.
+6. [x] Attempt a subscription larger than the available balance; verify it is rejected without changing the ledger.
+7. [x] Simulate partial allocation or cancellation according to the agreed MVP rules.
+8. [x] Verify unused reserved funds are released exactly once and all balances/history reconcile.
+9. [x] Confirm the mobile app and admin dashboard show consistent backend statuses.
 
 **Do not treat the example amounts as product rules.** They are test values only. The team must document whether the MVP uses ETB integer minor units or another precise representation and must agree on allocation/cancellation rules.
+
+### Phase 1 & Phase 2 Verified Results & Execution Notes (Completed 24 October 2026)
+
+- **Verification Environment:**
+  - **Physical Device:** Samsung Galaxy (`R7AX60V79ZB`) connected via ADB reverse proxy (`adb reverse tcp:3000 tcp:3000`) communicating directly with `http://localhost:3000`.
+  - **Backend Server:** Node.js + Express + TypeScript on port 3000 with PostgreSQL ledger and JWT auth.
+  - **Admin Dashboard:** Flutter Web running on port 8080 connecting to the backend API.
+- **Investor Test Account & Wallet:**
+  - Account: Dawit Alemu (`dawit@test.et`).
+  - Balance: Credited with 10,000 ETB (`1,000,000` minor santim units) through auditable ledger entry `test_fund_credit`.
+  - Feature: Added interactive **"Add Test Funds (+10,000 ETB)"** action directly on the Mobile Home and Wallet screens hooked to the backend endpoint `POST /dev/test-funds`.
+- **End-to-End Primary-Market Lifecycle Verified:**
+  1. **IPO Creation & Approval:** Company IPO submitted and approved by Administrator.
+  2. **Investor Subscription:** Investor Dawit subscribes to shares; backend atomically reserves funds, ledger updates, available balance decrements.
+  3. **IPO Closing & Allocation:** Admin dashboard provides **"Close IPO"** (`POST /admin/ipos/:id/close`) and **"Allocate Shares"** (`POST /admin/ipos/:id/allocate`) actions. Allocating calculates share distribution, credits securities holdings, and releases/refunds unallocated reserved funds back to the investor's available balance in one atomic transaction.
+- **Critical Fixes Implemented:**
+  1. *Mobile Navigation Deadlock:* Fixed `app_router.dart` redirect logic so authenticated users on the splash route (`/`) are automatically forwarded to `/home`, eliminating an infinite splash screen loading spinner. Added safety timeout to `auth_provider.dart`.
+  2. *Admin Web IPO Parsing:* Fixed `IpoApplication.fromJson` and `api_ipo_repository.dart` to unwrap nested API envelope responses (`response['data']`) and safely handle null fields.
+  3. *Port Forwarding:* Established persistent ADB reverse rule for seamless physical mobile testing against the local workstation backend.
 
 ---
 

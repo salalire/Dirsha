@@ -13,4 +13,10 @@ abstract class IpoRepository {
   /// Reject an IPO application.
   /// [reason] is required — the company needs to know what to fix.
   Future<void> rejectApplication(String id, {required String reason});
+
+  /// Close the subscription window for an open IPO.
+  Future<void> closeIpo(String id, {String? reason});
+
+  /// Run pro-rata share allocation for a closed or open IPO.
+  Future<void> allocateIpo(String id);
 }

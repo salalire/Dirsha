@@ -67,4 +67,23 @@ class WalletProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> addTestFunds([int amountMinor = 1000000]) async {
+    _isSummaryLoading = true;
+    _summaryError = null;
+    notifyListeners();
+    try {
+      await _repository.addTestFunds(amountMinor);
+      await refresh();
+    } on AppException catch (e) {
+      _summaryError = e;
+      rethrow;
+    } catch (e) {
+      _summaryError = e;
+      rethrow;
+    } finally {
+      _isSummaryLoading = false;
+      notifyListeners();
+    }
+  }
 }
