@@ -307,7 +307,46 @@ Authenticated with `role: admin`.
 - `POST /admin/brokers/:id/approve`: Approves broker application. Blocks approval if license has expired. Updates status to `approved`, user `verification_status: verified`.
 - `POST /admin/brokers/:id/reject`: Body: `{ "reason": "..." }`. Rejects application with audit logging.
 - `POST /admin/brokers/:id/request-info`: Body: `{ "message": "..." }`. Requests additional information/documents.
-- `POST /admin/documents/:id/review`: Body: `{ "status": "approved" | "rejected", "notes": "..." }`. Records admin review for a supporting document.
+### 7.4 Company IPO Management (`/ipos`)
+Authenticated with `role: company_rep` (for approved company) or `role: admin`.
+
+- `GET /ipos/my-offerings`: Lists all IPO offerings owned by the caller's company.
+- `POST /ipos`: Creates a new IPO draft. Body: `{ title, symbol, price_per_share_minor, total_shares, min_shares_per_subscription, max_shares_per_subscription, opens_at, closes_at }`. Status initialized to `draft`.
+- `GET /ipos/:id`: Retrieves full details for an offering including review status, rejection reason, and review notes.
+- `PUT /ipos/:id`: Updates an existing draft or rejected offering before resubmission.
+- `POST /ipos/:id/submit`: Submits draft offering for administrative review. Transitions to `submitted`.
+- `POST /ipos/:id/documents`: Uploads supporting offering document (`prospectus`, `valuation_report`, `ecma_approval`, etc.).
+- `GET /ipos/:id/documents`: Lists documents attached to the offering.
+- `GET /ipos/:id/documents/:docId/file`: Downloads private document binary.
+- `DELETE /ipos/:id/documents/:docId`: Removes an attached document while in draft.
+- `GET /ipos/:id/history`: Retrieves timeline history of offering status transitions.
+
+### 7.5 Broker Operations & Client Management (`/brokers`)
+Authenticated with `role: broker` or `role: admin`.
+
+- `GET /brokers/me`: Returns broker profile details and licensing category.
+- `GET /brokers/dashboard`: Returns aggregate KPI metrics (`total_active_clients`, `pending_client_requests`, `available_ipos_count`, `assisted_orders_count`).
+- `GET /brokers/ipos`: Discovers public and approved IPOs accessible to brokers.
+- `POST /brokers/clients/request`: Requests authorized relationship with an investor. Body: `{ investor_email, relationship_type, notes }`. Status initialized to `pending`.
+- `GET /brokers/clients`: Lists broker's client relationships (supports `?status=pending|active|rejected|revoked`).
+- `GET /brokers/clients/:clientId`: Retrieves private financial summary (cash balance and share holdings) for an authorized client with an `active` relationship.
+- `GET /brokers/relationships/my`: Investor endpoint to view incoming relationship requests.
+- `POST /brokers/relationships/:id/respond`: Investor endpoint to accept, reject, or revoke a broker relationship. Body: `{ action: "accept" | "reject" | "revoke" }`.
+
+### 7.6 Simulated Secondary-Market Trading Engine (`/trading`)
+Authenticated with `role: investor`, `role: broker`, or `role: admin`.
+
+- `GET /trading/securities`: Lists tradable securities with current status, last traded price, total trades, and open orders.
+- `GET /trading/holdings`: Lists share holdings with `quantity`, `reserved_quantity`, and `available_quantity`. Supports `?client_id=...` for authorized brokers.
+- `POST /trading/orders`: Places a simulated limit order (buy or sell). Body: `{ ipo_id, side: "buy" | "sell", order_type: "limit" | "market", price_per_share_minor, quantity, client_id? }`.
+  - Buy orders reserve cash in wallet via ledger (`trade_reserve`).
+  - Sell orders reserve shares in `share_holdings` (`reserved_quantity`).
+  - Executes deterministic price-time priority matching against active counterparty orders.
+  - Automatically settles cash and transfers shares on execution (`trade_settle`, `trade_credit`).
+  - Refunds price improvements to buyer (`trade_release`).
+- `POST /trading/orders/:id/cancel`: Cancels an open or partially filled order. Releases remaining reserved cash or reserved shares.
+- `GET /trading/orders`: Lists order history (supports `?ipo_id=...&side=...&status=...&client_id=...`).
+- `GET /trading/trades`: Lists executed trade transactions where caller or authorized client was counterparty.
 
 ---
 
@@ -315,11 +354,13 @@ Authenticated with `role: admin`.
 
 | Component | Status | Implementation Details |
 |---|---|---|
-| Investor Mobile App | Implemented | Flutter mobile app (Phase 1 & Phase 2 complete) |
-| Company Portal | Implemented | Dedicated web portal at `/portal/company` |
-| Broker Portal | Implemented | Dedicated web portal at `/portal/broker` |
-| Admin Review | Implemented | Live admin dashboard with company & broker review screens |
+| Investor Mobile App | Implemented | Flutter mobile app (Phase 1, 2, and 3 complete with profile screen) |
+| Company Portal | Implemented | Dedicated web portal at `/portal/company` with IPO creation & management |
+| Broker Portal | Implemented | Dedicated web portal at `/portal/broker` with client dashboard & portfolio view |
+| Admin Review | Implemented | Live admin dashboard with company, broker, and IPO review screens |
 | Private Doc Storage | Implemented | Encrypted private storage with mime/size validation |
-| Broker Trading / Relationships | Out of scope (Phase 3) | Secondary market and trading book not in scope |
+| Broker Client Relationships | Implemented | Formal investor consent, authorized client inspection, assisted trading |
+| Simulated Trading Engine | Implemented | In-memory/DB deterministic matching engine with ETB ledger settlement |
+| Real Bank / Exchange Rails | Deferred | External banking APIs and live stock exchange integration deferred |
 | Refresh Tokens | Deferred | 15-minute access token lifespan |
 

@@ -127,12 +127,115 @@ describe('GET /ipos/:id', () => {
     expect(res.body.error.code).toBe('VALIDATION_ERROR');
   });
 
-  it('is read-only in Phase 1: writes are not routed', async () => {
+  it('routes writes through authorized offering creation, rejecting unsupported methods with 404 and malformed POSTs with 400', async () => {
     const res = await request(ctx.app)
       .post('/ipos')
       .set(bearer(admin.token))
       .send({ title: 'x' });
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(400);
     expect((await request(ctx.app).delete(`/ipos/${a.open}`).set(bearer(admin.token))).status).toBe(404);
+  });
+});
+
+describe('IPO lifecycle, visibility and subscription boundaries', () => {
+  it('approved upcoming IPO is visible to investors and brokers as approved', async () => {
+    const { rows } = await ctx.db.query<{ id: string }>(
+      `INSERT INTO ipos (company_id, title, symbol, price_per_share_minor, total_shares,
+                         opens_at, closes_at, status)
+       VALUES ((SELECT id FROM companies LIMIT 1), 'Upcoming Approved IPO', 'UPCOMING1', 10000, 1000,
+               now() + interval '2 days', now() + interval '7 days', 'approved')
+       RETURNING id`,
+    );
+    const ipoId = rows[0]!.id;
+
+    for (const user of [investor, broker]) {
+      const listRes = await list(user);
+      expect(ids(listRes.body)).toContain(ipoId);
+      const item = listRes.body.data.find((i: { id: string }) => i.id === ipoId);
+      expect(item.status).toBe('approved');
+
+      const detailRes = await detail(user, ipoId);
+      expect(detailRes.status).toBe(200);
+      expect(detailRes.body.data.status).toBe('approved');
+    }
+  });
+
+  it('approved IPO whose opens_at has arrived is returned as open and accepts subscriptions', async () => {
+    const { rows } = await ctx.db.query<{ id: string }>(
+      `INSERT INTO ipos (company_id, title, symbol, price_per_share_minor, total_shares,
+                         opens_at, closes_at, status)
+       VALUES ((SELECT id FROM companies LIMIT 1), 'Live Approved IPO', 'LIVEAPP1', 10000, 1000,
+               now() - interval '1 hour', now() + interval '2 days', 'approved')
+       RETURNING id`,
+    );
+    const ipoId = rows[0]!.id;
+
+    const listRes = await list(investor);
+    const item = listRes.body.data.find((i: { id: string }) => i.id === ipoId);
+    expect(item).toBeDefined();
+    expect(item.status).toBe('open');
+
+    // Fund investor wallet and subscribe
+    const subRes = await request(ctx.app)
+      .post('/subscriptions')
+      .set(bearer(investor.token))
+      .set('Idempotency-Key', randomUUID())
+      .send({ ipo_id: ipoId, quantity: 5 });
+    // May succeed or fail on insufficient funds, but definitely NOT ipoNotOpen!
+    if (subRes.status === 422) {
+      expect(subRes.body.error.code).toBe('INSUFFICIENT_FUNDS');
+    } else {
+      expect(subRes.status).toBe(201);
+    }
+  });
+
+  it('expired IPO returns status closed and rejects subscription even if DB status is open', async () => {
+    const { rows } = await ctx.db.query<{ id: string }>(
+      `INSERT INTO ipos (company_id, title, symbol, price_per_share_minor, total_shares,
+                         opens_at, closes_at, status)
+       VALUES ((SELECT id FROM companies LIMIT 1), 'Expired IPO', 'EXPIRED1', 10000, 1000,
+               now() - interval '5 days', now() - interval '1 hour', 'open')
+       RETURNING id`,
+    );
+    const ipoId = rows[0]!.id;
+
+    const listRes = await list(investor);
+    const item = listRes.body.data.find((i: { id: string }) => i.id === ipoId);
+    expect(item).toBeDefined();
+    expect(item.status).toBe('closed');
+
+    const detailRes = await detail(investor, ipoId);
+    expect(detailRes.body.data.status).toBe('closed');
+
+    // Attempting to subscribe must fail with ipoNotOpen
+    const subRes = await request(ctx.app)
+      .post('/subscriptions')
+      .set(bearer(investor.token))
+      .set('Idempotency-Key', randomUUID())
+      .send({ ipo_id: ipoId, quantity: 5 });
+    expect(subRes.status).toBe(422);
+    expect(subRes.body.error.code).toBe('IPO_NOT_OPEN');
+    expect(subRes.body.error.message).toBe('IPO is not open for subscription');
+  });
+
+  it('admin can close an approved or open IPO immediately, and it reflects as closed', async () => {
+    const { rows } = await ctx.db.query<{ id: string }>(
+      `INSERT INTO ipos (company_id, title, symbol, price_per_share_minor, total_shares,
+                         opens_at, closes_at, status)
+       VALUES ((SELECT id FROM companies LIMIT 1), 'To Be Closed', 'CLOSEME1', 10000, 1000,
+               now() - interval '1 day', now() + interval '5 days', 'approved')
+       RETURNING id`,
+    );
+    const ipoId = rows[0]!.id;
+
+    const closeRes = await request(ctx.app)
+      .post(`/admin/ipos/${ipoId}/close`)
+      .set(bearer(admin.token))
+      .send({ reason: 'Administrative close' });
+    expect(closeRes.status).toBe(200);
+    expect(closeRes.body.data.status).toBe('closed');
+
+    const detailRes = await detail(investor, ipoId);
+    expect(detailRes.body.data.status).toBe('closed');
   });
 });

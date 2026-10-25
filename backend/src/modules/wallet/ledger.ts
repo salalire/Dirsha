@@ -22,7 +22,11 @@ export type LedgerEntryType =
   | 'subscription_reserve'
   | 'subscription_release'
   | 'subscription_settle'
-  | 'adjustment';
+  | 'adjustment'
+  | 'trade_reserve'
+  | 'trade_release'
+  | 'trade_settle'
+  | 'trade_credit';
 
 export type InitiatorType = 'user' | 'admin' | 'system';
 

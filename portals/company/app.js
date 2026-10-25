@@ -132,12 +132,15 @@ function handleLogout() {
 
 function goToStep(step) {
   currentStep = step;
-  ['profile', 'rep', 'docs', 'status'].forEach((s) => {
+  ['profile', 'rep', 'docs', 'status', 'offerings'].forEach((s) => {
     const nav = document.getElementById(`step-nav-${s}`);
     const panel = document.getElementById(`step-panel-${s}`);
     if (nav) nav.classList.toggle('active', s === step);
     if (panel) panel.style.display = s === step ? 'block' : 'none';
   });
+  if (step === 'offerings') {
+    loadOfferings();
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -223,8 +226,11 @@ function renderStatusView() {
   document.getElementById('profile-status-badge').innerHTML = badgeHtml;
   document.getElementById('final-status-badge').innerHTML = badgeHtml;
 
+  const navOfferings = document.getElementById('step-nav-offerings');
+
   const banner = document.getElementById('global-status-banner');
   if (status === 'additional_info_required') {
+    if (navOfferings) navOfferings.style.display = 'none';
     banner.className = 'alert-banner alert-warning';
     banner.style.display = 'flex';
     banner.innerHTML = `
@@ -233,6 +239,7 @@ function renderStatusView() {
         <p>${escapeHtml(currentCompany.additional_info_request || 'Please review your application and provide the requested corrections before resubmitting.')}</p>
       </div>`;
   } else if (status === 'rejected') {
+    if (navOfferings) navOfferings.style.display = 'none';
     banner.className = 'alert-banner alert-danger';
     banner.style.display = 'flex';
     banner.innerHTML = `
@@ -241,14 +248,19 @@ function renderStatusView() {
         <p><strong>Reason:</strong> ${escapeHtml(currentCompany.rejection_reason || 'Compliance criteria not met.')}</p>
       </div>`;
   } else if (status === 'approved') {
+    if (navOfferings) navOfferings.style.display = 'flex';
     banner.className = 'alert-banner alert-success';
     banner.style.display = 'flex';
     banner.innerHTML = `
-      <div class="alert-content">
+      <div class="alert-content" style="flex: 1;">
         <h4>Congratulations! Your Company Onboarding Application is Approved</h4>
-        <p>Your organization is now verified on the Dirsha platform. You can now prepare and manage IPO offering drafts.</p>
+        <p>Your organization is fully verified on the Dirsha platform. You can now create and manage IPO offerings.</p>
+        <div style="margin-top: 12px;">
+          <button class="btn btn-primary" type="button" onclick="goToStep('offerings')">Open IPO Issuer Dashboard &rarr;</button>
+        </div>
       </div>`;
   } else {
+    if (navOfferings) navOfferings.style.display = 'none';
     banner.style.display = 'none';
   }
 
@@ -670,6 +682,462 @@ function escapeHtml(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) modal.style.display = 'none';
+}
+
+// ── IPO Offerings Lifecycle Management (Decision 2) ─────────────────────────
+
+let currentOfferings = [];
+
+async function loadOfferings() {
+  if (!authToken) return;
+  const listEl = document.getElementById('offerings-list');
+  if (!listEl) return;
+  listEl.innerHTML = '<p style="color: var(--text-muted); font-size: 13px;">Loading offerings...</p>';
+
+  try {
+    const res = await fetch(`${API_BASE}/ipos/my-offerings`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      throw new Error(errJson.error?.message || 'Failed to load offerings');
+    }
+    const json = await res.json();
+    currentOfferings = json.data || [];
+    renderOfferings();
+  } catch (err) {
+    listEl.innerHTML = `<p style="color: var(--danger); font-size: 13px;">Error: ${escapeHtml(err.message)}</p>`;
+  }
+}
+
+function renderOfferings() {
+  const listEl = document.getElementById('offerings-list');
+  if (!listEl) return;
+
+  // Compute KPIs
+  const total = currentOfferings.length;
+  const inReview = currentOfferings.filter((o) => o.status === 'submitted' || o.status === 'under_review').length;
+  const active = currentOfferings.filter((o) => o.status === 'approved' || o.status === 'open').length;
+  const totalSubs = currentOfferings.reduce((sum, o) => sum + (o.subscription_count || 0), 0);
+
+  document.getElementById('kpi-total-offerings').innerText = total;
+  document.getElementById('kpi-review-offerings').innerText = inReview;
+  document.getElementById('kpi-active-offerings').innerText = active;
+  document.getElementById('kpi-total-subscriptions').innerText = totalSubs;
+
+  if (currentOfferings.length === 0) {
+    listEl.innerHTML = `
+      <div style="text-align: center; padding: 48px 24px; border: 1px dashed var(--border); border-radius: var(--radius-md); background: var(--bg-surface);">
+        <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">No IPO Offerings Created Yet</h4>
+        <p style="color: var(--text-secondary); font-size: 14px; max-width: 480px; margin: 0 auto 16px;">
+          Your company is approved. Start your primary market issuance by creating a new IPO draft.
+        </p>
+        <button class="btn btn-primary" type="button" onclick="openCreateIpoModal()">+ Create New IPO Draft</button>
+      </div>`;
+    return;
+  }
+
+  listEl.innerHTML = currentOfferings
+    .map((offering) => {
+      const priceEtb = (offering.price_per_share_minor / 100).toFixed(2);
+      const opensStr = offering.opens_at ? new Date(offering.opens_at).toLocaleString() : '—';
+      const closesStr = offering.closes_at ? new Date(offering.closes_at).toLocaleString() : '—';
+      const isDraft = offering.status === 'draft';
+      const hasFeedback = offering.rejection_reason || offering.review_notes;
+
+      let feedbackHtml = '';
+      if (offering.rejection_reason) {
+        feedbackHtml = `
+          <div class="offering-feedback-box">
+            <strong>Administrator Feedback / Rejection Reason:</strong> ${escapeHtml(offering.rejection_reason)}
+          </div>`;
+      } else if (offering.review_notes) {
+        feedbackHtml = `
+          <div class="offering-notes-box">
+            <strong>Administrator Review Notes:</strong> ${escapeHtml(offering.review_notes)}
+          </div>`;
+      }
+
+      return `
+        <div class="offering-card">
+          <div class="offering-header-row">
+            <div class="offering-title-group">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span class="offering-symbol-badge">${escapeHtml(offering.symbol)}</span>
+                <h3>${escapeHtml(offering.title)}</h3>
+              </div>
+              <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+                ${escapeHtml(offering.description || 'No description provided.')}
+              </p>
+            </div>
+            <div>
+              <span class="status-pill status-${offering.status}">
+                <span class="dot"></span> ${offering.status.replace(/_/g, ' ')}
+              </span>
+            </div>
+          </div>
+
+          <div class="offering-meta-grid">
+            <div class="meta-item">
+              <span class="meta-label">Share Price</span>
+              <span class="meta-value">${priceEtb} ETB</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Total Shares</span>
+              <span class="meta-value">${Number(offering.total_shares).toLocaleString()}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Min Subscription</span>
+              <span class="meta-value">${Number(offering.min_shares_per_subscription || 1).toLocaleString()} shares</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Subscriptions</span>
+              <span class="meta-value">${offering.subscription_count || 0} (${Number(offering.total_shares_subscribed || 0).toLocaleString()} shares)</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Opening</span>
+              <span class="meta-value" style="font-size: 12px;">${opensStr}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Closing</span>
+              <span class="meta-value" style="font-size: 12px;">${closesStr}</span>
+            </div>
+          </div>
+
+          ${feedbackHtml}
+
+          <div class="offering-actions">
+            ${isDraft ? `
+              <button class="btn btn-primary" type="button" onclick="handleSubmitIpoForReview('${offering.id}', '${escapeHtml(offering.title)}')">
+                Submit for Compliance Review &rarr;
+              </button>
+              <button class="btn btn-secondary" type="button" onclick="openCreateIpoModal('${offering.id}')">
+                Edit Offering Details
+              </button>
+            ` : ''}
+            <button class="btn btn-secondary" type="button" onclick="openIpoDocsModal('${offering.id}', '${escapeHtml(offering.title)}')">
+              Offering Documents (${offering.documents_count || (offering.documents ? offering.documents.length : 0)})
+            </button>
+            <button class="btn btn-secondary" type="button" onclick="openIpoHistoryModal('${offering.id}', '${escapeHtml(offering.title)}')">
+              Review History & Audit
+            </button>
+          </div>
+        </div>
+      `;
+    })
+    .join('');
+}
+
+function openCreateIpoModal(ipoId) {
+  const modal = document.getElementById('modal-ipo-form');
+  const titleEl = document.getElementById('modal-ipo-title');
+  const idInput = document.getElementById('ipo-draft-id');
+
+  if (ipoId) {
+    const item = currentOfferings.find((o) => o.id === ipoId);
+    if (!item) return;
+    titleEl.innerText = 'Edit IPO Offering Draft';
+    idInput.value = item.id;
+    document.getElementById('ipo-title').value = item.title;
+    document.getElementById('ipo-symbol').value = item.symbol;
+    document.getElementById('ipo-price').value = (item.price_per_share_minor / 100).toFixed(2);
+    document.getElementById('ipo-total-shares').value = item.total_shares;
+    document.getElementById('ipo-min-shares').value = item.min_shares_per_subscription || 1;
+    document.getElementById('ipo-max-shares').value = item.max_shares_per_subscription || '';
+    document.getElementById('ipo-opens-at').value = item.opens_at ? item.opens_at.slice(0, 16) : '';
+    document.getElementById('ipo-closes-at').value = item.closes_at ? item.closes_at.slice(0, 16) : '';
+    document.getElementById('ipo-description').value = item.description || '';
+  } else {
+    titleEl.innerText = 'Create IPO Offering Draft';
+    idInput.value = '';
+    document.getElementById('form-ipo-draft').reset();
+    document.getElementById('ipo-min-shares').value = '1';
+
+    // Set default dates: opens tomorrow, closes in 14 days
+    const now = new Date();
+    const opens = new Date(now.getTime() + 86400000);
+    const closes = new Date(now.getTime() + 86400000 * 14);
+    document.getElementById('ipo-opens-at').value = opens.toISOString().slice(0, 16);
+    document.getElementById('ipo-closes-at').value = closes.toISOString().slice(0, 16);
+  }
+
+  modal.style.display = 'flex';
+}
+
+async function handleSaveIpoDraft(event) {
+  event.preventDefault();
+  const idInput = document.getElementById('ipo-draft-id').value;
+  const isEdit = Boolean(idInput);
+  const btn = document.getElementById('btn-save-ipo');
+  btn.disabled = true;
+  btn.innerText = 'Saving...';
+
+  const title = document.getElementById('ipo-title').value.trim();
+  const symbol = document.getElementById('ipo-symbol').value.trim().toUpperCase();
+  const price = parseFloat(document.getElementById('ipo-price').value);
+  const totalShares = parseInt(document.getElementById('ipo-total-shares').value, 10);
+  const minShares = parseInt(document.getElementById('ipo-min-shares').value, 10) || 1;
+  const maxSharesVal = document.getElementById('ipo-max-shares').value;
+  const maxShares = maxSharesVal ? parseInt(maxSharesVal, 10) : null;
+  const opensAt = document.getElementById('ipo-opens-at').value;
+  const closesAt = document.getElementById('ipo-closes-at').value;
+  const description = document.getElementById('ipo-description').value.trim() || null;
+
+  if (new Date(closesAt) <= new Date(opensAt)) {
+    showToast('Closing date must be strictly after opening date', 'error');
+    btn.disabled = false;
+    btn.innerText = 'Save Offering Draft';
+    return;
+  }
+
+  const payload = {
+    title,
+    symbol,
+    price_per_share_minor: Math.round(price * 100),
+    total_shares: totalShares,
+    min_shares_per_subscription: minShares,
+    max_shares_per_subscription: maxShares,
+    opens_at: new Date(opensAt).toISOString(),
+    closes_at: new Date(closesAt).toISOString(),
+    description,
+  };
+
+  try {
+    const url = isEdit ? `${API_BASE}/ipos/${idInput}` : `${API_BASE}/ipos`;
+    const method = isEdit ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error?.message || 'Failed to save offering');
+
+    showToast(isEdit ? 'IPO offering draft updated!' : 'IPO offering draft created!');
+    closeModal('modal-ipo-form');
+    await loadOfferings();
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerText = 'Save Offering Draft';
+  }
+}
+
+async function handleSubmitIpoForReview(ipoId, ipoTitle) {
+  const confirmed = confirm(`Submit offering "${ipoTitle}" for formal compliance review? Once submitted, the draft cannot be edited until reviewed.`);
+  if (!confirmed) return;
+
+  const notes = prompt('Enter submission notes for the review team (optional):') || undefined;
+
+  try {
+    const res = await fetch(`${API_BASE}/ipos/${ipoId}/submit`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({ notes }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error?.message || 'Submission failed');
+
+    showToast('Offering submitted for regulatory review!');
+    await loadOfferings();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+async function openIpoDocsModal(ipoId, ipoTitle) {
+  document.getElementById('current-doc-ipo-id').value = ipoId;
+  document.getElementById('modal-ipo-docs-title').innerText = `Documents: ${ipoTitle}`;
+  const modal = document.getElementById('modal-ipo-docs');
+  modal.style.display = 'flex';
+  await loadIpoDocuments(ipoId);
+}
+
+async function loadIpoDocuments(ipoId) {
+  const listEl = document.getElementById('ipo-uploaded-docs-list');
+  listEl.innerHTML = '<p style="color: var(--text-muted); font-size: 13px;">Loading documents...</p>';
+
+  try {
+    const res = await fetch(`${API_BASE}/ipos/${ipoId}/documents`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    if (!res.ok) throw new Error('Failed to load documents');
+    const json = await res.json();
+    const docs = json.data || [];
+
+    if (docs.length === 0) {
+      listEl.innerHTML = '<p style="color: var(--text-muted); font-size: 13px;">No documents uploaded yet.</p>';
+      return;
+    }
+
+    listEl.innerHTML = docs
+      .map(
+        (doc) => `
+        <div class="doc-item">
+          <div class="doc-icon">&#128196;</div>
+          <div class="doc-details">
+            <span class="doc-name">${escapeHtml(doc.file_name)}</span>
+            <span class="doc-meta">
+              ${escapeHtml(doc.document_type.replace(/_/g, ' '))} &bull;
+              ${(doc.file_size_bytes / 1024).toFixed(1)} KB &bull;
+              Status: ${escapeHtml(doc.review_status)}
+            </span>
+          </div>
+          <div class="doc-actions">
+            <button class="btn-doc-action" type="button" onclick="downloadIpoDoc('${ipoId}', '${doc.id}', '${escapeHtml(doc.file_name)}')">Download</button>
+            <button class="btn-doc-action btn-danger-action" type="button" onclick="handleDeleteIpoDoc('${ipoId}', '${doc.id}')">Delete</button>
+          </div>
+        </div>
+      `,
+      )
+      .join('');
+  } catch (err) {
+    listEl.innerHTML = `<p style="color: var(--danger); font-size: 13px;">Error: ${escapeHtml(err.message)}</p>`;
+  }
+}
+
+async function handleUploadIpoDocument() {
+  const ipoId = document.getElementById('current-doc-ipo-id').value;
+  const fileInput = document.getElementById('ipo-doc-file-input');
+  const typeSelect = document.getElementById('ipo-doc-type-select');
+  const btn = document.getElementById('btn-upload-ipo-doc');
+
+  if (!fileInput.files || fileInput.files.length === 0) {
+    showToast('Please select a file to upload', 'error');
+    return;
+  }
+
+  const file = fileInput.files[0];
+  if (file.size > 10 * 1024 * 1024) {
+    showToast('File size must not exceed 10MB', 'error');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerText = 'Uploading...';
+
+  try {
+    const base64 = await fileToBase64(file);
+    const res = await fetch(`${API_BASE}/ipos/${ipoId}/documents`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({
+        document_type: typeSelect.value,
+        file_name: file.name,
+        mime_type: file.type || 'application/pdf',
+        content: base64,
+      }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error?.message || 'Failed to upload document');
+
+    showToast('Document uploaded successfully!');
+    fileInput.value = '';
+    await loadIpoDocuments(ipoId);
+    await loadOfferings();
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerText = 'Upload Document';
+  }
+}
+
+async function handleDeleteIpoDoc(ipoId, docId) {
+  if (!confirm('Are you sure you want to delete this document?')) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/ipos/${ipoId}/documents/${docId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      throw new Error(json.error?.message || 'Failed to delete document');
+    }
+    showToast('Document removed');
+    await loadIpoDocuments(ipoId);
+    await loadOfferings();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+async function downloadIpoDoc(ipoId, docId, fileName) {
+  try {
+    const res = await fetch(`${API_BASE}/ipos/${ipoId}/documents/${docId}/file`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    if (!res.ok) throw new Error('Download failed');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+async function openIpoHistoryModal(ipoId, ipoTitle) {
+  document.getElementById('modal-history-ipo-title').innerText = `Review Trail: ${ipoTitle}`;
+  const modal = document.getElementById('modal-ipo-history');
+  const timelineEl = document.getElementById('ipo-history-timeline');
+  timelineEl.innerHTML = '<p style="color: var(--text-muted); font-size: 13px;">Loading history...</p>';
+  modal.style.display = 'flex';
+
+  try {
+    const res = await fetch(`${API_BASE}/ipos/${ipoId}/history`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    if (!res.ok) throw new Error('Failed to load review history');
+    const json = await res.json();
+    const history = json.data || [];
+
+    if (history.length === 0) {
+      timelineEl.innerHTML = '<p style="color: var(--text-muted); font-size: 13px;">No history records yet.</p>';
+      return;
+    }
+
+    timelineEl.innerHTML = history
+      .map(
+        (item) => `
+        <div class="timeline-item">
+          <div class="timeline-time">${new Date(item.created_at).toLocaleString()}</div>
+          <div class="timeline-body">
+            <strong>Transition:</strong> ${item.from_status ? item.from_status.replace(/_/g, ' ') : 'initial'} &rarr; <span class="status-pill status-${item.to_status}">${item.to_status.replace(/_/g, ' ')}</span>
+            ${item.reason ? `<div style="margin-top: 4px; color: var(--text-secondary); font-size: 13px;"><strong>Notes:</strong> ${escapeHtml(item.reason)}</div>` : ''}
+          </div>
+        </div>
+      `,
+      )
+      .join('');
+  } catch (err) {
+    timelineEl.innerHTML = `<p style="color: var(--danger); font-size: 13px;">Error: ${escapeHtml(err.message)}</p>`;
+  }
 }
 
 // ── Initialization ───────────────────────────────────────────────────────────

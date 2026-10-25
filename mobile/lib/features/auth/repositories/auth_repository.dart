@@ -29,4 +29,7 @@ abstract interface class AuthRepository {
   ///
   /// Used on app startup to verify the stored token is still valid.
   Future<UserProfile> getCurrentUser();
+
+  /// Updates the current user's permitted profile fields.
+  Future<UserProfile> updateProfile({String? fullName, String? phone});
 }

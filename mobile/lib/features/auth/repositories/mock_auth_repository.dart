@@ -99,4 +99,30 @@ class MockAuthRepository implements AuthRepository {
     }
     return _currentUser!;
   }
+
+  @override
+  Future<UserProfile> updateProfile({String? fullName, String? phone}) async {
+    await Future.delayed(_delay);
+    if (_currentUser == null) {
+      throw const UnauthorizedException();
+    }
+    String firstName = _currentUser!.firstName;
+    String lastName = _currentUser!.lastName;
+    if (fullName != null && fullName.trim().isNotEmpty) {
+      final trimmed = fullName.trim();
+      if (trimmed.contains(' ')) {
+        firstName = trimmed.split(' ').first;
+        lastName = trimmed.substring(trimmed.indexOf(' ') + 1);
+      } else {
+        firstName = trimmed;
+        lastName = '';
+      }
+    }
+    _currentUser = _currentUser!.copyWith(
+      firstName: firstName,
+      lastName: lastName,
+      phone: phone ?? _currentUser!.phone,
+    );
+    return _currentUser!;
+  }
 }

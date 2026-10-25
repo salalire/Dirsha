@@ -139,6 +139,40 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // ---------------------------------------------------------------------------
+  // Profile update and refresh
+  // ---------------------------------------------------------------------------
+
+  Future<bool> updateProfile({String? fullName, String? phone}) async {
+    _clearError();
+    _setLoading(true);
+    try {
+      final updated = await _repository.updateProfile(
+        fullName: fullName,
+        phone: phone,
+      );
+      _user = updated;
+      notifyListeners();
+      return true;
+    } on AppException catch (e) {
+      _errorMessage = e.message;
+      notifyListeners();
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> refreshUser() async {
+    try {
+      final user = await _repository.getCurrentUser();
+      _user = user;
+      notifyListeners();
+    } catch (_) {
+      // Ignore background refresh errors
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
 

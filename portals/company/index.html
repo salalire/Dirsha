@@ -116,6 +116,14 @@
             <span class="step-desc">Review & Decisions</span>
           </div>
         </div>
+
+        <div id="step-nav-offerings" class="step-item" onclick="goToStep('offerings')" style="display: none;">
+          <div class="step-number">5</div>
+          <div class="step-info">
+            <span class="step-title">IPO Offerings</span>
+            <span class="step-desc">Issuance & Review</span>
+          </div>
+        </div>
       </nav>
 
       <!-- Status Banner (if additional info required or rejected) -->
@@ -363,8 +371,168 @@
         </div>
       </section>
 
+      <!-- Step 5: IPO Offerings Management (Approved Companies) -->
+      <section id="step-panel-offerings" class="panel-card" style="display: none;">
+        <div class="panel-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+          <div class="panel-header-title">
+            <h2>Company IPO Issuer Dashboard</h2>
+            <p>Create and manage primary market IPO offerings, upload offering documentation, and track regulatory review.</p>
+          </div>
+          <button id="btn-create-offering-open" class="btn btn-primary" type="button" onclick="openCreateIpoModal()">
+            + Create New IPO Draft
+          </button>
+        </div>
+
+        <!-- KPI Metrics -->
+        <div class="kpi-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <div class="kpi-card" style="background: var(--bg-surface-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px;">
+            <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Total Offerings</div>
+            <div id="kpi-total-offerings" style="font-size: 24px; font-weight: 700; color: var(--text-primary); margin-top: 4px;">0</div>
+          </div>
+          <div class="kpi-card" style="background: var(--bg-surface-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px;">
+            <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">In Review</div>
+            <div id="kpi-review-offerings" style="font-size: 24px; font-weight: 700; color: #c084fc; margin-top: 4px;">0</div>
+          </div>
+          <div class="kpi-card" style="background: var(--bg-surface-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px;">
+            <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Approved / Active</div>
+            <div id="kpi-active-offerings" style="font-size: 24px; font-weight: 700; color: var(--primary); margin-top: 4px;">0</div>
+          </div>
+          <div class="kpi-card" style="background: var(--bg-surface-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px;">
+            <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Total Subscriptions</div>
+            <div id="kpi-total-subscriptions" style="font-size: 24px; font-weight: 700; color: var(--secondary); margin-top: 4px;">0</div>
+          </div>
+        </div>
+
+        <!-- Offerings List -->
+        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">Your Organization's Offerings</h3>
+        <div id="offerings-list" style="display: flex; flex-direction: column; gap: 16px;">
+          <p style="color: var(--text-muted); font-size: 13px;">Loading offerings...</p>
+        </div>
+      </section>
+
     </div>
   </main>
+
+  <!-- Modal: Create / Edit IPO Offering Draft -->
+  <div id="modal-ipo-form" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3 id="modal-ipo-title" style="font-size: 18px; font-weight: 700;">Create IPO Offering Draft</h3>
+        <button class="btn-close" type="button" onclick="closeModal('modal-ipo-form')">&times;</button>
+      </div>
+      <form id="form-ipo-draft" onsubmit="handleSaveIpoDraft(event)">
+        <input type="hidden" id="ipo-draft-id" value="">
+        <div class="form-grid">
+          <div class="form-group-full form-group">
+            <label for="ipo-title">Offering Title <span class="required">*</span></label>
+            <input id="ipo-title" class="input-control" type="text" placeholder="e.g. Abyssinia Cloud Tech Initial Public Offering" required>
+          </div>
+          <div class="form-group">
+            <label for="ipo-symbol">Trading Symbol (alphanumeric, 2-10 chars) <span class="required">*</span></label>
+            <input id="ipo-symbol" class="input-control" type="text" placeholder="e.g. ABYS" maxlength="10" required>
+          </div>
+          <div class="form-group">
+            <label for="ipo-price">Price Per Share (ETB) <span class="required">*</span></label>
+            <input id="ipo-price" class="input-control" type="number" step="0.01" min="0.01" placeholder="e.g. 100.00" required>
+          </div>
+          <div class="form-group">
+            <label for="ipo-total-shares">Total Shares Offered <span class="required">*</span></label>
+            <input id="ipo-total-shares" class="input-control" type="number" min="1" step="1" placeholder="e.g. 1000000" required>
+          </div>
+          <div class="form-group">
+            <label for="ipo-min-shares">Minimum Shares Per Subscription</label>
+            <input id="ipo-min-shares" class="input-control" type="number" min="1" step="1" value="1">
+          </div>
+          <div class="form-group">
+            <label for="ipo-max-shares">Maximum Shares Per Subscription (optional)</label>
+            <input id="ipo-max-shares" class="input-control" type="number" min="1" step="1" placeholder="Leave empty for unlimited">
+          </div>
+          <div class="form-group">
+            <label for="ipo-opens-at">Subscription Opening Date & Time <span class="required">*</span></label>
+            <input id="ipo-opens-at" class="input-control" type="datetime-local" required>
+          </div>
+          <div class="form-group">
+            <label for="ipo-closes-at">Subscription Closing Date & Time <span class="required">*</span></label>
+            <input id="ipo-closes-at" class="input-control" type="datetime-local" required>
+          </div>
+          <div class="form-group-full form-group">
+            <label for="ipo-description">Prospectus & Offering Summary</label>
+            <textarea id="ipo-description" class="textarea-control" placeholder="Provide a summary of the offering, business objectives, and intended capital use."></textarea>
+          </div>
+        </div>
+        <div class="action-bar" style="margin-top: 24px;">
+          <button class="btn btn-secondary" type="button" onclick="closeModal('modal-ipo-form')">Cancel</button>
+          <button id="btn-save-ipo" class="btn btn-primary" type="submit">Save Offering Draft</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: IPO Offering Documents -->
+  <div id="modal-ipo-docs" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 640px;">
+      <div class="modal-header">
+        <div>
+          <h3 id="modal-ipo-docs-title" style="font-size: 18px; font-weight: 700;">Offering Documentation</h3>
+          <p id="modal-ipo-docs-subtitle" style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Upload required prospectus and regulatory documents.</p>
+        </div>
+        <button class="btn-close" type="button" onclick="closeModal('modal-ipo-docs')">&times;</button>
+      </div>
+      <input type="hidden" id="current-doc-ipo-id" value="">
+      
+      <!-- Upload Zone -->
+      <div style="background: var(--bg-surface-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 20px;">
+        <div class="form-grid" style="margin-bottom: 12px;">
+          <div class="form-group">
+            <label for="ipo-doc-type-select">Document Category <span class="required">*</span></label>
+            <select id="ipo-doc-type-select" class="select-control">
+              <option value="prospectus">Full Offering Prospectus (Mandatory)</option>
+              <option value="financial_statement">Audited Financial Statements</option>
+              <option value="ecma_approval">ECMA Approval / Letter of No Objection</option>
+              <option value="board_resolution">Board Resolution Authorizing IPO</option>
+              <option value="valuation_report">Independent Valuation Report</option>
+              <option value="articles_of_association">Memorandum / Articles of Association</option>
+              <option value="other">Other Supporting Documentation</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="ipo-doc-file-input">Select File (PDF, PNG, JPG &le; 10MB) <span class="required">*</span></label>
+            <input id="ipo-doc-file-input" class="input-control" type="file" accept=".pdf,.png,.jpg,.jpeg">
+          </div>
+        </div>
+        <button id="btn-upload-ipo-doc" class="btn btn-primary" type="button" onclick="handleUploadIpoDocument()">Upload Document</button>
+      </div>
+
+      <!-- Uploaded List -->
+      <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 10px;">Attached Documents</h4>
+      <div id="ipo-uploaded-docs-list" class="doc-list" style="margin-bottom: 16px;">
+        <p style="color: var(--text-muted); font-size: 13px;">No documents uploaded yet.</p>
+      </div>
+
+      <div class="action-bar">
+        <button class="btn btn-secondary" type="button" onclick="closeModal('modal-ipo-docs')">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: IPO Status History & Admin Feedback -->
+  <div id="modal-ipo-history" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <div>
+          <h3 id="modal-history-ipo-title" style="font-size: 18px; font-weight: 700;">Offering Review History</h3>
+          <p id="modal-history-ipo-subtitle" style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Administrative review trail and feedback</p>
+        </div>
+        <button class="btn-close" type="button" onclick="closeModal('modal-ipo-history')">&times;</button>
+      </div>
+      <div id="ipo-history-timeline" class="timeline" style="margin-bottom: 20px;">
+        <p style="color: var(--text-muted); font-size: 13px;">Loading history...</p>
+      </div>
+      <div class="action-bar">
+        <button class="btn btn-secondary" type="button" onclick="closeModal('modal-ipo-history')">Close</button>
+      </div>
+    </div>
+  </div>
 
   <div id="toast-container"></div>
 

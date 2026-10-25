@@ -12,6 +12,7 @@ import '../features/home/screens/home_screen.dart';
 import '../features/ipos/providers/ipo_provider.dart';
 import '../features/ipos/screens/ipo_detail_screen.dart';
 import '../features/ipos/repositories/ipo_repository.dart';
+import '../features/profile/screens/profile_screen.dart';
 import '../features/subscriptions/screens/my_subscriptions_screen.dart';
 import '../features/subscriptions/screens/subscription_detail_screen.dart';
 import '../shared/widgets/loading_indicator.dart';
@@ -28,6 +29,7 @@ abstract final class AppRoutes {
   static const ipoDetail = '/ipos/:id';
   static const subscriptions = '/subscriptions';
   static const subscriptionDetail = '/subscriptions/:id';
+  static const profile = '/profile';
 
   /// Builds the ipoDetail path for a given [id].
   static String ipoDetailPath(String id) => '/ipos/$id';
@@ -158,6 +160,14 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
           final id = state.pathParameters['id']!;
           return SubscriptionDetailScreen(subscriptionId: id);
         },
+      ),
+
+      // ------------------------------------------------------------------
+      // Investor profile & account screen — /profile
+      // ------------------------------------------------------------------
+      GoRoute(
+        path: AppRoutes.profile,
+        builder: (_, _) => const ProfileScreen(),
       ),
     ],
 

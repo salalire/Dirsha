@@ -13,6 +13,7 @@ import '../../ipos/models/ipo_models.dart';
 import '../../ipos/providers/ipo_provider.dart';
 import '../../portfolio/providers/portfolio_provider.dart';
 import '../../portfolio/screens/portfolio_screen.dart';
+import '../../profile/screens/profile_screen.dart';
 import '../../subscriptions/providers/subscription_provider.dart';
 import '../../wallet/providers/wallet_provider.dart';
 
@@ -34,12 +35,13 @@ class _HomeScreenState extends State<HomeScreen> {
   // the protected setState directly.
   void switchTab(int index) => setState(() => _selectedIndex = index);
 
-  static const _tabs = ['Dashboard', 'IPOs', 'Portfolio', 'Wallet'];
+  static const _tabs = ['Dashboard', 'IPOs', 'Portfolio', 'Wallet', 'Profile'];
   static const _icons = [
     Icons.dashboard_outlined,
     Icons.business_center_outlined,
     Icons.pie_chart_outline_rounded,
     Icons.account_balance_wallet_outlined,
+    Icons.person_outline_rounded,
   ];
 
   @override
@@ -100,6 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _IposTab(),
           PortfolioScreen(),
           _WalletTab(),
+          ProfileScreen(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -148,8 +151,8 @@ class _DashboardTab extends StatelessWidget {
                   padding: EdgeInsets.only(top: 8, bottom: 4),
                   child: MockDataBanner(detail: 'Dashboard using mock data'),
                 ),
-              const SizedBox(height: 24),
-              _buildGreeting(user?.firstName),
+              const SizedBox(height: 16),
+              _buildGreeting(context, user),
               const SizedBox(height: 20),
               _WalletSummaryCard(),
               const SizedBox(height: 16),
@@ -210,20 +213,81 @@ class _DashboardTab extends StatelessWidget {
     );
   }
 
-  Widget _buildGreeting(String? firstName) {
-    final name = (firstName != null && firstName.isNotEmpty)
-        ? firstName
+  Widget _buildGreeting(BuildContext context, dynamic user) {
+    final name = (user?.firstName != null && (user.firstName as String).isNotEmpty)
+        ? user.firstName as String
         : 'Investor';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Hello, $name', style: AppTextStyles.screenTitle),
-        const SizedBox(height: 4),
-        Text(
-          'Here\'s your investment overview.',
-          style: AppTextStyles.bodyMedium,
-        ),
-      ],
+    final role = (user?.role != null) ? (user.role as String) : 'INVESTOR';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.cardSurface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: AppColors.brandEmerald,
+            child: Text(
+              name.isNotEmpty ? name[0].toUpperCase() : 'I',
+              style: AppTextStyles.cardTitle.copyWith(color: AppColors.textPrimary),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        'Hello, $name',
+                        style: AppTextStyles.cardTitle.copyWith(fontSize: 16),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.brandEmerald.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: AppColors.secondaryEmerald, width: 0.8),
+                      ),
+                      child: Text(
+                        role,
+                        style: AppTextStyles.labelSmall.copyWith(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Here is your investment overview.',
+                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+            color: AppColors.textSecondary,
+            tooltip: 'View Profile',
+            onPressed: () {
+              final homeState = context.findAncestorStateOfType<_HomeScreenState>();
+              homeState?.switchTab(4);
+            },
+          ),
+        ],
+      ),
     );
   }
 }

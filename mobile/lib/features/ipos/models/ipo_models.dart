@@ -107,12 +107,27 @@ class IpoSummary {
   final String? logoUrl;
   final String? shortDescription;
 
-  bool get isOpen => status == 'OPEN';
-  bool get isUpcoming =>
-      status == 'APPROVED' ||
-      status == 'UPCOMING' ||
-      status == 'SUBMITTED' ||
-      status == 'UNDER_REVIEW';
+  bool get isOpen {
+    if (status != 'OPEN') return false;
+    final now = DateTime.now();
+    if (subscriptionStartDate != null && now.isBefore(subscriptionStartDate!)) {
+      return false;
+    }
+    if (subscriptionEndDate != null && !now.isBefore(subscriptionEndDate!)) {
+      return false;
+    }
+    return true;
+  }
+
+  bool get isUpcoming {
+    if (status == 'APPROVED' || status == 'UPCOMING') return true;
+    if (status == 'OPEN' &&
+        subscriptionStartDate != null &&
+        DateTime.now().isBefore(subscriptionStartDate!)) {
+      return true;
+    }
+    return status == 'SUBMITTED' || status == 'UNDER_REVIEW';
+  }
 
   static DateTime? _parseDate(dynamic value) {
     if (value is! String) return null;

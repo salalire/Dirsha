@@ -6,6 +6,7 @@ import { Errors } from "../../lib/errors.js";
 import { fromDb } from "../../lib/money.js";
 import { recordAudit } from "../audit/audit.service.js";
 import { applyLedgerEntry } from "../wallet/ledger.js";
+import { computeEffectiveIpoStatus, type IpoStatus } from "../ipos/ipos.service.js";
 
 export const SUBSCRIPTION_STATUSES = [
   "reserved",
@@ -128,7 +129,13 @@ export async function createSubscription(
   }
 
   const now = new Date();
-  if (ipo.status !== "open" || now < ipo.opens_at || now >= ipo.closes_at) {
+  const effectiveStatus = computeEffectiveIpoStatus(
+    ipo.status as IpoStatus,
+    ipo.opens_at,
+    ipo.closes_at,
+    now,
+  );
+  if (effectiveStatus !== "open") {
     throw Errors.ipoNotOpen("IPO is not open for subscription");
   }
 
@@ -166,12 +173,19 @@ export async function createSubscription(
     //    Allocation/close take FOR UPDATE on the same row, so a subscription can never
     //    slip in after allocation has read the list of reserved subscriptions.
     const locked = (
-      await client.query<{ status: string; closes_at: Date }>(
-        "SELECT status, closes_at FROM ipos WHERE id = $1 FOR SHARE",
+      await client.query<{ status: string; opens_at: Date; closes_at: Date }>(
+        "SELECT status, opens_at, closes_at FROM ipos WHERE id = $1 FOR SHARE",
         [input.ipoId],
       )
     ).rows[0];
-    if (!locked || locked.status !== "open" || new Date() >= locked.closes_at) {
+    if (
+      !locked ||
+      computeEffectiveIpoStatus(
+        locked.status as IpoStatus,
+        locked.opens_at,
+        locked.closes_at,
+      ) !== "open"
+    ) {
       throw Errors.ipoNotOpen("IPO is not open for subscription");
     }
 

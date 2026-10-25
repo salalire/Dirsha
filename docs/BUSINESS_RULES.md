@@ -91,6 +91,38 @@ The shape of each type is enforced by database `CHECK` constraints, not just by 
 - **Administrative Decision Enforceability:** Admins review applications and supporting documents (`approved`/`rejected`). Approvals require complete mandatory documents and non-expired licenses. Rejections require an explicit recorded reason. Additional-info requests transition application to `additional_info_required` to allow applicant correction and resubmission.
 - **Role Isolation:** Only approved companies can create IPOs; only approved brokers can engage in broker activities.
 
+### A9. Company IPO Creation and Management Lifecycle
+- **Eligibility:** Only authenticated company representatives with an `approved` company onboarding status (or platform administrators) may create, edit, or submit IPO offerings.
+- **Offering Draft States:** IPO offerings follow a strict state flow: `draft` -> `submitted` -> `under_review` -> `approved` / `rejected` -> `open` (during active window) -> `closed` -> `allocated`.
+- **Document Requirements:** Company representatives must upload required offering documents (prospectus, valuation report, ECMA approval) linked directly to the IPO entity before submitting for admin review.
+- **Tenant Isolation:** Companies may only view, edit, attach documents to, or submit their own offerings. Cross-company access is rejected with `403 Forbidden` / `404 Not Found`.
+
+### A10. Broker Client Relationships & Authorized Portfolio Operations
+- **Eligibility:** Only approved brokers with active licenses can request client relationships.
+- **Consent Lifecycle:** Relationships progress from `pending` -> `active` (accepted by investor) -> `revoked` / `rejected`.
+- **Authorization Enforcement:** Brokers cannot inspect private client balances, share holdings, or place orders on behalf of clients while a relationship is in `pending`, `rejected`, or `revoked` status. Explicit client acceptance is required.
+- **Assisted Operations:** When authorized, brokers may place orders on behalf of clients, explicitly recording `assisted_by_broker_id` and creating immutable audit entries.
+
+### A11. Simulated Secondary-Market Trading Engine & Ledger Settlement
+- **Reconciliation of Requirements:** While live stock exchange integration and real monetary rails remain deferred, Dirsha provides a fully operational **simulated secondary-market trading and deterministic matching engine** denominated strictly in ETB minor units (santim) for test securities.
+- **Pre-Trade Asset Reservation:**
+  - Buy orders reserve cash (`price × quantity`) via the immutable ledger (`trade_reserve`), preventing overspending.
+  - Sell orders reserve shares in `share_holdings` (`reserved_quantity`), preventing overselling.
+- **Deterministic Price-Time Priority Matching:**
+  - Buy orders match against active sell orders sorted by `price_per_share_minor ASC, created_at ASC`.
+  - Sell orders match against active buy orders sorted by `price_per_share_minor DESC, created_at ASC`.
+  - Self-trading is strictly prohibited (`user_id != counterparty.user_id`).
+- **Instant Dual-Settlement & Price Improvement:**
+  - Execution occurs at the resting passive order (maker) price.
+  - Buyer's reserved cash is settled (`trade_settle`), and any price improvement difference is refunded to available cash (`trade_release`).
+  - Seller's wallet is credited with trade proceeds (`trade_credit`).
+  - Shares are atomically decremented from the seller and credited to the buyer in PostgreSQL.
+  - Full double-entry reconciliation (`wallet_reconciliation.ok = true`) is strictly preserved on every transaction.
+- **Order Cancellation:**
+  - Cancelling an open buy order atomically releases remaining reserved funds back to available cash (`trade_release`).
+  - Cancelling an open sell order releases reserved shares back to available inventory.
+  - Already filled or cancelled orders cannot be cancelled (`409 Conflict`).
+
 ---
 
 ## Part B: Decisions the team must make (before Phase 2 relies on them)
@@ -112,7 +144,7 @@ Please confirm or change each one (a reply in the team chat is enough; then upda
 | B10 | **Share precision** | Whole shares only | all |
 | B11 | **Where the capital goes** | MVP: settled funds are recorded as a ledger `subscription_settle` entry; no company wallet yet | M2, M3 |
 | B12 | **Session length** | Keep 15-minute access tokens for now; add refresh tokens only if the team wants it (FR-AUTH-07 is P1) | M1 |
-| B13 | **Company onboarding / IPO creation / documents** | Not in the 6-day plan's backend list. Confirm they are deferred, or schedule them (they are P0 in the SRS) | all |
+| B13 | **Company onboarding / IPO creation / documents** | Implemented in Phase 3. Approved companies create offerings and manage document reviews. | all |
+| B14 | **Secondary-Market Trading Engine** | Implemented in Phase 3 as an internal simulated deterministic matching engine in ETB; live exchange matching deferred. | all |
 
-Not decided and **not needed for the 6-day MVP**: order matching, market orders, trading sessions, broker authority limits,
-notification channels, localisation scope, retention periods, performance targets (SRS §10 items 5–8, 10–12, 14–15).
+External banking rails, physical payment gateways, and external exchange matching remain deferred.

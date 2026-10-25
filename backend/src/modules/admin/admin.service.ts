@@ -268,7 +268,7 @@ export async function closeIpo(
     ).rows[0];
 
     if (!ipo) throw Errors.notFound('IPO not found');
-    if (ipo.status !== 'open') {
+    if (ipo.status !== 'open' && ipo.status !== 'approved') {
       throw Errors.conflict(`Cannot close IPO currently in status '${ipo.status}'`);
     }
 
@@ -517,7 +517,7 @@ export async function listCompanyApplications(
     page: number;
     page_size: number;
   },
-): Promise<{ data: any[]; pagination: Pagination }> {
+): Promise<{ data: Record<string, unknown>[]; pagination: Pagination }> {
   const offset = (query.page - 1) * query.page_size;
   const conditions: string[] = [];
   const params: unknown[] = [];
@@ -780,7 +780,7 @@ export async function listBrokerApplications(
     page: number;
     page_size: number;
   },
-): Promise<{ data: any[]; pagination: Pagination }> {
+): Promise<{ data: Record<string, unknown>[]; pagination: Pagination }> {
   const offset = (query.page - 1) * query.page_size;
   const conditions: string[] = [];
   const params: unknown[] = [];

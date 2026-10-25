@@ -87,7 +87,7 @@ describe('Company Onboarding Workflow (FR-ONB-01..03, FR-DOC-01..05)', () => {
         content: VALID_BASE64_PNG,
       });
     expect(doc2Res.status).toBe(201);
-    const doc2Id = doc2Res.body.data.id;
+    const _doc2Id = doc2Res.body.data.id;
 
     // 6. Access control: document download by owner succeeds, by another user fails (403)
     const otherRep = await createUser(ctx, 'company_rep');
@@ -340,7 +340,7 @@ describe('Broker Onboarding Workflow (FR-ONB-04..05, FR-DOC-01..05)', () => {
         content: VALID_BASE64_PNG,
       });
     expect(docRes.status).toBe(201);
-    const docId = docRes.body.data.id;
+    const _docId = docRes.body.data.id;
 
     // 4. Submit application
     const submitRes = await request(ctx.app)

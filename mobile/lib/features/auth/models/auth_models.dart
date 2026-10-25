@@ -107,7 +107,9 @@ class UserProfile {
     required this.phone,
     required this.role,
     required this.accountStatus,
+    this.verificationStatus = 'UNVERIFIED',
     this.avatarUrl,
+    this.createdAt,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> rawJson) {
@@ -127,6 +129,15 @@ class UserProfile {
         ((json['account_status'] ?? json['accountStatus']) as String?)
             ?.toUpperCase() ??
         'ACTIVE';
+    final rawVerification =
+        ((json['verification_status'] ?? json['verificationStatus']) as String?)
+            ?.toUpperCase() ??
+        'UNVERIFIED';
+
+    DateTime? createdAt;
+    if (json['created_at'] != null) {
+      createdAt = DateTime.tryParse(json['created_at'].toString());
+    }
 
     return UserProfile(
       id: (json['id'] as String?) ?? '',
@@ -136,7 +147,9 @@ class UserProfile {
       phone: (json['phone'] as String?) ?? '',
       role: rawRole,
       accountStatus: rawStatus,
+      verificationStatus: rawVerification,
       avatarUrl: json['avatarUrl'] as String?,
+      createdAt: createdAt,
     );
   }
 
@@ -152,15 +165,47 @@ class UserProfile {
   /// Account status: "ACTIVE", "SUSPENDED", "PENDING_VERIFICATION", etc.
   final String accountStatus;
 
+  /// Verification status: "UNVERIFIED", "PENDING", "VERIFIED", "REJECTED".
+  final String verificationStatus;
+
   final String? avatarUrl;
+  final DateTime? createdAt;
 
   String get fullName => '$firstName $lastName'.trim();
 
   bool get isActive => accountStatus == 'ACTIVE';
 
+  bool get isVerified => verificationStatus == 'VERIFIED';
+
+  UserProfile copyWith({
+    String? id,
+    String? firstName,
+    String? lastName,
+    String? email,
+    String? phone,
+    String? role,
+    String? accountStatus,
+    String? verificationStatus,
+    String? avatarUrl,
+    DateTime? createdAt,
+  }) {
+    return UserProfile(
+      id: id ?? this.id,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      role: role ?? this.role,
+      accountStatus: accountStatus ?? this.accountStatus,
+      verificationStatus: verificationStatus ?? this.verificationStatus,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
   @override
   String toString() =>
-      'UserProfile(id: $id, name: $fullName, role: $role, status: $accountStatus)';
+      'UserProfile(id: $id, name: $fullName, role: $role, status: $accountStatus, verification: $verificationStatus)';
 }
 
 /// Combined result returned after a successful login or registration.

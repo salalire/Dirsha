@@ -125,12 +125,16 @@ function handleLogout() {
 
 function goToStep(step) {
   currentStep = step;
-  ['profile', 'license', 'docs', 'status'].forEach((s) => {
+  ['profile', 'license', 'docs', 'status', 'clients'].forEach((s) => {
     const nav = document.getElementById(`step-nav-${s}`);
     const panel = document.getElementById(`step-panel-${s}`);
     if (nav) nav.classList.toggle('active', s === step);
     if (panel) panel.style.display = s === step ? 'block' : 'none';
   });
+  if (step === 'clients') {
+    loadBrokerDashboard();
+    loadBrokerClients();
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -225,12 +229,18 @@ function renderStatusView() {
         <p><strong>Reason:</strong> ${escapeHtml(currentBroker.rejection_reason || 'Compliance criteria not met.')}</p>
       </div>`;
   } else if (status === 'approved') {
+    const clientsNav = document.getElementById('step-nav-clients');
+    if (clientsNav) clientsNav.style.display = 'flex';
+
     banner.className = 'alert-banner alert-success';
     banner.style.display = 'flex';
     banner.innerHTML = `
       <div class="alert-content">
         <h4>Broker License Approved by Platform Administrator</h4>
         <p>Your brokerage credentials have been verified and activated on the platform.</p>
+        <button class="btn btn-primary" style="margin-top: 12px; font-size: 13px;" onclick="goToStep('clients')">
+          Open Broker Operations &amp; Clients Dashboard &rarr;
+        </button>
       </div>`;
   } else {
     banner.style.display = 'none';
@@ -260,7 +270,8 @@ function setFormEditable(editable) {
   } else if (currentBroker && currentBroker.onboarding_status === 'approved') {
     submitBox.innerHTML = `
       <h3 style="font-size: 18px; font-weight: 700; color: var(--primary); margin-bottom: 8px;">Approved Brokerage</h3>
-      <p style="color: var(--text-secondary); font-size: 14px;">Your broker account is authorized.</p>
+      <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 16px;">Your broker account is authorized for client relationship management and secondary-market operations.</p>
+      <button class="btn btn-primary" type="button" onclick="goToStep('clients')">Go to Broker Dashboard</button>
     `;
   } else if (currentBroker && currentBroker.onboarding_status === 'additional_info_required') {
     btnSubmit.innerText = 'Resubmit Broker Application';
@@ -651,6 +662,214 @@ function escapeHtml(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+// ── Broker Dashboard & Client Operations ──────────────────────────────────
+let brokerClients = [];
+
+function formatSantim(minor) {
+  const val = Number(minor || 0) / 100;
+  return `${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ETB`;
+}
+
+async function loadBrokerDashboard() {
+  if (!authToken) return;
+  try {
+    const res = await fetch(`${API_BASE}/brokers/dashboard`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error?.message || 'Failed to load dashboard metrics');
+
+    const metrics = json.metrics || {};
+    document.getElementById('kpi-active-clients').innerText = metrics.total_active_clients ?? 0;
+    document.getElementById('kpi-pending-clients').innerText = metrics.pending_client_requests ?? 0;
+    document.getElementById('kpi-available-ipos').innerText = metrics.available_ipos_count ?? 0;
+    document.getElementById('kpi-assisted-orders').innerText = metrics.assisted_orders_count ?? 0;
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+async function loadBrokerClients() {
+  if (!authToken) return;
+  const statusFilter = document.getElementById('client-filter-status').value;
+  const url = statusFilter ? `${API_BASE}/brokers/clients?status=${encodeURIComponent(statusFilter)}` : `${API_BASE}/brokers/clients`;
+
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error?.message || 'Failed to load client roster');
+
+    brokerClients = json.data || [];
+    renderClientsTable();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+function renderClientsTable() {
+  const tbody = document.getElementById('clients-table-body');
+  if (!tbody) return;
+
+  if (brokerClients.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">
+          No client relationships found matching criteria.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = brokerClients.map((c) => {
+    const statusClass = c.status === 'active' ? 'status-approved' : (c.status === 'pending' ? 'status-submitted' : 'status-rejected');
+    const scopeLabel = c.relationship_type.replace(/_/g, ' ').toUpperCase();
+    const dateFormatted = new Date(c.requested_at).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+
+    const actionBtn = c.status === 'active'
+      ? `<button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;" onclick="inspectClientPortfolio('${c.investor_id}', '${escapeHtml(c.investor_name)}')">View Portfolio</button>`
+      : `<span style="color: var(--text-muted); font-size: 12px;">Awaiting consent</span>`;
+
+    return `
+      <tr>
+        <td>
+          <div style="font-weight: 600; color: var(--text-primary);">${escapeHtml(c.investor_name)}</div>
+          <div style="font-size: 12px; color: var(--text-muted);">${escapeHtml(c.investor_email)}</div>
+        </td>
+        <td>
+          <span style="display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">
+            ${escapeHtml(scopeLabel)}
+          </span>
+          ${c.notes ? `<div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">${escapeHtml(c.notes)}</div>` : ''}
+        </td>
+        <td>
+          <span class="status-pill ${statusClass}"><span class="dot"></span> ${c.status}</span>
+        </td>
+        <td style="color: var(--text-secondary); font-size: 12px;">
+          ${dateFormatted}
+        </td>
+        <td>
+          ${actionBtn}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function handleRequestClient(e) {
+  e.preventDefault();
+  const emailInput = document.getElementById('req-investor-email');
+  const typeInput = document.getElementById('req-rel-type');
+  const notesInput = document.getElementById('req-notes');
+  const btn = document.getElementById('btn-submit-client-req');
+
+  const investor_email = emailInput.value.trim();
+  const relationship_type = typeInput.value;
+  const notes = notesInput.value.trim();
+
+  if (!investor_email) return;
+
+  btn.disabled = true;
+  btn.innerText = 'Sending Request...';
+
+  try {
+    const res = await fetch(`${API_BASE}/brokers/clients/request`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({
+        investor_email,
+        relationship_type,
+        notes: notes || undefined,
+      }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error?.message || 'Failed to request relationship');
+
+    showToast('Authorized client relationship request sent successfully');
+    emailInput.value = '';
+    notesInput.value = '';
+    loadBrokerDashboard();
+    loadBrokerClients();
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerText = 'Send Relationship Request';
+  }
+}
+
+async function inspectClientPortfolio(clientId, clientName) {
+  if (!authToken) return;
+  try {
+    const res = await fetch(`${API_BASE}/brokers/clients/${clientId}`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error?.message || 'Access denied or portfolio inspection failed');
+
+    const data = json;
+    document.getElementById('modal-portfolio-subtitle').innerText =
+      `Authorized Client: ${clientName} (${data.client?.email || ''}) — ${data.relationship?.relationship_type?.toUpperCase() || ''}`;
+
+    const wallet = data.wallet || {};
+    document.getElementById('portfolio-available-cash').innerText = formatSantim(wallet.available_minor);
+    document.getElementById('portfolio-reserved-cash').innerText = formatSantim(wallet.reserved_minor);
+    document.getElementById('portfolio-total-cash').innerText = formatSantim(wallet.total_minor);
+
+    const holdingsContainer = document.getElementById('portfolio-holdings-container');
+    const holdings = data.holdings || [];
+    if (holdings.length === 0) {
+      holdingsContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 13px;">No share holdings currently held in this client's simulated portfolio.</p>`;
+    } else {
+      holdingsContainer.innerHTML = `
+        <div class="clients-table-container" style="margin-top: 8px;">
+          <table class="clients-table">
+            <thead>
+              <tr>
+                <th>Security / Company</th>
+                <th>Total Shares</th>
+                <th>Reserved Shares</th>
+                <th>Available</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${holdings.map((h) => `
+                <tr>
+                  <td>
+                    <div style="font-weight: 600; color: var(--text-primary);">${escapeHtml(h.symbol)}</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(h.company_name)}</div>
+                  </td>
+                  <td style="font-weight: 600;">${Number(h.quantity).toLocaleString()}</td>
+                  <td style="color: var(--warning);">${Number(h.reserved_quantity).toLocaleString()}</td>
+                  <td style="color: var(--primary); font-weight: 600;">${(Number(h.quantity) - Number(h.reserved_quantity)).toLocaleString()}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    document.getElementById('modal-client-portfolio').style.display = 'flex';
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+function closePortfolioModal() {
+  document.getElementById('modal-client-portfolio').style.display = 'none';
 }
 
 window.addEventListener('DOMContentLoaded', () => {

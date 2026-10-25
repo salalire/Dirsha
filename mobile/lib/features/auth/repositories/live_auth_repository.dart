@@ -113,4 +113,30 @@ class LiveAuthRepository implements AuthRepository {
       throw ParseException(message: 'Could not parse user profile.', cause: e);
     }
   }
+
+  @override
+  Future<UserProfile> updateProfile({String? fullName, String? phone}) async {
+    final payload = <String, dynamic>{};
+    if (fullName != null) payload['full_name'] = fullName;
+    if (phone != null) payload['phone'] = phone;
+
+    final data = await _client.patch<Map<String, dynamic>?>(
+      '/users/me',
+      data: payload,
+    );
+    if (data == null) {
+      throw const ParseException(message: 'Update profile response was empty.');
+    }
+    try {
+      final unwrapped = (data['data'] is Map<String, dynamic>)
+          ? data['data'] as Map<String, dynamic>
+          : data;
+      return UserProfile.fromJson(unwrapped);
+    } catch (e) {
+      throw ParseException(
+        message: 'Could not parse updated user profile.',
+        cause: e,
+      );
+    }
+  }
 }

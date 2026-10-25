@@ -116,6 +116,14 @@
             <span class="step-desc">Review &amp; Approvals</span>
           </div>
         </div>
+
+        <div id="step-nav-clients" class="step-item" onclick="goToStep('clients')" style="display: none;">
+          <div class="step-number">5</div>
+          <div class="step-info">
+            <span class="step-title">Broker Dashboard</span>
+            <span class="step-desc">Clients &amp; Operations</span>
+          </div>
+        </div>
       </nav>
 
       <!-- Status Banner (if additional info required or rejected) -->
@@ -343,8 +351,144 @@
         </div>
       </section>
 
+      <!-- Step 5: Broker Dashboard & Client Management -->
+      <section id="step-panel-clients" class="panel-card" style="display: none;">
+        <div class="panel-header">
+          <div class="panel-header-title">
+            <h2>Broker Operations &amp; Client Management</h2>
+            <p>Monitor your active clients, request investor relationships, and review authorized portfolios.</p>
+          </div>
+          <button class="btn btn-secondary" type="button" onclick="loadBrokerDashboard()">Refresh</button>
+        </div>
+
+        <!-- Metrics KPIs -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <span id="kpi-active-clients" class="kpi-val">0</span>
+            <span class="kpi-lbl">Active Clients</span>
+          </div>
+          <div class="kpi-card">
+            <span id="kpi-pending-clients" class="kpi-val">0</span>
+            <span class="kpi-lbl">Pending Requests</span>
+          </div>
+          <div class="kpi-card">
+            <span id="kpi-available-ipos" class="kpi-val">0</span>
+            <span class="kpi-lbl">Available Offerings</span>
+          </div>
+          <div class="kpi-card">
+            <span id="kpi-assisted-orders" class="kpi-val">0</span>
+            <span class="kpi-lbl">Assisted Orders</span>
+          </div>
+        </div>
+
+        <!-- Request New Client Relationship Card -->
+        <div style="background: var(--bg-surface-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 22px; margin-bottom: 24px;">
+          <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">Request Authorized Client Relationship</h3>
+          <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 16px;">
+            Enter the registered investor's email address to request authorization for portfolio advisory or order execution. The investor must review and accept the request before private financial data is accessible.
+          </p>
+          <form id="form-client-request" onsubmit="handleRequestClient(event)">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="req-investor-email">Investor Registered Email <span class="required">*</span></label>
+                <input id="req-investor-email" class="input-control" type="email" placeholder="investor@example.et" required>
+              </div>
+              <div class="form-group">
+                <label for="req-rel-type">Relationship Scope <span class="required">*</span></label>
+                <select id="req-rel-type" class="select-control" required>
+                  <option value="advisory">Advisory (Portfolio Advice &amp; Recommendations)</option>
+                  <option value="discretionary">Discretionary (Authorized Trading Execution)</option>
+                  <option value="execution_only">Execution Only (Order Execution Assistance)</option>
+                </select>
+              </div>
+              <div class="form-group form-group-full">
+                <label for="req-notes">Advisory Engagement Notes</label>
+                <input id="req-notes" class="input-control" type="text" placeholder="e.g. Annual portfolio advisory engagement agreement">
+              </div>
+            </div>
+            <button id="btn-submit-client-req" class="btn btn-primary" style="margin-top: 14px;" type="submit">
+              Send Relationship Request
+            </button>
+          </form>
+        </div>
+
+        <!-- Authorized Client Roster Table -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <h3 style="font-size: 16px; font-weight: 700;">Client Roster &amp; Relationships</h3>
+          <div style="display: flex; gap: 8px;">
+            <select id="client-filter-status" class="select-control" style="width: auto; padding: 6px 12px; font-size: 12px;" onchange="loadBrokerClients()">
+              <option value="">All Statuses</option>
+              <option value="active">Active Only</option>
+              <option value="pending">Pending Only</option>
+              <option value="revoked">Revoked</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="clients-table-container">
+          <table class="clients-table">
+            <thead>
+              <tr>
+                <th>Investor</th>
+                <th>Relationship Scope</th>
+                <th>Status</th>
+                <th>Requested Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="clients-table-body">
+              <tr>
+                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No client relationships found.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
     </div>
   </main>
+
+  <!-- Modal: Client Authorized Portfolio -->
+  <div id="modal-client-portfolio" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 650px;">
+      <div class="modal-header">
+        <div>
+          <h3 style="font-size: 18px; font-weight: 700;">Client Portfolio Inspection</h3>
+          <p id="modal-portfolio-subtitle" style="color: var(--text-secondary); font-size: 13px;">Authorized financial view</p>
+        </div>
+        <button class="btn-close" type="button" onclick="closePortfolioModal()">&times;</button>
+      </div>
+
+      <div class="portfolio-card">
+        <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-muted); text-transform: uppercase;">Simulated Cash Balances</h4>
+        <div class="portfolio-grid">
+          <div class="portfolio-item">
+            <div class="portfolio-label">Available Cash</div>
+            <div id="portfolio-available-cash" class="portfolio-value" style="color: var(--primary);">0.00 ETB</div>
+          </div>
+          <div class="portfolio-item">
+            <div class="portfolio-label">Reserved Cash</div>
+            <div id="portfolio-reserved-cash" class="portfolio-value" style="color: var(--warning);">0.00 ETB</div>
+          </div>
+          <div class="portfolio-item">
+            <div class="portfolio-label">Total Cash</div>
+            <div id="portfolio-total-cash" class="portfolio-value">0.00 ETB</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="portfolio-card">
+        <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-muted); text-transform: uppercase;">Share Holdings</h4>
+        <div id="portfolio-holdings-container">
+          <p style="color: var(--text-muted); font-size: 13px;">No share holdings found for this client.</p>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+        <button class="btn btn-secondary" type="button" onclick="closePortfolioModal()">Close</button>
+      </div>
+    </div>
+  </div>
 
   <div id="toast-container"></div>
 
