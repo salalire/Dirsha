@@ -112,7 +112,8 @@ class MockIpoRepository implements IpoRepository {
   }
 
   @override
-  Future<void> approveApplication(String id, {String? notes}) async {
+  Future<void> approveApplication(String id,
+      {String? notes, bool openImmediately = false}) async {
     await Future.delayed(const Duration(milliseconds: 800));
     final idx = _data.indexWhere((i) => i.id == id);
     if (idx == -1) throw Exception('IPO application not found: $id');
@@ -125,11 +126,36 @@ class MockIpoRepository implements IpoRepository {
       offeringTitle: _data[idx].offeringTitle,
       companyId: _data[idx].companyId,
       companyName: _data[idx].companyName,
-      status: IpoStatus.approved,
+      status: openImmediately ? IpoStatus.open : IpoStatus.approved,
       submittedAt: _data[idx].submittedAt,
       reviewedAt: DateTime.now(),
       reviewNotes: notes,
-      openDate: _data[idx].openDate,
+      openDate: openImmediately ? DateTime.now() : _data[idx].openDate,
+      closeDate: _data[idx].closeDate,
+      pricePerShareSantim: _data[idx].pricePerShareSantim,
+      totalSharesOffered: _data[idx].totalSharesOffered,
+      documents: _data[idx].documents,
+    );
+  }
+
+  @override
+  Future<void> openIpo(String id, {String? reason}) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    final idx = _data.indexWhere((i) => i.id == id);
+    if (idx == -1) throw Exception('IPO application not found: $id');
+    if (_data[idx].status != IpoStatus.approved) {
+      throw Exception('Only approved IPOs can be opened');
+    }
+    _data[idx] = IpoApplication(
+      id: _data[idx].id,
+      offeringTitle: _data[idx].offeringTitle,
+      companyId: _data[idx].companyId,
+      companyName: _data[idx].companyName,
+      status: IpoStatus.open,
+      submittedAt: _data[idx].submittedAt,
+      reviewedAt: _data[idx].reviewedAt,
+      reviewNotes: reason ?? _data[idx].reviewNotes,
+      openDate: DateTime.now(),
       closeDate: _data[idx].closeDate,
       pricePerShareSantim: _data[idx].pricePerShareSantim,
       totalSharesOffered: _data[idx].totalSharesOffered,
@@ -199,6 +225,28 @@ class MockIpoRepository implements IpoRepository {
       submittedAt: _data[idx].submittedAt,
       reviewedAt: _data[idx].reviewedAt,
       reviewNotes: _data[idx].reviewNotes,
+      openDate: _data[idx].openDate,
+      closeDate: _data[idx].closeDate,
+      pricePerShareSantim: _data[idx].pricePerShareSantim,
+      totalSharesOffered: _data[idx].totalSharesOffered,
+      documents: _data[idx].documents,
+    );
+  }
+
+  @override
+  Future<void> listIpo(String id, {String? reason}) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    final idx = _data.indexWhere((i) => i.id == id);
+    if (idx == -1) throw Exception('IPO application not found: $id');
+    _data[idx] = IpoApplication(
+      id: _data[idx].id,
+      offeringTitle: _data[idx].offeringTitle,
+      companyId: _data[idx].companyId,
+      companyName: _data[idx].companyName,
+      status: IpoStatus.listed,
+      submittedAt: _data[idx].submittedAt,
+      reviewedAt: _data[idx].reviewedAt,
+      reviewNotes: reason ?? _data[idx].reviewNotes,
       openDate: _data[idx].openDate,
       closeDate: _data[idx].closeDate,
       pricePerShareSantim: _data[idx].pricePerShareSantim,

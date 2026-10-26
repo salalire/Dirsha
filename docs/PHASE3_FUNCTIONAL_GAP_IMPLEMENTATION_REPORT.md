@@ -1,169 +1,189 @@
 # Dirsha Project — Phase 3 Functional Gap Implementation Report
 
 **Branch:** `feature/phase3-mobile-admin`  
-**Execution Context:** Resumed Interrupted Session (Full Continuation, Zero-Loss Recovery)  
-**Date:** October 25, 2026  
-**Status:** ALL PHASE 3 AUTHORIZED TASKS COMPLETED & VERIFIED
+**Execution Context:** Independent Verification & Final Review Preparation  
+**Date:** October 26, 2026  
+**Status:** ALL INTEGRATION GAPS VERIFIED & AUTOMATED CHECKS PASSING  
+**Verdict:** **READY FOR FINAL DEVICE TESTING**
 
 ---
 
-## 1. Executive Summary
+## 1. Actual Git State
 
-This report documents the continuation and completion of the authorized Phase 3 functional gaps on the Ethiopian digital investment platform **Dirsha**. The implementation was recovered without restarting, resetting, or discarding prior progress, building directly on the verified repository state.
-
-All five authorized areas are now complete:
-1. **Task A — IPO Visibility & Lifecycle Consistency:** Reconciled approved, upcoming, open, and closed IPO states; enforced server-side date windows; eliminated expired subscription vulnerabilities; regression verified.
-2. **Task B — Investor Profile & Account Experience:** Full authenticated profile screen in Flutter mobile with live backend integration (`/users/me`), editable profile bottom sheet, financial overview, router integration, and 100% widget test coverage.
-3. **Task C — Company IPO Creation & Management:** Complete post-approval issuer workflow with draft creation, metadata editing, document uploads, admin review submission, status timeline, and dedicated Web Portal UI at `/portal/company`.
-4. **Task D — Broker Operations & Client Management:** Dedicated broker operations dashboard, client relationship invitation lifecycle (`pending` -> `active` / `rejected` / `revoked`), strict client authorization enforcement, private portfolio inspection, and Web Portal UI at `/portal/broker`.
-5. **Task E — Simulated Secondary-Market Trading Engine:** In-memory & database deterministic price-time priority matching engine, pre-trade cash and share reservations, instant dual-settlement, price-improvement refunds, cancellation release, broker-assisted orders, and immutable double-entry ledger reconciliation (`wallet_reconciliation.ok = true`).
-
----
-
-## 2. Recovery & Starting State Assessment
-
-Before any code modifications were performed, the existing repository state was recovered and validated:
-
-| Area | Status Upon Resumption | Source-of-Truth Artifacts |
-|---|---|---|
-| **Task A (IPO Lifecycle)** | `COMPLETE` | `backend/src/modules/ipos/ipos.service.ts`, `backend/src/modules/subscriptions/subscriptions.service.ts`, `backend/tests/ipos.test.ts` (15 tests passing) |
-| **Task B (Investor Profile)** | `COMPLETE` | `mobile/lib/features/profile/screens/profile_screen.dart`, `mobile/lib/router/app_router.dart`, `mobile/lib/features/home/screens/home_screen.dart`, `mobile/test/features/profile/profile_screen_test.dart` (3 tests passing) |
-| **Task C (Company IPO Management)** | `COMPLETE` | Migration `0006_company_ipo_workflow_and_broker_trading.sql`, `backend/src/modules/ipos/ipos.routes.ts`, `backend/tests/company-ipo.test.ts` (13 tests passing), `portals/company/index.html`, `portals/company/app.js`, `portals/company/styles.css` |
-| **Task D (Broker Functionality)** | `PARTIALLY COMPLETE` | `broker_client_relationships` table in migration 0006, `backend/src/modules/brokers/brokers.service.ts` created but unrouted; no broker tests; broker portal UI not updated |
-| **Task E (Simulated Trading Engine)** | `NOT STARTED` | Schema tables (`share_holdings`, `orders`, `trades`) existed from migration 0006, but no ledger entry types, no trading service, no routes, and conflicting deferral note in `BUSINESS_RULES.md` |
-
----
-
-## 3. Detailed Work Completed in Resumed Session
-
-### Task D — Broker Operations & Client Management
-- **Backend Architecture & Routes:**
-  - Fixed linting and typing in `backend/src/modules/brokers/brokers.service.ts` (mapped PostgreSQL `legal_name` to DTO `firm_legal_name`).
-  - Created `backend/src/modules/brokers/brokers.routes.ts` mounting:
-    - `GET /brokers/me`: Profile of authenticated broker.
-    - `GET /brokers/dashboard`: Key operational metrics (active clients, pending requests, available IPOs, assisted orders).
-    - `GET /brokers/ipos`: Public and approved offerings discovery for brokers.
-    - `POST /brokers/clients/request`: Requests client relationship with an eligible investor (enforces approved broker status and investor existence, prevents duplicates).
-    - `GET /brokers/clients`: Lists broker's client relationships (supports `?status=pending|active|rejected|revoked`).
-    - `GET /brokers/clients/:clientId`: Retrieves private financial summary (cash balance and share holdings) for an authorized client with an `active` relationship.
-    - `GET /brokers/relationships/my`: Investor view of incoming relationship requests.
-    - `POST /brokers/relationships/:id/respond`: Investor response (`accept`, `reject`, or `revoke`).
-  - Registered `/brokers` router in `backend/src/app.ts`.
-- **Broker Portal UI (`/portal/broker`):**
-  - Updated `portals/broker/index.html` with 5th stepper nav tab `step-nav-clients`, Broker Dashboard panel `step-panel-clients`, KPI cards, Relationship Request form, and Client Roster table.
-  - Added Client Portfolio modal `#modal-client-portfolio` displaying client cash balances and share holdings.
-  - Added styling in `portals/broker/styles.css` adhering to the Dirsha dark design system (`#090d16`, `#111827`, `#10b981`, `#6366f1`).
-  - Implemented client management logic in `portals/broker/app.js` (`loadBrokerDashboard`, `loadBrokerClients`, `handleRequestClient`, `inspectClientPortfolio`, `closePortfolioModal`).
-- **Regression Tests (`backend/tests/brokers.test.ts`):**
-  - 17 comprehensive automated tests covering broker authorization, profile access, dashboard metrics, client invitations, duplicate prevention, privacy blocking for pending relationships, investor accept/revoke flows, and authorized portfolio inspection.
-
-### Task E — Simulated Secondary-Market Trading Engine
-- **Requirements Reconciliation:**
-  - Resolved conflict in `docs/BUSINESS_RULES.md`: While live external exchange matching and real-money banking rails remain deferred, Dirsha implements an internal prototype simulated trading engine denominated in ETB minor units (santim) with deterministic price-time priority matching.
-- **Database Schema & Migrations:**
-  - Created and applied `backend/migrations/0007_trading_ledger_entries.sql`:
-    - Extended `ledger_entries.entry_type` CHECK constraint with: `trade_reserve`, `trade_release`, `trade_settle`, `trade_credit`.
-    - Added mathematical shape constraints for each trading entry type.
-    - Applied cleanly to `dirsha_dev` and `dirsha_test`.
-- **Double-Entry Ledger Integrity:**
-  - Updated `LedgerEntryType` in `backend/src/modules/wallet/ledger.ts`.
-  - Every buy reservation, settlement, price improvement refund, and seller credit goes through `applyLedgerEntry`, guaranteeing that `wallet_reconciliation.ok` remains strictly `true`.
-- **Trading Engine & Service (`backend/src/modules/trading/trading.service.ts`):**
-  - `listTradableSecurities`: Discovers securities with pricing and order book volume.
-  - `listShareHoldings`: Lists caller's (or authorized client's) holdings.
-  - `placeOrder`:
-    - Validates buy funds or sell shares before placing order.
-    - Reserves funds in wallet or shares in `share_holdings` with `FOR UPDATE` row locking.
-    - Executes deterministic price-time priority matching against resting counterparty orders.
-    - Instant atomic dual-settlement: transfers cash via ledger and updates share quantities.
-    - Price improvement: refunds buyer if executed below limit price.
-    - Records `trades` and `audit_events`.
-  - `cancelOrder`:
-    - Cancels open or partially filled orders.
-    - Atomically releases remaining unspent cash or reserved shares.
-  - `listOrders` and `listTrades`: Full execution history with filters.
-- **Routes & Application Mounting:**
-  - Created `backend/src/modules/trading/trading.routes.ts`.
-  - Mounted `/trading` router in `backend/src/app.ts`.
-- **Regression Tests (`backend/tests/trading.test.ts`):**
-  - 14 comprehensive automated tests covering securities discovery, share holdings, sell order share reservation, insufficient fund rejections, limit matching, price improvement refunds, order cancellations, broker-assisted trading, and `wallet_reconciliation` verification.
+- **Current Branch:** `feature/phase3-mobile-admin`
+- **Working Tree Cleanliness:** Non-destructive; no uncommitted changes were discarded; no branch switching, merges, or pushes were performed.
+- **Tracked Changed Files (19 files):**
+  - `admin/lib/features/ipos/models/ipo_application.dart`
+  - `admin/lib/features/ipos/providers/ipos_provider.dart`
+  - `admin/lib/features/ipos/repositories/api_ipo_repository.dart`
+  - `admin/lib/features/ipos/repositories/ipo_repository.dart`
+  - `admin/lib/features/ipos/repositories/mock_ipo_repository.dart`
+  - `admin/lib/features/ipos/screens/ipo_detail_screen.dart`
+  - `admin/test/api_repositories_test.dart`
+  - `backend/src/modules/admin/admin.routes.ts`
+  - `backend/src/modules/admin/admin.service.ts`
+  - `backend/src/modules/trading/trading.service.ts`
+  - `backend/tests/admin.test.ts`
+  - `backend/tests/trading.test.ts`
+  - `docs/PHASE3_FUNCTIONAL_GAP_IMPLEMENTATION_REPORT.md`
+  - `mobile/lib/features/home/screens/home_screen.dart`
+  - `mobile/lib/features/portfolio/screens/portfolio_screen.dart`
+  - `mobile/lib/main.dart`
+  - `mobile/lib/router/app_router.dart`
+  - `portals/broker/app.js`
+  - `portals/broker/index.html`
+- **Untracked Added Files (3 items):**
+  - `backend/tests/e2e-phase3-full-workflow.test.ts` (11-step comprehensive E2E primary/secondary market test)
+  - `mobile/lib/features/trading/` (Models, repositories, provider, bottom sheet, and trading screen)
+  - `mobile/test/features/trading/` (Unit and widget tests for mobile trading)
+- **Recent Git Commits:**
+  - `0067a56` *(HEAD -> feature/phase3-mobile-admin, origin/main)* Fix some functional gaps
+  - `df82009` Add functionl gabs on what we did so far
+  - `f791610` Final phase interation
+  - `318c851` Phase 3: fix concurrent subscription race, add handover docs
+  - `ccf0403` feat: complete phase 1 & 2 integration and update srs & task plan to v1.1
 
 ---
 
-## 4. Verified Test Execution Results
+## 2. Independent Automated Test Results
 
-All test suites were executed locally and passed with zero errors:
+Every automated test command was independently executed and recorded:
 
-### Backend Test Suite (Vitest)
-- **Command:** `TEST_DATABASE_URL="postgres://dirsha:dirsha_local_test@localhost:5432/dirsha_test" npx vitest run`
-- **Result:** **18 test files passed (18/18), 172 tests passed (172/172)**.
-- **Duration:** 23.06s.
-- **Test File Breakdown:**
-  1. `tests/admin.test.ts` (7 passed)
-  2. `tests/admin-provision.test.ts` (2 passed)
-  3. `tests/auth.test.ts` (20 passed)
-  4. `tests/brokers.test.ts` (17 passed) — *NEW*
-  5. `tests/company-ipo.test.ts` (13 passed)
-  6. `tests/e2e-phase2-checkpoint.test.ts` (1 passed)
-  7. `tests/env-and-money.test.ts` (9 passed)
-  8. `tests/health-and-http.test.ts` (7 passed)
-  9. `tests/ipos.test.ts` (15 passed)
-  10. `tests/ledger.test.ts` (12 passed)
-  11. `tests/migrations.test.ts` (4 passed)
-  12. `tests/onboarding.test.ts` (18 passed)
-  13. `tests/portfolio.test.ts` (6 passed)
-  14. `tests/subscriptions.test.ts` (17 passed)
-  15. `tests/trading.test.ts` (14 passed) — *NEW*
-  16. `tests/users.test.ts` (4 passed)
-  17. `tests/wallet.test.ts` (6 passed)
-  18. `tests/helpers.ts` utilities
-
-### Backend Code Quality & Linter
-- **TypeScript Typecheck (`npm run typecheck`):** Clean (0 errors).
-- **ESLint (`npm run lint`):** Clean (0 errors, 0 warnings).
-
-### Mobile Flutter Application
-- **Command:** `flutter test`
-- **Result:** **165 tests passed (165/165)**.
-- **Static Analysis:** `flutter analyze mobile admin` reported **No issues found**.
-
-### Admin Flutter Dashboard
-- **Command:** `flutter test`
-- **Result:** **22 tests passed (22/22)**.
+| Verification Suite | Exact Executed Command | Exit Code | Result Details | Status |
+|---|---|:---:|---|:---:|
+| **Backend Tests (Vitest)** | `TEST_DATABASE_URL="postgres://dirsha:dirsha_local_test@localhost:5432/dirsha_test" npm test` | `0` | **19 test files passed (19/19), 184 tests passed (184/184)** | **PASS** |
+| **Admin Dashboard (Flutter)** | `/snap/bin/flutter test --no-pub` (in `admin/`) | `0` | **23 tests passed (23/23)** | **PASS** |
+| **Mobile App (Flutter)** | `/snap/bin/flutter test --no-pub` (in `mobile/`) | `0` | **171 tests passed (171/171)** | **PASS** |
+| **Flutter Static Analysis** | `/snap/bin/flutter analyze mobile admin` | `0` | **No issues found** across all analyzed files | **PASS** |
+| **Backend TypeScript Build** | `npm run build` (in `backend/`) | `0` | `tsc -p tsconfig.build.json` completed with **0 errors** | **PASS** |
 
 ---
 
-## 5. Summary of Files Changed
+## 3. Security, Financial Integrity & Authorization Audit
 
-### Backend Files
-- `backend/migrations/0006_company_ipo_workflow_and_broker_trading.sql` (Existing Phase 3 migration)
-- `backend/migrations/0007_trading_ledger_entries.sql` (New migration for trading ledger entries)
-- `backend/src/app.ts` (Mounted `/brokers` and `/trading` routers)
-- `backend/src/modules/brokers/brokers.service.ts` (Broker profiles, dashboard, and client relationships)
-- `backend/src/modules/brokers/brokers.routes.ts` (New Express router for broker endpoints)
-- `backend/src/modules/trading/trading.service.ts` (New trading engine, matching, settlement)
-- `backend/src/modules/trading/trading.routes.ts` (New Express router for trading endpoints)
-- `backend/src/modules/wallet/ledger.ts` (Added trade ledger movement types)
-- `backend/tests/brokers.test.ts` (17 regression tests for broker operations)
-- `backend/tests/trading.test.ts` (14 regression tests for trading engine)
+A thorough code-level audit was conducted across all critical paths:
 
-### Portals
-- `portals/broker/index.html` (Added Broker Dashboard tab, KPI cards, client request form, portfolio modal)
-- `portals/broker/styles.css` (Added modal, table, and KPI grid styles)
-- `portals/broker/app.js` (Implemented dashboard loading, client invitation, and portfolio inspection)
-- `portals/company/index.html`, `app.js`, `styles.css` (Completed company IPO creation & management)
+### 1. IPO Allocation & Shareholding Synchronization
+- **Atomicity:** In `backend/src/modules/admin/admin.service.ts` (`allocateIpo`), subscription allocation, wallet settlement, ledger entries, and `share_holdings` insertion execute within a single PostgreSQL transaction (`db.tx`).
+- **Upsert Correctness:** Uses `INSERT INTO share_holdings ... ON CONFLICT (investor_id, ipo_id) DO UPDATE SET quantity = share_holdings.quantity + EXCLUDED.quantity`. Existing holdings increment correctly.
+- **Zero Allocation Handling:** Subscriptions receiving 0 shares are completely bypassed, preventing empty 0-share rows.
+- **Failure Rollback:** If any settlement or ledger movement fails, the entire transaction rolls back cleanly; no phantom shares or unbalanced ledger entries are persisted.
+- **Concurrency & Idempotency:** The target IPO row is locked with `FOR UPDATE` at transaction start. Status transitions to `allocated`. Any repeated or concurrent execution sees status `allocated` and throws HTTP 409 Conflict.
 
-### Documentation
-- `docs/BUSINESS_RULES.md` (Added rules A9, A10, A11; reconciled trading engine requirements)
-- `docs/API_SPECIFICATION.md` (Added sections 7.4, 7.5, 7.6; updated implementation status table)
-- `docs/PHASE3_FUNCTIONAL_GAP_IMPLEMENTATION_REPORT.md` (This document)
+### 2. IPO Listing Transition
+- **Eligibility Enforced:** `listIpo()` in `admin.service.ts` strictly checks `ipo.status === 'allocated'`. Any other status throws HTTP 409 Conflict.
+- **Holding Precondition:** Listing queries `share_holdings` for `SUM(quantity) > 0`. Attempting to list an IPO with 0 allocated shares is rejected with HTTP 409 Conflict.
+- **Discovery Isolation:** `listTradableSecurities()` in `trading.service.ts` queries `WHERE i.status = 'listed'`. Non-listed IPOs (`draft`, `submitted`, `approved`, `open`, `closed`, `allocated`) never appear in trading discovery.
+- **Independent Server Order Validation:** `placeOrder()` queries the IPO status in the database transaction and throws HTTP 409 Conflict if `ipo.status !== 'listed'`, regardless of frontend state.
+- **Audit Logging:** Every listing appends to `ipo_status_history` and records an immutable audit event (`ipo.list`).
+
+### 3. Investor Trading (Mobile)
+- **Validation:** `placeOrder()` enforces Zod integer schemas (`quantity > 0`, `price_per_share_minor > 0`).
+- **Pre-Trade Financial Reservations:**
+  - Buy order: Atomically reserves `price * quantity` via `trade_reserve` in the ledger. Throws HTTP 422 `INSUFFICIENT_FUNDS` if balance is insufficient.
+  - Sell order: Atomically reserves shares in `share_holdings` (`quantity - reserved_quantity`). Throws HTTP 400 Validation Error if available shares are insufficient.
+- **Order Cancellation Rules:** Only orders with status `open` or `partially_filled` may be cancelled (enforced server-side with row-level locks). Cancellation releases unused funds/shares and records `trading.order_cancelled`.
+- **Investor Scoping:** `listOrders()` and `listTrades()` scope queries to `user_id = targetUserId`.
+- **UI Error Integrity:** `trading_screen.dart` and `order_placement_bottom_sheet.dart` catch and display backend API error messages via SnackBars/banners; failed requests are never masked as successful.
+
+### 4. Broker-Assisted Trading
+- **Independent Authorization:** `verifyBrokerClientAuthorization()` in `trading.service.ts` verifies caller role is `broker`, verifies broker profile exists, and checks `broker_client_relationships` for `status = 'active'`.
+- **Consent Lifecycle:** `pending`, `rejected`, or `revoked` consent strictly blocks client portfolio inspection (`GET /brokers/clients/:clientId`) and order submission (`POST /trading/orders` with `client_id`), returning HTTP 403 Forbidden.
+- **Attribution & Audit:** Assisted orders record `assisted_by_broker_id` on the order record and log audit records indicating the broker and client user IDs.
 
 ---
 
-## 6. Remaining Gaps and Blockers
+## 4. Local Services & Device Connectivity Findings
 
-- **Zero Functional Blockers:** All approved Phase 3 functional gaps (Tasks A, B, C, D, and E) are fully implemented, integrated, and verified with regression tests.
-- **Deferred Architecture Items (By Design):**
-  - External banking API rails (Telebirr/CBE live payment gateways) remain deferred for simulated ETB in prototype environment.
-  - Real-world stock exchange execution (direct Ethiopian Capital Market integration) remains deferred in favor of Dirsha's internal simulated matching engine.
-  - Refresh tokens (15-minute access tokens remain active as documented in `BUSINESS_RULES.md` B12).
+All required local services were inspected and confirmed operational:
+
+| Service / Component | Address / Port | Verified Method | Response / Status |
+|---|---|---|---|
+| **PostgreSQL 18** | `127.0.0.1:5432` | Pool Query (`dirsha_dev`, `dirsha_test`) | **Operational** |
+| **Node.js Backend** | `http://127.0.0.1:3000` | `curl -s http://127.0.0.1:3000/health` | `{"status":"ok","checks":{"database":"up"}}` |
+| **Admin Dashboard** | `http://localhost:8080` | `curl -s -I http://localhost:8080` | `HTTP/1.0 200 OK` (Python HTTP Server) |
+| **Company Web Portal** | `http://127.0.0.1:3000/portal/company/` | `curl -s -I http://127.0.0.1:3000/portal/company/` | `HTTP/1.1 200 OK` (Static route in `app.ts`) |
+| **Broker Web Portal** | `http://127.0.0.1:3000/portal/broker/` | `curl -s -I http://127.0.0.1:3000/portal/broker/` | `HTTP/1.1 200 OK` (Static route in `app.ts`) |
+| **Android Device Tunnel** | `R7AX60V79ZB` | `adb reverse --list` | `UsbFfs tcp:3000 tcp:3000` |
+| **Device Reverse Reachability** | From device shell | `adb shell curl -s http://127.0.0.1:3000/health` | **200 OK** (`checks.database = up`) |
+
+---
+
+## 5. End-to-End Workflow Verification Results
+
+The automated end-to-end acceptance suite (`backend/tests/e2e-phase3-full-workflow.test.ts`) executed 11 comprehensive lifecycle steps:
+
+1. **Company IPO Draft & Submit:** Created `POST /ipos`, submitted via `POST /ipos/:id/submit`. (`submitted` status verified).
+2. **Admin Approval & Opening:** Admin approved via `POST /admin/ipos/:id/approve` with notes. Date window opened IPO.
+3. **Dual Investor Subscriptions:** Investor 1 subscribed for 50 shares (5,000 ETB); Investor 2 subscribed for 30 shares (3,000 ETB). Available balances decreased, reserved balances increased.
+4. **IPO Close:** Admin closed subscription window via `POST /admin/ipos/:id/close`.
+5. **Atomic Allocation:** Admin allocated shares via `POST /admin/ipos/:id/allocate`.
+   - Investor 1: **50 shares** inserted into `share_holdings` (0 reserved).
+   - Investor 2: **30 shares** inserted into `share_holdings` (0 reserved).
+   - Ledger settled: 0 unallocated difference across all wallets.
+6. **Allocation Idempotency:** Repeated call returned HTTP 409 Conflict; shareholdings remained unchanged.
+7. **Listing Transition:** Admin listed IPO via `POST /admin/ipos/:id/list`. Security appeared in `GET /trading/securities`.
+8. **Unlisted Order Rejection:** Order placement on unlisted draft IPO rejected with HTTP 409 Conflict.
+9. **Order Pre-trade Validation:** Sell order exceeding holdings rejected with HTTP 400; buy order exceeding funds rejected with HTTP 422.
+10. **Secondary Market Matching:** Limit sell order (10 shares @ 105 ETB) matched against limit buy order (10 shares @ 105 ETB). Immediate trade execution, dual cash/share settlement, orders marked `filled`.
+11. **Broker Consent Lifecycle:** Pending consent blocked order (HTTP 403); active consent allowed assisted order and cancellation; revoked consent blocked subsequent orders (HTTP 403).
+
+---
+
+## 6. Real-Device and Portal Manual Test Checklists
+
+### A. Samsung Galaxy A05s (Physical Android Device)
+The device is connected (`R7AX60V79ZB`), the package `com.dirsha.dirsha_mobile` is installed, and the reverse tunnel reaches `127.0.0.1:3000`.
+
+**Interactive Test Steps (Recommended for Manual Review):**
+1. **Launch App:** Launch Dirsha Mobile from the app launcher.
+2. **Sign In:**
+   - *Mock Mode:* Sign in with `investor@dirsha.dev` / `Demo1234!` (displays `[MOCK DATA ACTIVE]` banner).
+   - *Live Mode:* Sign in with an active investor account (e.g. `investor@dirsha.test`).
+3. **Navigate to Trading:**
+   - Tap "Secondary Market Trading" card on Home Screen, or "Trade Shares on Secondary Market" on Portfolio Screen.
+   - Screen `/trading` opens with 3 tabs: *Securities*, *My Holdings*, *Orders & Trades*.
+4. **Discover Listed Securities:**
+   - Verify tab 1 displays listed IPOs (e.g. `TESTC`), prices in ETB, and "Trade" action button.
+5. **Inspect My Holdings:**
+   - Switch to tab 2. Verify allocated shares, available vs reserved shares, and market valuation in ETB.
+6. **Place Buy Order:**
+   - Tap "Trade", select "Buy", enter quantity and price in ETB, observe live total, and tap "Submit Buy Order".
+   - Verify confirmation SnackBar.
+7. **Place Sell Order:**
+   - Tap "Sell", enter quantity (within available shares) and price, submit, and verify reserved shares update.
+8. **Inspect Orders & Cancellation:**
+   - Switch to tab 3. Locate open order and tap "Cancel".
+   - Verify order status updates to `cancelled` and reserved funds/shares release immediately.
+9. **Validation & Error Handling:**
+   - Enter an invalid quantity (0 or exceeding shares) or price; verify validation message prevents submission.
+
+### B. Admin Dashboard (`http://localhost:8080`)
+1. **Access:** Open `http://localhost:8080` in Chrome/Firefox.
+2. **Review IPOs:** Navigate to IPO Applications list.
+3. **Verify Listing Action:** Select an IPO with status `allocated` (e.g. `NILE`).
+4. **Execute Listing:** Click the green "List on Market" button, enter reason in dialog, click Confirm.
+5. **Verify Immediate Update:** Verify SnackBar confirmation, status updates to `LISTED`, and "List on Market" button is replaced with active badge.
+6. **Inspect Unallocated IPOs:** Open an IPO in `draft` or `open` status; verify "List on Market" button is not visible.
+
+### C. Broker Portal (`http://127.0.0.1:3000/portal/broker/`)
+1. **Access:** Open `http://127.0.0.1:3000/portal/broker/`.
+2. **Consent Gating:** On client roster, observe clients with `pending` status; verify that portfolio modal and order submission are blocked by the backend (HTTP 403).
+3. **Assisted Trading:** On an `active` client, click "Portfolio & Trading".
+4. **Order Placement:** In the client modal, select a listed security, choose Buy/Sell, input quantity and limit price, verify live total, and click "Submit Assisted Order".
+5. **Assisted Cancellation:** Locate open assisted order in Client Orders table, click "Cancel", and verify cancellation.
+
+---
+
+## 7. Remaining Gaps and Known Limitations
+
+- **Prototype Financial Environment:** All transactions are simulated in Ethiopian Birr minor units (santim: 1 ETB = 100 santim). Real external banking rails (Telebirr/CBE live APIs) and live exchange APIs remain deferred by project architecture.
+- **Local Test Credentials:** The dev database accounts use bcrypt hashes. For fresh developer sessions, credentials can be created via public self-registration (`POST /auth/register`), or existing accounts can have passwords updated via `SEED_PASSWORD="<local-pass>" npm run seed`.
+
+---
+
+## 8. Final Verdict
+
+# **READY FOR FINAL DEVICE TESTING**
+
+All automated backend, admin, and mobile tests pass with 100% success; static analysis is clean; all three integration gaps are resolved with strict financial and authorization invariants; local services and device network connectivity are verified. The platform is ready for hands-on review.

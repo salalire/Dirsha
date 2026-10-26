@@ -67,8 +67,22 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
               children: [
                 if (summary != null) ...[
                   PortfolioSummaryCard(summary: summary),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                 ],
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => context.push('/trading'),
+                    icon: const Icon(Icons.trending_up, size: 16),
+                    label: const Text('Trade Shares on Secondary Market'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.secondaryEmerald,
+                      side: const BorderSide(color: AppColors.secondaryEmerald),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
                 SectionHeader(
                   title: 'My Holdings',
                   actionLabel: 'All Subscriptions',

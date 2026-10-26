@@ -81,7 +81,7 @@ export async function listTradableSecurities(db: Db): Promise<{ data: TradableSe
             (SELECT count(*)::bigint FROM orders o WHERE o.ipo_id = i.id AND o.status IN ('open', 'partially_filled')) AS open_orders_count
      FROM ipos i
      JOIN companies c ON c.id = i.company_id
-     WHERE i.status IN ('open', 'approved', 'closed', 'allocated')
+     WHERE i.status = 'listed'
      ORDER BY i.symbol ASC`,
   );
 
@@ -182,8 +182,8 @@ export async function placeOrder(
 
   return db.tx(async (client) => {
     // Verify IPO exists and fetch metadata
-    const ipoRes = await client.query<{ id: string; symbol: string; company_name: string }>(
-      `SELECT i.id, i.symbol, c.legal_name AS company_name
+    const ipoRes = await client.query<{ id: string; symbol: string; company_name: string; status: string }>(
+      `SELECT i.id, i.symbol, c.legal_name AS company_name, i.status
        FROM ipos i
        JOIN companies c ON c.id = i.company_id
        WHERE i.id = $1`,
@@ -191,6 +191,10 @@ export async function placeOrder(
     );
     const ipo = ipoRes.rows[0];
     if (!ipo) throw Errors.notFound('Security not found');
+
+    if (ipo.status !== 'listed') {
+      throw Errors.conflict(`Security '${ipo.symbol}' is not listed for secondary-market trading (status: ${ipo.status})`);
+    }
 
     // Get target user's wallet
     const walletRes = await client.query<{ id: string }>(

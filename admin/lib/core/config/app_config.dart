@@ -20,15 +20,14 @@ abstract final class AppConfig {
   static const String appVersion = '1.0.0-phase1';
 
   /// When true, the app uses mock repositories instead of real API calls.
-  /// This is set to true by default for Phase 1 while the backend is in
-  /// development. Set to false once backend endpoints are confirmed ready.
+  /// Set to false now that backend endpoints are confirmed ready.
   ///
   /// IMPORTANT: This is a DEVELOPMENT convenience flag only.
   /// Backend authorization must protect every privileged operation.
   /// Disabling mock mode does not make the client "secure" on its own.
   static const bool useMockData = bool.fromEnvironment(
     'USE_MOCK_DATA',
-    defaultValue: true,
+    defaultValue: false,
   );
 
   /// Request timeout duration.

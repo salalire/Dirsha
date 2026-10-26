@@ -57,7 +57,7 @@ beforeAll(async () => {
      )
      VALUES (
        $1, 'Habesha Breweries Shares', 'HBBR', 10000, 500000,
-       'open', now() - INTERVAL '1 day', now() + INTERVAL '10 days'
+       'listed', now() - INTERVAL '1 day', now() + INTERVAL '10 days'
      )
      RETURNING id`,
     [companyId],

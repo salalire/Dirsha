@@ -166,6 +166,33 @@ void main() {
       await repo.rejectApplication('ipo-1', reason: 'Missing audit financials');
       expect(called, isTrue);
     });
+
+    test('openIpo, closeIpo, allocateIpo, and listIpo post to admin endpoints', () async {
+      final calledPaths = <String>[];
+      final mockHttp = MockClient((request) async {
+        calledPaths.add(request.url.path);
+        return http.Response(
+          json.encode({'data': {'status': 'ok'}}),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+
+      final apiClient = ApiClient(httpClient: mockHttp);
+      final repo = ApiIpoRepository(apiClient: apiClient);
+
+      await repo.openIpo('ipo-1', reason: 'Open subscriptions');
+      await repo.closeIpo('ipo-1', reason: 'Window ended');
+      await repo.allocateIpo('ipo-1');
+      await repo.listIpo('ipo-1', reason: 'Ready for market');
+
+      expect(calledPaths, [
+        '/admin/ipos/ipo-1/open',
+        '/admin/ipos/ipo-1/close',
+        '/admin/ipos/ipo-1/allocate',
+        '/admin/ipos/ipo-1/list',
+      ]);
+    });
   });
 
   group('ApiUserRepository', () {

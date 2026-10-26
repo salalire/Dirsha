@@ -15,6 +15,7 @@ import '../features/ipos/repositories/ipo_repository.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/subscriptions/screens/my_subscriptions_screen.dart';
 import '../features/subscriptions/screens/subscription_detail_screen.dart';
+import '../features/trading/screens/trading_screen.dart';
 import '../shared/widgets/loading_indicator.dart';
 
 /// Route name constants — use these instead of string literals in screens.
@@ -30,6 +31,7 @@ abstract final class AppRoutes {
   static const subscriptions = '/subscriptions';
   static const subscriptionDetail = '/subscriptions/:id';
   static const profile = '/profile';
+  static const trading = '/trading';
 
   /// Builds the ipoDetail path for a given [id].
   static String ipoDetailPath(String id) => '/ipos/$id';
@@ -168,6 +170,14 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
       GoRoute(
         path: AppRoutes.profile,
         builder: (_, _) => const ProfileScreen(),
+      ),
+
+      // ------------------------------------------------------------------
+      // Secondary-market trading screen — /trading
+      // ------------------------------------------------------------------
+      GoRoute(
+        path: AppRoutes.trading,
+        builder: (_, _) => const TradingScreen(),
       ),
     ],
 

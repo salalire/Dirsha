@@ -192,6 +192,23 @@ class _DashboardTab extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => context.push('/trading'),
+                  icon: const Icon(Icons.trending_up, size: 18),
+                  label: const Text('Secondary Market Trading'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.secondaryEmerald,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ),
               const SizedBox(height: 28),
               SectionHeader(
                 title: 'IPO Opportunities',

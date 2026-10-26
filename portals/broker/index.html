@@ -450,7 +450,7 @@
 
   <!-- Modal: Client Authorized Portfolio -->
   <div id="modal-client-portfolio" class="modal-backdrop" style="display: none;">
-    <div class="modal-content" style="max-width: 650px;">
+    <div class="modal-content" style="max-width: 820px;">
       <div class="modal-header">
         <div>
           <h3 style="font-size: 18px; font-weight: 700;">Client Portfolio Inspection</h3>
@@ -481,6 +481,70 @@
         <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-muted); text-transform: uppercase;">Share Holdings</h4>
         <div id="portfolio-holdings-container">
           <p style="color: var(--text-muted); font-size: 13px;">No share holdings found for this client.</p>
+        </div>
+      </div>
+
+      <!-- Client-Assisted Trading Form -->
+      <div class="portfolio-card" style="border: 1px solid var(--accent-surface); background: rgba(99, 102, 241, 0.04);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h4 style="font-size: 14px; font-weight: 700; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.03em;">
+            Client-Assisted Trade Order
+          </h4>
+          <span class="badge" style="background: var(--accent-surface); color: #a5b4fc; font-size: 11px;">Broker Execution</span>
+        </div>
+
+        <form id="form-assisted-trade" onsubmit="event.preventDefault(); handlePlaceAssistedOrder();">
+          <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group" style="grid-column: span 2;">
+              <label class="form-label" for="assisted-order-security">Tradable Listed Security *</label>
+              <select id="assisted-order-security" class="form-control" onchange="handleSecuritySelected()" required>
+                <option value="">Loading listed securities...</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="assisted-order-side">Order Side *</label>
+              <select id="assisted-order-side" class="form-control" onchange="updateAssistedOrderCalculations()" required>
+                <option value="buy">Buy (Debit Client Cash)</option>
+                <option value="sell">Sell (Debit Client Shares)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="assisted-order-qty">Quantity (Shares) *</label>
+              <input type="number" id="assisted-order-qty" class="form-control" min="1" step="1" value="10" oninput="updateAssistedOrderCalculations()" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="assisted-order-price">Limit Price per Share (ETB) *</label>
+              <input type="number" id="assisted-order-price" class="form-control" min="0.01" step="0.01" value="100.00" oninput="updateAssistedOrderCalculations()" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Estimated Order Value</label>
+              <div id="assisted-order-total" class="portfolio-value" style="color: var(--primary); padding-top: 8px;">1,000.00 ETB</div>
+            </div>
+          </div>
+
+          <div style="font-size: 12px; color: var(--text-muted); background: var(--accent-surface); border-left: 3px solid var(--accent); padding: 10px 14px; border-radius: var(--radius-sm); margin-top: 14px; line-height: 1.4;">
+            <strong style="color: #a5b4fc;">Client Authorization Enforced:</strong> This order is placed on behalf of this client with broker authorization (<code>assisted_by_broker_id</code>). The backend matching engine independently validates active client consent, reserves required funds or shares, and records audit trail events.
+          </div>
+
+          <div style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="submit" id="btn-submit-assisted-order" class="btn btn-primary" style="background: var(--accent); border-color: var(--accent);">
+              Submit Assisted Order
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Client Orders & Trades Table -->
+      <div class="portfolio-card">
+        <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-muted); text-transform: uppercase;">
+          Client Orders & Activity
+        </h4>
+        <div id="client-orders-container">
+          <p style="color: var(--text-muted); font-size: 13px;">Loading client orders...</p>
         </div>
       </div>
 

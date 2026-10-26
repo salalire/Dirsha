@@ -69,10 +69,14 @@ class _DetailContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomScrollView(
-      slivers: [
-        _buildAppBar(context),
-        SliverToBoxAdapter(
+    return RefreshIndicator(
+      color: AppColors.secondaryEmerald,
+      backgroundColor: AppColors.cardSurface,
+      onRefresh: () => context.read<IpoDetailProvider>().refresh(detail.id),
+      child: CustomScrollView(
+        slivers: [
+          _buildAppBar(context),
+          SliverToBoxAdapter(
           child: Column(
             children: [
               if (AppConfig.useMockRepositories && !AppConfig.isProduction)
@@ -117,6 +121,7 @@ class _DetailContent extends StatelessWidget {
           ),
         ),
       ],
+    ),
     );
   }
 
@@ -299,10 +304,27 @@ class _DetailContent extends StatelessWidget {
 
   Widget _buildSubscriptionButton(BuildContext context) {
     final isOpen = detail.isOpen;
+    final isUpcoming = detail.isUpcoming;
+    String buttonLabel;
+    String helperText;
+
+    if (isOpen) {
+      buttonLabel = 'Subscribe';
+      helperText = 'Funds will be reserved from your wallet until allocation.';
+    } else if (isUpcoming) {
+      buttonLabel = 'Subscriptions opening soon';
+      helperText = detail.subscriptionStartDate != null
+          ? 'Subscriptions open on ${Formatters.dateMedium(detail.subscriptionStartDate!)}.'
+          : 'This offering is scheduled to open soon.';
+    } else {
+      buttonLabel = 'Subscriptions closed';
+      helperText = 'This offering is not currently accepting subscriptions.';
+    }
+
     return Column(
       children: [
         DirshaButton(
-          label: isOpen ? 'Subscribe' : 'Subscriptions closed',
+          label: buttonLabel,
           onPressed: isOpen
               ? () => SubscriptionBottomSheet.show(context, ipo: detail)
               : null,
@@ -310,9 +332,7 @@ class _DetailContent extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          isOpen
-              ? 'Funds will be reserved from your wallet until allocation.'
-              : 'This offering is not currently accepting subscriptions.',
+          helperText,
           style: AppTextStyles.labelSmall,
           textAlign: TextAlign.center,
         ),

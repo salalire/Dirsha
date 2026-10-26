@@ -11,12 +11,14 @@ import {
   approveCompanyApplication,
   approveIpo,
   closeIpo,
+  openIpo,
   getBrokerApplicationById,
   getCompanyApplicationById,
   listAllUsers,
   listAuditEvents,
   listBrokerApplications,
   listCompanyApplications,
+  listIpo,
   rejectBrokerApplication,
   rejectCompanyApplication,
   rejectIpo,
@@ -37,6 +39,11 @@ const usersQuerySchema = paginationSchema.extend({
 
 const approveIpoSchema = z.strictObject({
   notes: z.string().max(1000).optional(),
+  open_immediately: z.boolean().optional(),
+});
+
+const openIpoSchema = z.strictObject({
+  reason: z.string().max(1000).optional(),
 });
 
 const rejectIpoSchema = z.strictObject({
@@ -44,6 +51,10 @@ const rejectIpoSchema = z.strictObject({
 });
 
 const closeIpoSchema = z.strictObject({
+  reason: z.string().max(1000).optional(),
+});
+
+const listIpoSchema = z.strictObject({
   reason: z.string().max(1000).optional(),
 });
 
@@ -94,6 +105,19 @@ export function adminRouter(deps: AppDeps): Router {
     const body = parseWith(approveIpoSchema, req.body ?? {});
     const result = await approveIpo(deps.db, req.user, id, {
       notes: body.notes,
+      open_immediately: body.open_immediately,
+      requestId: req.requestId,
+    });
+    res.json({ data: result });
+  });
+
+  // POST /admin/ipos/:id/open
+  router.post('/ipos/:id/open', async (req, res) => {
+    if (!req.user) throw Errors.unauthenticated();
+    const id = parseWith(uuidSchema, req.params.id);
+    const body = parseWith(openIpoSchema, req.body ?? {});
+    const result = await openIpo(deps.db, req.user, id, {
+      reason: body.reason,
       requestId: req.requestId,
     });
     res.json({ data: result });
@@ -128,6 +152,18 @@ export function adminRouter(deps: AppDeps): Router {
     if (!req.user) throw Errors.unauthenticated();
     const id = parseWith(uuidSchema, req.params.id);
     const result = await allocateIpo(deps.db, req.user, id, {
+      requestId: req.requestId,
+    });
+    res.json({ data: result });
+  });
+
+  // POST /admin/ipos/:id/list
+  router.post('/ipos/:id/list', async (req, res) => {
+    if (!req.user) throw Errors.unauthenticated();
+    const id = parseWith(uuidSchema, req.params.id);
+    const body = parseWith(listIpoSchema, req.body ?? {});
+    const result = await listIpo(deps.db, req.user, id, {
+      reason: body.reason,
       requestId: req.requestId,
     });
     res.json({ data: result });

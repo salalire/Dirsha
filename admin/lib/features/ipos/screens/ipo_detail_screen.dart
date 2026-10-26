@@ -248,7 +248,10 @@ class _IpoDetailContent extends StatelessWidget {
               ],
             ],
           ),
-        ] else if (ipo.isClosable || ipo.isAllocatable) ...[
+        ] else if (ipo.isOpenable ||
+            ipo.isClosable ||
+            ipo.isAllocatable ||
+            ipo.isListable) ...[
           Text('Lifecycle Actions',
               style: TextStyle(
                   fontSize: 16,
@@ -256,13 +259,25 @@ class _IpoDetailContent extends StatelessWidget {
                   color: cs.onSurface)),
           const SizedBox(height: 4),
           Text(
-            'Manage the subscription window and execute allocation of shares to subscribers.',
+            'Manage the subscription window, execute allocation of shares, and list securities for secondary trading.',
             style: TextStyle(
                 fontSize: 12, color: cs.onSurface.withAlpha(160)),
           ),
           const SizedBox(height: 16),
           Row(
             children: [
+              if (ipo.isOpenable) ...[
+                ElevatedButton.icon(
+                  onPressed: provider.isSubmitting
+                      ? null
+                      : () => _handleOpen(context),
+                  icon: const Icon(Icons.lock_open_outlined, size: 18),
+                  label: const Text('Open Subscriptions'),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.success),
+                ),
+                const SizedBox(width: 12),
+              ],
               if (ipo.isClosable) ...[
                 ElevatedButton.icon(
                   onPressed: provider.isSubmitting
@@ -284,6 +299,18 @@ class _IpoDetailContent extends StatelessWidget {
                   label: const Text('Allocate Shares'),
                   style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary),
+                ),
+                const SizedBox(width: 12),
+              ],
+              if (ipo.isListable) ...[
+                ElevatedButton.icon(
+                  onPressed: provider.isSubmitting
+                      ? null
+                      : () => _handleList(context),
+                  icon: const Icon(Icons.show_chart, size: 18),
+                  label: const Text('List on Market'),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.success),
                 ),
                 const SizedBox(width: 12),
               ],
@@ -332,15 +359,37 @@ class _IpoDetailContent extends StatelessWidget {
   }
 
   Future<void> _handleApprove(BuildContext context) async {
+    final opensInFuture =
+        ipo.openDate != null && ipo.openDate!.isAfter(DateTime.now());
     await showConfirmationDialog(
       context,
       title: 'Approve IPO Application',
-      content: 'Approve "${ipo.offeringTitle}"?\n\n'
-          'Once approved, the company can open the offering for subscription.',
-      confirmLabel: 'Approve IPO',
+      content: opensInFuture
+          ? 'Approve "${ipo.offeringTitle}"?\n\n'
+              'Subscription opening date is set in the future (${ipo.openDate}). It will transition to APPROVED and open automatically when the opening date arrives, or you can open it explicitly.'
+          : 'Approve and open "${ipo.offeringTitle}"?\n\n'
+              'The opening date has arrived or is immediate. Approving will open subscriptions immediately for investors.',
+      confirmLabel: opensInFuture ? 'Approve IPO' : 'Approve & Open Subscriptions',
       reasonFieldLabel: 'Notes (optional)',
+      onConfirm: (reason) => context.read<IposProvider>().approve(
+            ipo.id,
+            notes: reason,
+            openImmediately: !opensInFuture,
+          ),
+    );
+    if (context.mounted) context.read<IposProvider>().clearFeedback();
+  }
+
+  Future<void> _handleOpen(BuildContext context) async {
+    await showConfirmationDialog(
+      context,
+      title: 'Open IPO Subscriptions',
+      content: 'Open subscriptions for "${ipo.offeringTitle}" immediately?\n\n'
+          'Eligible investors will be able to submit subscriptions.',
+      confirmLabel: 'Open Subscriptions',
+      reasonFieldLabel: 'Reason / Notes (optional)',
       onConfirm: (reason) =>
-          context.read<IposProvider>().approve(ipo.id, notes: reason),
+          context.read<IposProvider>().openIpo(ipo.id, reason: reason),
     );
     if (context.mounted) context.read<IposProvider>().clearFeedback();
   }
@@ -389,6 +438,20 @@ class _IpoDetailContent extends StatelessWidget {
     if (context.mounted) context.read<IposProvider>().clearFeedback();
   }
 
+  Future<void> _handleList(BuildContext context) async {
+    await showConfirmationDialog(
+      context,
+      title: 'List IPO on Market',
+      content: 'Transition "${ipo.offeringTitle}" to LISTED status?\n\n'
+          'This will enable secondary-market trading and allow investors and brokers to discover and place limit orders.',
+      confirmLabel: 'List IPO',
+      reasonFieldLabel: 'Listing notes / ECMA approval (optional)',
+      onConfirm: (reason) =>
+          context.read<IposProvider>().listIpo(ipo.id, reason: reason),
+    );
+    if (context.mounted) context.read<IposProvider>().clearFeedback();
+  }
+
   Widget _ipoStatusBadge(IpoStatus s) {
     switch (s) {
       case IpoStatus.approved:
@@ -399,6 +462,8 @@ class _IpoDetailContent extends StatelessWidget {
         return StatusBadge.open();
       case IpoStatus.closed:
         return StatusBadge.closed();
+      case IpoStatus.listed:
+        return StatusBadge.fromLabel('Listed');
       default:
         return StatusBadge.fromLabel(s.label);
     }

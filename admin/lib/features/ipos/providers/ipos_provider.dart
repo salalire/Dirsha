@@ -53,14 +53,40 @@ class IposProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> approve(String id, {String? notes}) async {
+  Future<bool> approve(String id,
+      {String? notes, bool openImmediately = false}) async {
     _isSubmitting = true;
     _submitError = null;
     _submitSuccess = null;
     notifyListeners();
     try {
-      await _repository.approveApplication(id, notes: notes);
-      _submitSuccess = 'IPO application approved successfully.';
+      await _repository.approveApplication(id,
+          notes: notes, openImmediately: openImmediately);
+      _submitSuccess = openImmediately
+          ? 'IPO approved and subscriptions opened successfully.'
+          : 'IPO application approved successfully.';
+      await loadApplications();
+      if (_selectedApplication?.id == id) {
+        await loadApplicationById(id);
+      }
+      return true;
+    } catch (e) {
+      _submitError = e.toString().replaceFirst('Exception: ', '');
+      return false;
+    } finally {
+      _isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> openIpo(String id, {String? reason}) async {
+    _isSubmitting = true;
+    _submitError = null;
+    _submitSuccess = null;
+    notifyListeners();
+    try {
+      await _repository.openIpo(id, reason: reason);
+      _submitSuccess = 'IPO subscriptions opened successfully.';
       await loadApplications();
       if (_selectedApplication?.id == id) {
         await loadApplicationById(id);
@@ -127,6 +153,28 @@ class IposProvider extends ChangeNotifier {
     try {
       await _repository.allocateIpo(id);
       _submitSuccess = 'Shares allocated successfully.';
+      await loadApplications();
+      if (_selectedApplication?.id == id) {
+        await loadApplicationById(id);
+      }
+      return true;
+    } catch (e) {
+      _submitError = e.toString().replaceFirst('Exception: ', '');
+      return false;
+    } finally {
+      _isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> listIpo(String id, {String? reason}) async {
+    _isSubmitting = true;
+    _submitError = null;
+    _submitSuccess = null;
+    notifyListeners();
+    try {
+      await _repository.listIpo(id, reason: reason);
+      _submitSuccess = 'IPO listed successfully on secondary market.';
       await loadApplications();
       if (_selectedApplication?.id == id) {
         await loadApplicationById(id);
