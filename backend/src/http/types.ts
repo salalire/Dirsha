@@ -1,6 +1,7 @@
 import type { Logger } from 'pino';
 import type { Env } from '../config/env.js';
 import type { Db } from '../db/pool.js';
+import type { AiProvider } from '../modules/ai/providers/types.js';
 
 export type Role = 'investor' | 'company_rep' | 'broker' | 'admin';
 export type AccountStatus = 'active' | 'suspended';
@@ -22,6 +23,7 @@ export interface AppDeps {
   env: Env;
   db: Db;
   logger: Logger;
+  aiProvider?: AiProvider;
 }
 
 declare global {

@@ -15,6 +15,7 @@ export type ErrorCode =
   | 'INSUFFICIENT_FUNDS'
   | 'IPO_NOT_OPEN'
   | 'IDEMPOTENCY_KEY_REUSED'
+  | 'AI_UNAVAILABLE'
   | 'INTERNAL_ERROR';
 
 export class AppError extends Error {
@@ -57,4 +58,6 @@ export const Errors = {
       'IDEMPOTENCY_KEY_REUSED',
       'This Idempotency-Key was already used with a different request',
     ),
+  aiUnavailable: () =>
+    new AppError(503, 'AI_UNAVAILABLE', 'The assistant is temporarily unavailable'),
 };

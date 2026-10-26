@@ -33,6 +33,14 @@ const envSchema = z
     ENABLE_TEST_FUNDS: boolFromString,
     // Max sign-in/registration attempts per client IP per 15 minutes (FR-AUTH-08).
     AUTH_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(10_000).default(20),
+    AI_PROVIDER: z.enum(['mock', 'bedrock', 'gemini']).default('mock'),
+    AI_MODEL_ID: z.string().min(1).optional(),
+    GEMINI_API_KEY: z.string().min(1).optional(),
+    GEMINI_MODEL_ID: z.string().min(1).optional(),
+    AWS_REGION: z.string().min(1).optional(),
+    AI_TIMEOUT_MS: z.coerce.number().int().min(1000).max(60_000).default(12_000),
+    AI_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(10_000).default(20),
+    AI_ALLOW_MOCK_FALLBACK: boolFromString,
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === 'production' && env.ENABLE_TEST_FUNDS) {
@@ -47,6 +55,27 @@ const envSchema = z
         code: 'custom',
         path: ['JWT_ACCESS_SECRET'],
         message: 'JWT_ACCESS_SECRET still contains the placeholder value',
+      });
+    }
+    if (env.AI_PROVIDER === 'bedrock' && !env.AI_MODEL_ID) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['AI_MODEL_ID'],
+        message: 'AI_MODEL_ID is required when AI_PROVIDER=bedrock',
+      });
+    }
+    if (env.AI_PROVIDER === 'bedrock' && !env.AWS_REGION) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['AWS_REGION'],
+        message: 'AWS_REGION is required when AI_PROVIDER=bedrock',
+      });
+    }
+    if (env.AI_PROVIDER === 'gemini' && !env.GEMINI_API_KEY) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['GEMINI_API_KEY'],
+        message: 'GEMINI_API_KEY is required when AI_PROVIDER=gemini',
       });
     }
   });

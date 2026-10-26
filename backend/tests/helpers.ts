@@ -9,6 +9,7 @@ import { signAccessToken } from '../src/http/auth.js';
 import type { Role } from '../src/http/types.js';
 import { createLogger } from '../src/lib/logger.js';
 import type { IpoStatus } from '../src/modules/ipos/ipos.service.js';
+import type { AiProvider } from '../src/modules/ai/providers/types.js';
 import { postLedgerEntry } from '../src/modules/wallet/ledger.js';
 
 // Test-only value. Not a secret: it only signs tokens for the throw-away test database.
@@ -41,10 +42,13 @@ export interface TestCtx {
   close: () => Promise<void>;
 }
 
-export function buildApp(overrides: Record<string, string> = {}): TestCtx {
+export function buildApp(
+  overrides: Record<string, string> = {},
+  options: { aiProvider?: AiProvider } = {},
+): TestCtx {
   const env = testEnv(overrides);
   const db = createDb(env.DATABASE_URL);
-  const app = createApp({ env, db, logger: createLogger('silent') });
+  const app = createApp({ env, db, logger: createLogger('silent'), ...options });
   return { app, db, env, close: () => db.end() };
 }
 

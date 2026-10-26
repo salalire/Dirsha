@@ -10,6 +10,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { adminRouter } from './modules/admin/admin.routes.js';
 import { authRouter } from './modules/auth/auth.routes.js';
+import { aiRouter } from './modules/ai/ai.routes.js';
 import { brokersRouter } from './modules/brokers/brokers.routes.js';
 import { healthRouter } from './modules/health/health.routes.js';
 import { iposRouter } from './modules/ipos/ipos.routes.js';
@@ -65,7 +66,13 @@ export function createApp(deps: AppDeps): Express {
   }));
   app.use(
     cors({
-      origin: (origin, cb) => cb(null, !origin || env.CORS_ORIGINS.includes(origin)),
+      origin: (origin, cb) => {
+        const isLocalDevelopmentOrigin =
+          env.NODE_ENV !== 'production' &&
+          !!origin &&
+          /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+        cb(null, !origin || env.CORS_ORIGINS.includes(origin) || isLocalDevelopmentOrigin);
+      },
       methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Authorization', 'Content-Type', 'Idempotency-Key', 'X-Request-Id'],
       exposedHeaders: ['X-Request-Id', 'Idempotent-Replay'],
@@ -80,6 +87,7 @@ export function createApp(deps: AppDeps): Express {
 
   app.use('/health', healthRouter(deps.db));
   app.use('/auth', authRouter(deps));
+  app.use('/ai', aiRouter(deps));
   app.use('/users', usersRouter(deps));
   app.use('/ipos', iposRouter(deps));
   app.use('/subscriptions', subscriptionsRouter(deps));
