@@ -364,3 +364,43 @@ Authenticated with `role: investor`, `role: broker`, or `role: admin`.
 | Real Bank / Exchange Rails | Deferred | External banking APIs and live stock exchange integration deferred |
 | Refresh Tokens | Deferred | 15-minute access token lifespan |
 
+## PROPOSED: AI assistant
+
+### POST /ai/chat
+
+Requires authentication. All authenticated roles may call this read-only endpoint.
+
+Request:
+
+```json
+{
+  "message": "What is an IPO?",
+  "language": "en",
+  "ipo_id": "optional-uuid",
+  "history": [{"role": "user", "content": "previous question"}]
+}
+```
+
+`message` is trimmed and limited to 1000 characters. `language` is `en` or `am`
+and defaults to `en`; `history` is limited to six turns. Unknown fields are
+rejected. Ethiopic text selects Amharic response language.
+
+Successful responses use the standard `{ "data": ... }` envelope:
+
+```json
+{
+  "data": {
+    "answer": "Educational answer",
+    "language": "en",
+    "grounded": false,
+    "sources": [],
+    "disclaimer": "Educational information only...",
+    "simulated": true,
+    "request_id": "request-id"
+  }
+}
+```
+
+The standard error envelope is returned for validation, authentication,
+account-suspension, rate-limit, and `AI_UNAVAILABLE` failures. The assistant
+cannot perform actions, access private account data, or provide financial advice.
