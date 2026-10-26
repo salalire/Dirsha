@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/url_launcher.dart';
 import '../../../shared/widgets/widgets.dart';
 
 /// Broker applicant entry point — Option C.
@@ -20,11 +21,14 @@ import '../../../shared/widgets/widgets.dart';
 /// - The backend enforces all broker authorization (FR-AUTH-04).
 /// - Selecting "Broker" on the role screen does not grant any permissions.
 class BrokerPortalScreen extends StatelessWidget {
-  const BrokerPortalScreen({super.key});
+  const BrokerPortalScreen({super.key, this.portalUrl});
+
+  final String? portalUrl;
 
   @override
   Widget build(BuildContext context) {
-    final portalAvailable = AppConfig.brokerPortalUrl.isNotEmpty;
+    final effectiveUrl = portalUrl ?? AppConfig.brokerPortalUrl;
+    final portalAvailable = effectiveUrl.isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
@@ -43,7 +47,7 @@ class BrokerPortalScreen extends StatelessWidget {
               _buildInfoCard(context),
               const SizedBox(height: 28),
               if (portalAvailable)
-                _buildPortalButton(context)
+                _buildPortalButton(context, effectiveUrl)
               else
                 _buildUnavailableState(context),
               const SizedBox(height: 24),
@@ -151,15 +155,14 @@ class BrokerPortalScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPortalButton(BuildContext context) {
+  Widget _buildPortalButton(BuildContext context, String url) {
     return DirshaButton(
       label: 'Open broker portal',
       onPressed: () {
-        // TODO(integration): Launch AppConfig.brokerPortalUrl via
-        // url_launcher once confirmed by the project owner.
+        openUrlInNewTab(url);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Broker portal: ${AppConfig.brokerPortalUrl}'),
+            content: Text('Opening broker portal: $url'),
           ),
         );
       },

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/url_launcher.dart';
 import '../../../shared/widgets/widgets.dart';
 
 /// Company applicant entry point — Option C.
@@ -23,11 +24,14 @@ import '../../../shared/widgets/widgets.dart';
 /// - Displaying this screen does NOT verify or approve any company.
 /// - The backend is the authoritative source for onboarding status.
 class CompanyPortalScreen extends StatelessWidget {
-  const CompanyPortalScreen({super.key});
+  const CompanyPortalScreen({super.key, this.portalUrl});
+
+  final String? portalUrl;
 
   @override
   Widget build(BuildContext context) {
-    final portalAvailable = AppConfig.companyPortalUrl.isNotEmpty;
+    final effectiveUrl = portalUrl ?? AppConfig.companyPortalUrl;
+    final portalAvailable = effectiveUrl.isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
@@ -46,7 +50,7 @@ class CompanyPortalScreen extends StatelessWidget {
               _buildInfoCard(context),
               const SizedBox(height: 28),
               if (portalAvailable)
-                _buildPortalButton(context)
+                _buildPortalButton(context, effectiveUrl)
               else
                 _buildUnavailableState(context),
               const SizedBox(height: 24),
@@ -154,18 +158,14 @@ class CompanyPortalScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPortalButton(BuildContext context) {
+  Widget _buildPortalButton(BuildContext context, String url) {
     return DirshaButton(
       label: 'Open company portal',
       onPressed: () {
-        // TODO(integration): Launch AppConfig.companyPortalUrl via
-        // url_launcher once the portal URL is confirmed by the project owner.
-        // For now, show a snackbar — the URL is configured but the
-        // url_launcher package has not been added to avoid unnecessary
-        // dependencies before the URL is finalized.
+        openUrlInNewTab(url);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Company portal: ${AppConfig.companyPortalUrl}'),
+            content: Text('Opening company portal: $url'),
           ),
         );
       },
