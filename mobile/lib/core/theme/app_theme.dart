@@ -68,6 +68,8 @@ abstract final class AppTheme {
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
           statusBarBrightness: Brightness.dark,
+          systemNavigationBarColor: AppColors.backgroundPrimary,
+          systemNavigationBarIconBrightness: Brightness.light,
         ),
       ),
       cardTheme: CardThemeData(
@@ -224,6 +226,14 @@ abstract final class AppTheme {
           height: 1.5,
         ),
       ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.backgroundSecondary,
+        modalBackgroundColor: AppColors.backgroundSecondary,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+      ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.cardElevated,
         contentTextStyle: GoogleFonts.inter(
@@ -342,6 +352,8 @@ abstract final class AppTheme {
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.dark, // dark icons on light bg
           statusBarBrightness: Brightness.light,
+          systemNavigationBarColor: bgSecondary,
+          systemNavigationBarIconBrightness: Brightness.dark,
         ),
       ),
       // -----------------------------------------------------------------
@@ -506,6 +518,14 @@ abstract final class AppTheme {
           fontSize: 14,
           color: textSecondary,
           height: 1.5,
+        ),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: bgSecondary,
+        modalBackgroundColor: bgSecondary,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
       ),
       // -----------------------------------------------------------------

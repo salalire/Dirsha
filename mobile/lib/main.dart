@@ -27,6 +27,10 @@ import 'features/subscriptions/providers/subscription_provider.dart';
 import 'features/subscriptions/repositories/live_subscription_repository.dart';
 import 'features/subscriptions/repositories/mock_subscription_repository.dart';
 import 'features/subscriptions/repositories/subscription_repository.dart';
+import 'features/trading/providers/trading_provider.dart';
+import 'features/trading/repositories/live_trading_repository.dart';
+import 'features/trading/repositories/mock_trading_repository.dart';
+import 'features/trading/repositories/trading_repository.dart';
 import 'features/wallet/providers/wallet_provider.dart';
 import 'features/wallet/repositories/live_wallet_repository.dart';
 import 'features/wallet/repositories/mock_wallet_repository.dart';
@@ -94,6 +98,7 @@ class _DirshAppState extends State<DirshApp> {
   late final SubscriptionRepository _subscriptionRepository;
   late final PortfolioRepository _portfolioRepository;
   late final AiRepository _aiRepository;
+  late final TradingRepository _tradingRepository;
 
   // Providers — kept here so they outlive individual routes.
   late final AuthProvider _authProvider;
@@ -102,6 +107,7 @@ class _DirshAppState extends State<DirshApp> {
   late final SubscriptionProvider _subscriptionProvider;
   late final PortfolioProvider _portfolioProvider;
   late final AiChatProvider _aiChatProvider;
+  late final TradingProvider _tradingProvider;
 
   // Router — built after auth provider is ready.
   late final _router = buildAppRouter(_authProvider);
@@ -127,6 +133,7 @@ class _DirshAppState extends State<DirshApp> {
       );
       _portfolioRepository = MockPortfolioRepository();
       _aiRepository = MockAiRepository();
+      _tradingRepository = MockTradingRepository();
     } else {
       _authRepository = LiveAuthRepository(apiClient: _apiClient);
       _ipoRepository = LiveIpoRepository(apiClient: _apiClient);
@@ -136,6 +143,7 @@ class _DirshAppState extends State<DirshApp> {
       );
       _portfolioRepository = LivePortfolioRepository(apiClient: _apiClient);
       _aiRepository = LiveAiRepository(apiClient: _apiClient);
+      _tradingRepository = LiveTradingRepository(apiClient: _apiClient);
     }
 
     _authProvider = AuthProvider(repository: _authRepository);
@@ -147,6 +155,7 @@ class _DirshAppState extends State<DirshApp> {
     _portfolioProvider = PortfolioProvider(repository: _portfolioRepository);
     _aiChatProvider = AiChatProvider(repository: _aiRepository);
     _authProvider.addListener(_clearAiChatOnSignOut);
+    _tradingProvider = TradingProvider(repository: _tradingRepository);
 
     // Check whether a stored token is still valid. The router redirect
     // waits for AuthStatus to leave 'unknown' before navigating.
@@ -162,6 +171,7 @@ class _DirshAppState extends State<DirshApp> {
     _subscriptionProvider.dispose();
     _portfolioProvider.dispose();
     _aiChatProvider.dispose();
+    _tradingProvider.dispose();
     super.dispose();
   }
 
@@ -188,6 +198,7 @@ class _DirshAppState extends State<DirshApp> {
         Provider<SubscriptionRepository>.value(value: _subscriptionRepository),
         Provider<PortfolioRepository>.value(value: _portfolioRepository),
         Provider<AiRepository>.value(value: _aiRepository),
+        Provider<TradingRepository>.value(value: _tradingRepository),
 
         // Feature providers — app-scoped.
         ChangeNotifierProvider<AuthProvider>.value(value: _authProvider),
@@ -200,6 +211,9 @@ class _DirshAppState extends State<DirshApp> {
           value: _portfolioProvider,
         ),
         ChangeNotifierProvider<AiChatProvider>.value(value: _aiChatProvider),
+        ChangeNotifierProvider<TradingProvider>.value(
+          value: _tradingProvider,
+        ),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) => MaterialApp.router(

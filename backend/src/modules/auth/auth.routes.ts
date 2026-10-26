@@ -69,5 +69,9 @@ export function authRouter(deps: AppDeps): Router {
     res.json({ data: result });
   });
 
+  router.post('/logout', (_req, res) => {
+    res.status(204).end();
+  });
+
   return router;
 }

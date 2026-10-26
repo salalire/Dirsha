@@ -810,8 +810,15 @@ async function handleRequestClient(e) {
   }
 }
 
+let currentInspectClientId = null;
+let currentInspectClientName = '';
+let tradableSecurities = [];
+
 async function inspectClientPortfolio(clientId, clientName) {
   if (!authToken) return;
+  currentInspectClientId = clientId;
+  currentInspectClientName = clientName;
+
   try {
     const res = await fetch(`${API_BASE}/brokers/clients/${clientId}`, {
       headers: { Authorization: `Bearer ${authToken}` },
@@ -862,7 +869,254 @@ async function inspectClientPortfolio(clientId, clientName) {
       `;
     }
 
+    // Load tradable securities & client orders
+    await loadTradableSecurities();
+    await loadClientOrdersAndTrades(clientId);
+
     document.getElementById('modal-client-portfolio').style.display = 'flex';
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+async function loadTradableSecurities() {
+  const select = document.getElementById('assisted-order-security');
+  if (!select || !authToken) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/trading/securities`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error?.message || 'Failed to load tradable securities');
+
+    tradableSecurities = json.data || [];
+    if (tradableSecurities.length === 0) {
+      select.innerHTML = '<option value="">No listed securities available for trading</option>';
+      return;
+    }
+
+    select.innerHTML = tradableSecurities.map((s) => {
+      const priceEtb = (s.last_traded_price_minor ?? s.price_per_share_minor) / 100;
+      return `<option value="${s.ipo_id}" data-price="${priceEtb}">${escapeHtml(s.symbol)} — ${escapeHtml(s.company_name)} (Ref: ETB ${priceEtb.toFixed(2)})</option>`;
+    }).join('');
+
+    handleSecuritySelected();
+  } catch (err) {
+    select.innerHTML = '<option value="">Error loading securities</option>';
+  }
+}
+
+function handleSecuritySelected() {
+  const select = document.getElementById('assisted-order-security');
+  const selectedOption = select.options[select.selectedIndex];
+  if (!selectedOption) return;
+
+  const refPrice = selectedOption.getAttribute('data-price');
+  if (refPrice) {
+    document.getElementById('assisted-order-price').value = parseFloat(refPrice).toFixed(2);
+  }
+  updateAssistedOrderCalculations();
+}
+
+function updateAssistedOrderCalculations() {
+  const qty = parseInt(document.getElementById('assisted-order-qty').value, 10) || 0;
+  const price = parseFloat(document.getElementById('assisted-order-price').value) || 0;
+  const total = qty * price;
+  const totalEl = document.getElementById('assisted-order-total');
+  if (totalEl) {
+    totalEl.innerText = `${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ETB`;
+  }
+}
+
+async function handlePlaceAssistedOrder() {
+  if (!currentInspectClientId || !authToken) return;
+
+  const btn = document.getElementById('btn-submit-assisted-order');
+  const securitySelect = document.getElementById('assisted-order-security');
+  const ipo_id = securitySelect.value;
+  const side = document.getElementById('assisted-order-side').value;
+  const quantity = parseInt(document.getElementById('assisted-order-qty').value, 10);
+  const priceEtb = parseFloat(document.getElementById('assisted-order-price').value);
+
+  if (!ipo_id) {
+    showToast('Please select a listed security', 'error');
+    return;
+  }
+  if (!quantity || quantity <= 0) {
+    showToast('Quantity must be at least 1 share', 'error');
+    return;
+  }
+  if (!priceEtb || priceEtb <= 0) {
+    showToast('Price must be greater than 0', 'error');
+    return;
+  }
+
+  const price_per_share_minor = Math.round(priceEtb * 100);
+
+  btn.disabled = true;
+  btn.innerText = 'Submitting Order...';
+
+  try {
+    const res = await fetch(`${API_BASE}/trading/orders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({
+        client_id: currentInspectClientId,
+        ipo_id,
+        side,
+        order_type: 'limit',
+        quantity,
+        price_per_share_minor,
+      }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error?.message || 'Failed to place assisted order');
+
+    const result = json;
+    const orderStatus = result.order?.status || 'placed';
+    const executions = result.trades || result.executions || [];
+
+    if (executions.length > 0) {
+      showToast(`Assisted order executed immediately (${executions.length} match)!`);
+    } else {
+      showToast(`Assisted limit order placed (${orderStatus})`);
+    }
+
+    // Refresh client portfolio and orders
+    await inspectClientPortfolio(currentInspectClientId, currentInspectClientName);
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerText = 'Submit Assisted Order';
+  }
+}
+
+async function loadClientOrdersAndTrades(clientId) {
+  const container = document.getElementById('client-orders-container');
+  if (!container || !authToken) return;
+
+  try {
+    const [ordersRes, tradesRes] = await Promise.all([
+      fetch(`${API_BASE}/trading/orders?client_id=${clientId}`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      }),
+      fetch(`${API_BASE}/trading/trades?client_id=${clientId}`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      }),
+    ]);
+
+    const ordersJson = await ordersRes.json();
+    const tradesJson = await tradesRes.json();
+
+    const orders = ordersJson.data || [];
+    const trades = tradesJson.data || [];
+
+    let html = '';
+
+    if (orders.length === 0 && trades.length === 0) {
+      container.innerHTML = '<p style="color: var(--text-muted); font-size: 13px;">No trading orders or trade executions found for this client.</p>';
+      return;
+    }
+
+    if (orders.length > 0) {
+      html += `
+        <div style="font-weight: 600; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px;">Client Orders</div>
+        <div class="clients-table-container">
+          <table class="clients-table">
+            <thead>
+              <tr>
+                <th>Security</th>
+                <th>Side</th>
+                <th>Quantity</th>
+                <th>Limit Price</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${orders.map((o) => {
+                const canCancel = o.status === 'open' || o.status === 'partially_filled';
+                const statusColor = o.status === 'filled' ? 'var(--primary)' : o.status === 'open' ? 'var(--warning)' : 'var(--text-muted)';
+                return `
+                  <tr>
+                    <td style="font-weight: 600;">${escapeHtml(o.symbol)}</td>
+                    <td style="text-transform: uppercase; font-weight: 600; color: ${o.side === 'buy' ? 'var(--primary)' : '#f43f5e'};">${escapeHtml(o.side)}</td>
+                    <td>${Number(o.filled_quantity).toLocaleString()} / ${Number(o.quantity).toLocaleString()}</td>
+                    <td>${formatSantim(o.price_per_share_minor)}</td>
+                    <td><span style="color: ${statusColor}; font-weight: 600; text-transform: capitalize;">${escapeHtml(o.status)}</span></td>
+                    <td>
+                      ${canCancel ? `<button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px; color: var(--danger); border-color: rgba(239, 68, 68, 0.3);" onclick="handleCancelClientOrder('${o.id}')">Cancel</button>` : `<span style="color: var(--text-muted); font-size: 11px;">—</span>`}
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    if (trades.length > 0) {
+      html += `
+        <div style="font-weight: 600; font-size: 13px; color: var(--text-secondary); margin-top: 14px; margin-bottom: 6px;">Executed Trades</div>
+        <div class="clients-table-container">
+          <table class="clients-table">
+            <thead>
+              <tr>
+                <th>Security</th>
+                <th>Quantity</th>
+                <th>Execution Price</th>
+                <th>Total Value</th>
+                <th>Executed At</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${trades.map((t) => `
+                <tr>
+                  <td style="font-weight: 600;">${escapeHtml(t.symbol)}</td>
+                  <td>${Number(t.quantity).toLocaleString()}</td>
+                  <td style="color: var(--primary); font-weight: 600;">${formatSantim(t.price_per_share_minor)}</td>
+                  <td>${formatSantim(t.total_amount_minor)}</td>
+                  <td style="font-size: 12px; color: var(--text-muted);">${new Date(t.executed_at).toLocaleString()}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = `<p style="color: var(--danger); font-size: 13px;">Error loading orders: ${escapeHtml(err.message)}</p>`;
+  }
+}
+
+async function handleCancelClientOrder(orderId) {
+  if (!confirm('Are you sure you want to cancel this client order? Unspent reserved funds or shares will be released.')) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/trading/orders/${orderId}/cancel`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
+
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error?.message || 'Failed to cancel order');
+
+    showToast('Client order cancelled and reserved assets released');
+    await inspectClientPortfolio(currentInspectClientId, currentInspectClientName);
   } catch (err) {
     showToast(err.message, 'error');
   }

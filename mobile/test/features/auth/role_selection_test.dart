@@ -11,7 +11,11 @@ import 'package:dirsha_mobile/core/theme/app_theme.dart';
 // ---------------------------------------------------------------------------
 
 /// Wraps a widget in a GoRouter for navigation tests.
-Widget _routerWrap({required String initialLocation}) {
+Widget _routerWrap({
+  required String initialLocation,
+  String? companyPortalUrl,
+  String? brokerPortalUrl,
+}) {
   final router = GoRouter(
     initialLocation: initialLocation,
     routes: [
@@ -25,11 +29,11 @@ Widget _routerWrap({required String initialLocation}) {
       ),
       GoRoute(
         path: '/register/company',
-        builder: (_, _) => const CompanyPortalScreen(),
+        builder: (_, _) => CompanyPortalScreen(portalUrl: companyPortalUrl),
       ),
       GoRoute(
         path: '/register/broker',
-        builder: (_, _) => const BrokerPortalScreen(),
+        builder: (_, _) => BrokerPortalScreen(portalUrl: brokerPortalUrl),
       ),
     ],
   );
@@ -115,10 +119,10 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
-  // CompanyPortalScreen — unavailable state (default: no portal URL)
+  // CompanyPortalScreen — connected state & portal launch
   // ---------------------------------------------------------------------------
-  group('CompanyPortalScreen — unavailable state', () {
-    testWidgets('shows unavailable message when portal URL is empty', (
+  group('CompanyPortalScreen — connected state & portal launch', () {
+    testWidgets('shows "Open company portal" button with configured URL', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -126,19 +130,8 @@ void main() {
       );
       await tester.pump();
 
-      // AppConfig.companyPortalUrl defaults to '' in test environment
-      expect(find.text('Company portal not yet available'), findsOneWidget);
-    });
-
-    testWidgets('does NOT show a broken portal button when URL is empty', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        _routerWrap(initialLocation: '/register/company'),
-      );
-      await tester.pump();
-
-      expect(find.text('Open company portal'), findsNothing);
+      expect(find.text('Open company portal'), findsOneWidget);
+      expect(find.text('Company portal not yet available'), findsNothing);
     });
 
     testWidgets('shows informational note about external portal', (
@@ -151,28 +144,57 @@ void main() {
 
       expect(find.textContaining('dedicated web portal'), findsOneWidget);
     });
+
+    testWidgets('tapping "Open company portal" triggers portal launch', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _routerWrap(initialLocation: '/register/company'),
+      );
+      await tester.pump();
+
+      await tester.tap(find.text('Open company portal'));
+      await tester.pump();
+
+      expect(find.textContaining('Opening company portal:'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 4));
+    });
   });
 
   // ---------------------------------------------------------------------------
-  // BrokerPortalScreen — unavailable state
+  // CompanyPortalScreen — unavailable state
   // ---------------------------------------------------------------------------
-  group('BrokerPortalScreen — unavailable state', () {
-    testWidgets('shows unavailable message when portal URL is empty', (
+  group('CompanyPortalScreen — unavailable state', () {
+    testWidgets('shows unavailable message when portal URL is explicitly empty', (
       tester,
     ) async {
-      await tester.pumpWidget(_routerWrap(initialLocation: '/register/broker'));
+      await tester.pumpWidget(
+        _routerWrap(
+          initialLocation: '/register/company',
+          companyPortalUrl: '',
+        ),
+      );
       await tester.pump();
 
-      expect(find.text('Broker portal not yet available'), findsOneWidget);
+      expect(find.text('Company portal not yet available'), findsOneWidget);
+      expect(find.text('Open company portal'), findsNothing);
     });
+  });
 
-    testWidgets('does NOT show a broken portal button when URL is empty', (
+  // ---------------------------------------------------------------------------
+  // BrokerPortalScreen — connected state & portal launch
+  // ---------------------------------------------------------------------------
+  group('BrokerPortalScreen — connected state & portal launch', () {
+    testWidgets('shows "Open broker portal" button with configured URL', (
       tester,
     ) async {
-      await tester.pumpWidget(_routerWrap(initialLocation: '/register/broker'));
+      await tester.pumpWidget(
+        _routerWrap(initialLocation: '/register/broker'),
+      );
       await tester.pump();
 
-      expect(find.text('Open broker portal'), findsNothing);
+      expect(find.text('Open broker portal'), findsOneWidget);
+      expect(find.text('Broker portal not yet available'), findsNothing);
     });
 
     testWidgets('shows authorization note about backend enforcement', (
@@ -186,6 +208,41 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets('tapping "Open broker portal" triggers portal launch', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _routerWrap(initialLocation: '/register/broker'),
+      );
+      await tester.pump();
+
+      await tester.tap(find.text('Open broker portal'));
+      await tester.pump();
+
+      expect(find.textContaining('Opening broker portal:'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 4));
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // BrokerPortalScreen — unavailable state
+  // ---------------------------------------------------------------------------
+  group('BrokerPortalScreen — unavailable state', () {
+    testWidgets('shows unavailable message when portal URL is explicitly empty', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _routerWrap(
+          initialLocation: '/register/broker',
+          brokerPortalUrl: '',
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Broker portal not yet available'), findsOneWidget);
+      expect(find.text('Open broker portal'), findsNothing);
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -193,7 +250,6 @@ void main() {
   // ---------------------------------------------------------------------------
   group('WalletSummary.fromJson — santim contract', () {
     test('parses integer santim fields correctly', () {
-      // Simulates what the live backend will send
       final json = {
         'id': 'w1',
         'currency': 'ETB',
@@ -201,8 +257,6 @@ void main() {
         'reserved_minor': 300000,
         'total_minor': 1000000,
       };
-      // Import inline to avoid needing a barrel
-      // We verify via the Money value directly
       from(dynamic v) {
         if (v is int) return v;
         return null;

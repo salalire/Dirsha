@@ -56,7 +56,7 @@ abstract final class AppConfig {
   /// falls back to mock data after a live network failure.
   static const bool useMockRepositories = bool.fromEnvironment(
     'DIRSHA_USE_MOCKS',
-    defaultValue: false,
+    defaultValue: false, // Default to live API now that API contract is confirmed
   );
 
   // ---------------------------------------------------------------------------
@@ -84,21 +84,18 @@ abstract final class AppConfig {
   /// URL for the company onboarding portal.
   ///
   /// Injected at build time via --dart-define=DIRSHA_COMPANY_PORTAL_URL.
-  /// If empty (the default), [CompanyPortalScreen] shows an "unavailable"
-  /// message rather than a broken link.
-  ///
-  /// DEPENDENCY: URL must be confirmed by the project owner before setting.
-  /// Do not invent or hardcode a production URL here.
+  /// Defaults to the local backend static company portal route.
   static const String companyPortalUrl = String.fromEnvironment(
     'DIRSHA_COMPANY_PORTAL_URL',
-    defaultValue: '', // Empty = portal not yet configured
+    defaultValue: 'http://localhost:3000/portal/company',
   );
 
   /// URL for the broker registration portal.
   ///
-  /// Same rules as [companyPortalUrl].
+  /// Same rules as [companyPortalUrl]. Defaults to the local backend static
+  /// broker portal route.
   static const String brokerPortalUrl = String.fromEnvironment(
     'DIRSHA_BROKER_PORTAL_URL',
-    defaultValue: '', // Empty = portal not yet configured
+    defaultValue: 'http://localhost:3000/portal/broker',
   );
 }

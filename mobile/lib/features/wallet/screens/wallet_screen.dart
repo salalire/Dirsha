@@ -33,7 +33,6 @@ class _WalletScreenState extends State<WalletScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(title: const Text('Wallet')),
       body: Column(
         children: [
@@ -44,7 +43,7 @@ class _WalletScreenState extends State<WalletScreen> {
           Expanded(
             child: RefreshIndicator(
               color: AppColors.secondaryEmerald,
-              backgroundColor: AppColors.cardSurface,
+              backgroundColor: AppColors.cardSurfaceOf(context),
               onRefresh: () => context.read<WalletProvider>().refresh(),
               child: CustomScrollView(
                 slivers: [
@@ -106,13 +105,13 @@ class _WalletBalanceCard extends StatelessWidget {
               Text(
                 'Total balance',
                 style: AppTextStyles.labelSmall.copyWith(
-                  color: AppColors.textPrimary.withValues(alpha: 0.75),
+                  color: Colors.white70,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 Formatters.money(summary.total, symbol: summary.currency),
-                style: AppTextStyles.balanceHero,
+                style: AppTextStyles.balanceHero.copyWith(color: Colors.white),
               ),
               const SizedBox(height: 16),
               const Divider(color: Colors.white24, thickness: 1, height: 1),
@@ -247,7 +246,7 @@ class _BalanceItem extends StatelessWidget {
             Text(
               label,
               style: AppTextStyles.labelSmall.copyWith(
-                color: AppColors.textPrimary.withValues(alpha: 0.75),
+                color: Colors.white70,
               ),
             ),
           ],
@@ -256,7 +255,7 @@ class _BalanceItem extends StatelessWidget {
         Text(
           amount,
           style: AppTextStyles.financialSmall.copyWith(
-            color: AppColors.textPrimary,
+            color: Colors.white,
           ),
         ),
       ],
@@ -329,9 +328,9 @@ class _TransactionRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.cardSurface,
+        color: AppColors.cardSurfaceOf(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.borderOf(context)),
       ),
       child: Row(
         children: [
@@ -340,8 +339,8 @@ class _TransactionRow extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: tx.isDebit
-                  ? AppColors.errorSurface
-                  : AppColors.successSurface,
+                  ? AppColors.errorSurfaceOf(context)
+                  : AppColors.successSurfaceOf(context),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -359,8 +358,8 @@ class _TransactionRow extends StatelessWidget {
               children: [
                 Text(
                   tx.description ?? _labelFor(tx.type),
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textPrimary,
+                  style: AppTextStyles.bodyMediumOf(context).copyWith(
+                    color: AppColors.textPrimaryOf(context),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -373,7 +372,7 @@ class _TransactionRow extends StatelessWidget {
                     Flexible(
                       child: Text(
                         Formatters.relativeDate(tx.createdAt),
-                        style: AppTextStyles.labelSmall,
+                        style: AppTextStyles.labelSmallOf(context),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),

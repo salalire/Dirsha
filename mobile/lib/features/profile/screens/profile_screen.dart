@@ -29,7 +29,6 @@ class ProfileScreen extends StatelessWidget {
     final user = auth.user;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(
         title: const Text('Account & Profile'),
         actions: [
@@ -44,7 +43,7 @@ class ProfileScreen extends StatelessWidget {
           ? const LoadingIndicator.fullScreen(message: 'Loading profile…')
           : RefreshIndicator(
               color: AppColors.secondaryEmerald,
-              backgroundColor: AppColors.cardSurface,
+              backgroundColor: AppColors.cardSurfaceOf(context),
               onRefresh: () async {
                 await Future.wait([
                   auth.refreshUser(),
@@ -102,9 +101,9 @@ class _UserHeaderCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.cardSurface,
+        color: AppColors.cardSurfaceOf(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.borderOf(context)),
       ),
       child: Row(
         children: [
@@ -120,7 +119,7 @@ class _UserHeaderCard extends StatelessWidget {
               child: Text(
                 initials,
                 style: AppTextStyles.screenTitle.copyWith(
-                  color: AppColors.textPrimary,
+                  color: Colors.white,
                   fontSize: 22,
                 ),
               ),
@@ -133,15 +132,15 @@ class _UserHeaderCard extends StatelessWidget {
               children: [
                 Text(
                   user.fullName.isNotEmpty ? user.fullName : 'Investor',
-                  style: AppTextStyles.cardTitle.copyWith(fontSize: 18),
+                  style: AppTextStyles.cardTitleOf(context).copyWith(fontSize: 18),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   user.email,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
+                  style: AppTextStyles.bodySmallOf(context).copyWith(
+                    color: AppColors.textSecondaryOf(context),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -152,14 +151,16 @@ class _UserHeaderCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: AppColors.brandEmerald.withValues(alpha: 0.4),
+                        color: AppColors.isDark(context)
+                            ? AppColors.brandEmerald.withValues(alpha: 0.4)
+                            : AppColors.brandEmerald.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(color: AppColors.secondaryEmerald),
                       ),
                       child: Text(
                         user.role,
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: AppColors.textPrimary,
+                        style: AppTextStyles.labelSmallOf(context).copyWith(
+                          color: AppColors.secondaryEmerald,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -169,17 +170,17 @@ class _UserHeaderCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: user.isActive
-                            ? AppColors.success.withValues(alpha: 0.15)
-                            : AppColors.warning.withValues(alpha: 0.15),
+                            ? AppColors.successSurfaceOf(context)
+                            : AppColors.warningSurfaceOf(context),
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: user.isActive ? AppColors.success : AppColors.warning,
+                          color: user.isActive ? AppColors.successOf(context) : AppColors.warningOf(context),
                         ),
                       ),
                       child: Text(
                         user.accountStatus,
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: user.isActive ? AppColors.success : AppColors.warning,
+                        style: AppTextStyles.labelSmallOf(context).copyWith(
+                          color: user.isActive ? AppColors.successOf(context) : AppColors.warningOf(context),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -219,16 +220,16 @@ class _AccountOverviewCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardSurface,
+        color: AppColors.cardSurfaceOf(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.borderOf(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Financial Overview',
-            style: AppTextStyles.cardTitle.copyWith(fontSize: 16),
+            style: AppTextStyles.cardTitleOf(context).copyWith(fontSize: 16),
           ),
           const SizedBox(height: 14),
           Row(
@@ -302,9 +303,9 @@ class _MetricTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.backgroundPrimary,
+        color: AppColors.cardElevatedOf(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+        border: Border.all(color: AppColors.borderOf(context).withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -316,8 +317,8 @@ class _MetricTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: AppColors.textSecondary,
+                  style: AppTextStyles.labelSmallOf(context).copyWith(
+                    color: AppColors.textSecondaryOf(context),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -328,7 +329,7 @@ class _MetricTile extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             value,
-            style: AppTextStyles.cardTitle.copyWith(fontSize: 14),
+            style: AppTextStyles.cardTitleOf(context).copyWith(fontSize: 14),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -352,9 +353,9 @@ class _ProfileDetailsCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardSurface,
+        color: AppColors.cardSurfaceOf(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.borderOf(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,7 +365,7 @@ class _ProfileDetailsCard extends StatelessWidget {
             children: [
               Text(
                 'Personal Information',
-                style: AppTextStyles.cardTitle.copyWith(fontSize: 16),
+                style: AppTextStyles.cardTitleOf(context).copyWith(fontSize: 16),
               ),
               TextButton.icon(
                 onPressed: () => _showEditProfileBottomSheet(context, user),
@@ -382,25 +383,25 @@ class _ProfileDetailsCard extends StatelessWidget {
             label: 'Full Name',
             value: user.fullName.isNotEmpty ? user.fullName : '—',
           ),
-          const Divider(color: AppColors.border, height: 20),
+          Divider(color: AppColors.borderOf(context), height: 20),
           _DetailRow(
             label: 'Email Address',
             value: user.email,
             trailingIcon: Icons.lock_outline,
             trailingTooltip: 'Email cannot be modified directly',
           ),
-          const Divider(color: AppColors.border, height: 20),
+          Divider(color: AppColors.borderOf(context), height: 20),
           _DetailRow(
             label: 'Phone Number',
             value: user.phone.isNotEmpty ? user.phone : 'Not provided',
           ),
-          const Divider(color: AppColors.border, height: 20),
+          Divider(color: AppColors.borderOf(context), height: 20),
           _DetailRow(
             label: 'Account Role',
             value: user.role,
           ),
           if (user.createdAt != null) ...[
-            const Divider(color: AppColors.border, height: 20),
+            Divider(color: AppColors.borderOf(context), height: 20),
             _DetailRow(
               label: 'Member Since',
               value: Formatters.dateShort(user.createdAt!),
@@ -415,7 +416,7 @@ class _ProfileDetailsCard extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.cardSurface,
+      backgroundColor: AppColors.cardSurfaceOf(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -446,16 +447,16 @@ class _DetailRow extends StatelessWidget {
           width: 120,
           child: Text(
             label,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textSecondary,
+            style: AppTextStyles.bodySmallOf(context).copyWith(
+              color: AppColors.textSecondaryOf(context),
             ),
           ),
         ),
         Expanded(
           child: Text(
             value,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textPrimary,
+            style: AppTextStyles.bodyMediumOf(context).copyWith(
+              color: AppColors.textPrimaryOf(context),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -466,7 +467,7 @@ class _DetailRow extends StatelessWidget {
             child: Icon(
               trailingIcon,
               size: 16,
-              color: AppColors.textSecondary.withValues(alpha: 0.6),
+              color: AppColors.textSecondaryOf(context).withValues(alpha: 0.6),
             ),
           ),
       ],
@@ -563,7 +564,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
               children: [
                 Text(
                   'Edit Profile',
-                  style: AppTextStyles.cardTitle.copyWith(fontSize: 18),
+                  style: AppTextStyles.cardTitleOf(context).copyWith(fontSize: 18),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close_rounded),
@@ -628,41 +629,41 @@ class _SettingsAndSecurityCard extends StatelessWidget {
     final theme = context.watch<ThemeProvider>();
 
     return Material(
-      color: AppColors.cardSurface,
+      color: AppColors.cardSurfaceOf(context),
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: AppColors.borderOf(context)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
           Text(
             'Settings & Security',
-            style: AppTextStyles.cardTitle.copyWith(fontSize: 16),
+            style: AppTextStyles.cardTitleOf(context).copyWith(fontSize: 16),
           ),
           const SizedBox(height: 12),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(
               'Dark Mode',
-              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
+              style: AppTextStyles.bodyMediumOf(context).copyWith(color: AppColors.textPrimaryOf(context)),
             ),
             subtitle: Text(
               'Toggle application theme',
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+              style: AppTextStyles.bodySmallOf(context).copyWith(color: AppColors.textSecondaryOf(context)),
             ),
             secondary: Icon(
               theme.isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-              color: AppColors.textSecondary,
+              color: AppColors.textSecondaryOf(context),
             ),
             value: theme.isDark,
             activeThumbColor: AppColors.secondaryEmerald,
             onChanged: (_) => theme.toggleTheme(),
           ),
-          const Divider(color: AppColors.border, height: 16),
+          Divider(color: AppColors.borderOf(context), height: 16),
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(
@@ -671,14 +672,14 @@ class _SettingsAndSecurityCard extends StatelessWidget {
             ),
             title: Text(
               'Platform Environment',
-              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
+              style: AppTextStyles.bodyMediumOf(context).copyWith(color: AppColors.textPrimaryOf(context)),
             ),
             subtitle: Text(
               'Simulated Prototype (ETB test funds only)',
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+              style: AppTextStyles.bodySmallOf(context).copyWith(color: AppColors.textSecondaryOf(context)),
             ),
           ),
-          const Divider(color: AppColors.border, height: 24),
+          Divider(color: AppColors.borderOf(context), height: 24),
           DirshaButton(
             label: 'Sign Out',
             variant: DirshaBtnVariant.danger,

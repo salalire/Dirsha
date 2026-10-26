@@ -5,6 +5,7 @@ import { Errors } from '../../lib/errors.js';
 import { fromDb } from '../../lib/money.js';
 import { recordAudit } from '../audit/audit.service.js';
 import { applyLedgerEntry } from '../wallet/ledger.js';
+import { computeEffectiveIpoStatus, type IpoStatus } from '../ipos/ipos.service.js';
 
 export interface AuditEventDto {
   id: string;
@@ -171,12 +172,12 @@ export async function approveIpo(
   db: Db,
   admin: AuthUser,
   ipoId: string,
-  opts: { notes?: string; requestId: string },
+  opts: { notes?: string; open_immediately?: boolean; requestId: string },
 ): Promise<{ ipo_id: string; status: string }> {
   return db.tx(async (client) => {
     const ipo = (
-      await client.query<{ id: string; status: string }>(
-        'SELECT id, status FROM ipos WHERE id = $1 FOR UPDATE',
+      await client.query<{ id: string; status: string; opens_at: Date; closes_at: Date }>(
+        'SELECT id, status, opens_at, closes_at FROM ipos WHERE id = $1 FOR UPDATE',
         [ipoId],
       )
     ).rows[0];
@@ -186,14 +187,29 @@ export async function approveIpo(
       throw Errors.conflict(`Cannot approve IPO currently in status '${ipo.status}'`);
     }
 
-    const nextStatus = 'approved';
+    const now = new Date();
+    const openImmediately = Boolean(opts.open_immediately);
+    if (openImmediately && ipo.opens_at > now) {
+      await client.query('UPDATE ipos SET opens_at = $2 WHERE id = $1', [ipoId, now]);
+      ipo.opens_at = now;
+    }
+
+    const nextStatus = openImmediately ? 'open' : 'approved';
     await client.query('UPDATE ipos SET status = $2 WHERE id = $1', [ipoId, nextStatus]);
 
     await client.query(
       `INSERT INTO ipo_status_history (ipo_id, from_status, to_status, changed_by, reason)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [ipoId, ipo.status, nextStatus, admin.id, opts.notes ?? 'Approved by administrator'],
+       VALUES ($1, $2, 'approved', $3, $4)`,
+      [ipoId, ipo.status, admin.id, opts.notes ?? 'Approved by administrator'],
     );
+
+    if (nextStatus === 'open') {
+      await client.query(
+        `INSERT INTO ipo_status_history (ipo_id, from_status, to_status, changed_by, reason)
+         VALUES ($1, 'approved', 'open', $2, 'Subscriptions opened immediately upon approval')`,
+        [ipoId, admin.id],
+      );
+    }
 
     await recordAudit(client, {
       actorUserId: admin.id,
@@ -204,6 +220,60 @@ export async function approveIpo(
       outcome: 'success',
       requestId: opts.requestId,
       metadata: { from_status: ipo.status, to_status: nextStatus, notes: opts.notes ?? null },
+    });
+
+    return { ipo_id: ipoId, status: nextStatus };
+  });
+}
+
+export async function openIpo(
+  db: Db,
+  admin: AuthUser,
+  ipoId: string,
+  opts: { reason?: string; requestId: string },
+): Promise<{ ipo_id: string; status: string }> {
+  return db.tx(async (client) => {
+    const ipo = (
+      await client.query<{ id: string; status: string; opens_at: Date; closes_at: Date }>(
+        'SELECT id, status, opens_at, closes_at FROM ipos WHERE id = $1 FOR UPDATE',
+        [ipoId],
+      )
+    ).rows[0];
+
+    if (!ipo) throw Errors.notFound('IPO not found');
+    if (ipo.status !== 'approved') {
+      throw Errors.conflict(
+        `Cannot open IPO currently in status '${ipo.status}'. Only approved offerings can be opened.`,
+      );
+    }
+
+    const now = new Date();
+    if (ipo.closes_at <= now) {
+      throw Errors.conflict('Cannot open an IPO whose subscription closing date has already passed');
+    }
+
+    if (ipo.opens_at > now) {
+      await client.query('UPDATE ipos SET opens_at = $2 WHERE id = $1', [ipoId, now]);
+    }
+
+    const nextStatus = 'open';
+    await client.query('UPDATE ipos SET status = $2 WHERE id = $1', [ipoId, nextStatus]);
+
+    await client.query(
+      `INSERT INTO ipo_status_history (ipo_id, from_status, to_status, changed_by, reason)
+       VALUES ($1, 'approved', 'open', $2, $3)`,
+      [ipoId, admin.id, opts.reason ?? 'Subscription window opened by administrator'],
+    );
+
+    await recordAudit(client, {
+      actorUserId: admin.id,
+      actorRole: admin.role,
+      action: 'ipo.open',
+      targetType: 'ipo',
+      targetId: ipoId,
+      outcome: 'success',
+      requestId: opts.requestId,
+      metadata: { from_status: 'approved', to_status: nextStatus },
     });
 
     return { ipo_id: ipoId, status: nextStatus };
@@ -340,13 +410,26 @@ export async function allocateIpo(
         status: string;
         total_shares: string;
         price_per_share_minor: string;
-      }>('SELECT id, status, total_shares, price_per_share_minor FROM ipos WHERE id = $1 FOR UPDATE', [
-        ipoId,
-      ])
+        opens_at: Date;
+        closes_at: Date;
+      }>(
+        'SELECT id, status, total_shares, price_per_share_minor, opens_at, closes_at FROM ipos WHERE id = $1 FOR UPDATE',
+        [ipoId],
+      )
     ).rows[0];
 
     if (!ipo) throw Errors.notFound('IPO not found');
-    if (ipo.status !== 'closed' && ipo.status !== 'open') {
+    const effectiveStatus = computeEffectiveIpoStatus(
+      ipo.status as IpoStatus,
+      ipo.opens_at,
+      ipo.closes_at,
+    );
+    if (
+      ipo.status !== 'closed' &&
+      ipo.status !== 'open' &&
+      effectiveStatus !== 'open' &&
+      effectiveStatus !== 'closed'
+    ) {
       throw Errors.conflict(`Cannot allocate IPO currently in status '${ipo.status}'. Must be open or closed.`);
     }
 
@@ -470,6 +553,17 @@ export async function allocateIpo(
         'UPDATE subscriptions SET allocated_quantity = $2, status = $3 WHERE id = $1',
         [s.id, allocatedQty, finalStatus],
       );
+
+      // Credit investor share holdings if allocation is positive
+      if (allocatedQty > 0) {
+        await client.query(
+          `INSERT INTO share_holdings (investor_id, ipo_id, quantity, reserved_quantity)
+           VALUES ($1, $2, $3, 0)
+           ON CONFLICT (investor_id, ipo_id)
+           DO UPDATE SET quantity = share_holdings.quantity + EXCLUDED.quantity`,
+          [s.investor_id, ipoId, allocatedQty],
+        );
+      }
     }
 
     const nextStatus = 'allocated';
@@ -504,6 +598,90 @@ export async function allocateIpo(
       total_shares_allocated: actualAllocatedTotal,
       subscriptions_count: subs.length,
       status: nextStatus,
+    };
+  });
+}
+
+// ── IPO Listing ─────────────────────────────────────────────────────────────
+
+export interface ListingSummary {
+  ipo_id: string;
+  symbol: string;
+  total_shareholders: number;
+  total_allocated_shares: number;
+  status: 'listed';
+  listed_at: string;
+}
+
+export async function listIpo(
+  db: Db,
+  admin: AuthUser,
+  ipoId: string,
+  opts: { reason?: string; requestId?: string } = {},
+): Promise<ListingSummary> {
+  return db.tx(async (client) => {
+    const ipo = (
+      await client.query<{
+        id: string;
+        symbol: string;
+        status: string;
+      }>('SELECT id, symbol, status FROM ipos WHERE id = $1 FOR UPDATE', [ipoId])
+    ).rows[0];
+
+    if (!ipo) throw Errors.notFound('IPO not found');
+    if (ipo.status !== 'allocated') {
+      throw Errors.conflict(`Cannot list IPO currently in status '${ipo.status}'. Must be in 'allocated' status.`);
+    }
+
+    // Validate that eligible allocated shareholdings exist before listing
+    const holdingsRes = await client.query<{
+      shareholders_count: string;
+      total_shares: string;
+    }>(
+      `SELECT count(*)::bigint AS shareholders_count,
+              COALESCE(sum(quantity), 0)::bigint AS total_shares
+       FROM share_holdings
+       WHERE ipo_id = $1 AND quantity > 0`,
+      [ipoId],
+    );
+    const shareholdersCount = fromDb(holdingsRes.rows[0]?.shareholders_count ?? '0');
+    const totalAllocatedShares = fromDb(holdingsRes.rows[0]?.total_shares ?? '0');
+
+    if (totalAllocatedShares <= 0) {
+      throw Errors.conflict(`Cannot list IPO '${ipo.symbol}' with 0 allocated shares.`);
+    }
+
+    const nextStatus = 'listed';
+    await client.query('UPDATE ipos SET status = $2 WHERE id = $1', [ipoId, nextStatus]);
+
+    await client.query(
+      `INSERT INTO ipo_status_history (ipo_id, from_status, to_status, changed_by, reason)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [ipoId, ipo.status, nextStatus, admin.id, opts.reason ?? 'IPO listed on secondary market'],
+    );
+
+    await recordAudit(client, {
+      actorUserId: admin.id,
+      actorRole: admin.role,
+      action: 'ipo.list',
+      targetType: 'ipo',
+      targetId: ipoId,
+      outcome: 'success',
+      requestId: opts.requestId,
+      metadata: {
+        symbol: ipo.symbol,
+        shareholders_count: shareholdersCount,
+        total_shares: totalAllocatedShares,
+      },
+    });
+
+    return {
+      ipo_id: ipoId,
+      symbol: ipo.symbol,
+      total_shareholders: shareholdersCount,
+      total_allocated_shares: totalAllocatedShares,
+      status: nextStatus,
+      listed_at: new Date().toISOString(),
     };
   });
 }

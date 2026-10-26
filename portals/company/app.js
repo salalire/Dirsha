@@ -833,6 +833,17 @@ function renderOfferings() {
     .join('');
 }
 
+function formatLocalDateTime(date) {
+  if (!date || isNaN(date.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 function openCreateIpoModal(ipoId) {
   const modal = document.getElementById('modal-ipo-form');
   const titleEl = document.getElementById('modal-ipo-title');
@@ -849,8 +860,8 @@ function openCreateIpoModal(ipoId) {
     document.getElementById('ipo-total-shares').value = item.total_shares;
     document.getElementById('ipo-min-shares').value = item.min_shares_per_subscription || 1;
     document.getElementById('ipo-max-shares').value = item.max_shares_per_subscription || '';
-    document.getElementById('ipo-opens-at').value = item.opens_at ? item.opens_at.slice(0, 16) : '';
-    document.getElementById('ipo-closes-at').value = item.closes_at ? item.closes_at.slice(0, 16) : '';
+    document.getElementById('ipo-opens-at').value = item.opens_at ? formatLocalDateTime(new Date(item.opens_at)) : '';
+    document.getElementById('ipo-closes-at').value = item.closes_at ? formatLocalDateTime(new Date(item.closes_at)) : '';
     document.getElementById('ipo-description').value = item.description || '';
   } else {
     titleEl.innerText = 'Create IPO Offering Draft';
@@ -858,12 +869,11 @@ function openCreateIpoModal(ipoId) {
     document.getElementById('form-ipo-draft').reset();
     document.getElementById('ipo-min-shares').value = '1';
 
-    // Set default dates: opens tomorrow, closes in 14 days
+    // Set default dates: opens now (ready for immediate subscription upon approval), closes in 14 days
     const now = new Date();
-    const opens = new Date(now.getTime() + 86400000);
     const closes = new Date(now.getTime() + 86400000 * 14);
-    document.getElementById('ipo-opens-at').value = opens.toISOString().slice(0, 16);
-    document.getElementById('ipo-closes-at').value = closes.toISOString().slice(0, 16);
+    document.getElementById('ipo-opens-at').value = formatLocalDateTime(now);
+    document.getElementById('ipo-closes-at').value = formatLocalDateTime(closes);
   }
 
   modal.style.display = 'flex';

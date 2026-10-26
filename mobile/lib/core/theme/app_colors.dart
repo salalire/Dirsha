@@ -93,6 +93,48 @@ abstract final class AppColors {
   static const Color infoSurface = Color(0xFF0A1929);
 
   // ---------------------------------------------------------------------------
+  // Light mode surfaces and text
+  // ---------------------------------------------------------------------------
+
+  /// Light primary background — base screen surface in light mode.
+  static const Color lightBackgroundPrimary = Color(0xFFF5F7F5);
+
+  /// Light secondary background — elevated sections in light mode.
+  static const Color lightBackgroundSecondary = Color(0xFFFFFFFF);
+
+  /// Light card surface — default card / tile background in light mode.
+  static const Color lightCardSurface = Color(0xFFFFFFFF);
+
+  /// Light elevated card surface — slightly tinted elevated card in light mode.
+  static const Color lightCardElevated = Color(0xFFF0F4F1);
+
+  /// Light borders and dividers.
+  static const Color lightBorder = Color(0xFFDDE4DF);
+
+  /// Primary text on light surfaces.
+  static const Color lightTextPrimary = Color(0xFF0D1A12);
+
+  /// Secondary text on light surfaces.
+  static const Color lightTextSecondary = Color(0xFF4A5E50);
+
+  /// Disabled text on light surfaces.
+  static const Color lightTextDisabled = Color(0xFF9AB0A0);
+
+  // ---------------------------------------------------------------------------
+  // Light semantic status colors & surface tints
+  // ---------------------------------------------------------------------------
+
+  static const Color lightSuccess = Color(0xFF15803D);
+  static const Color lightError = Color(0xFFDC2626);
+  static const Color lightWarning = Color(0xFFB45309);
+  static const Color lightInfo = Color(0xFF2563EB);
+
+  static const Color lightSuccessSurface = Color(0xFFDCFCE7);
+  static const Color lightErrorSurface = Color(0xFFFEE2E2);
+  static const Color lightWarningSurface = Color(0xFFFEF3CC);
+  static const Color lightInfoSurface = Color(0xFFE0F2FE);
+
+  // ---------------------------------------------------------------------------
   // Overlay / scrim
   // ---------------------------------------------------------------------------
 
@@ -105,4 +147,76 @@ abstract final class AppColors {
 
   /// Transparent — use instead of Colors.transparent for consistency.
   static const Color transparent = Color(0x00000000);
+
+  // ---------------------------------------------------------------------------
+  // Theme-aware helpers
+  // ---------------------------------------------------------------------------
+
+  /// Whether the active theme is dark mode.
+  static bool isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  /// Theme-aware primary background color.
+  static Color backgroundPrimaryOf(BuildContext context) =>
+      isDark(context) ? backgroundPrimary : lightBackgroundPrimary;
+
+  /// Theme-aware secondary background color.
+  static Color backgroundSecondaryOf(BuildContext context) =>
+      isDark(context) ? backgroundSecondary : lightBackgroundSecondary;
+
+  /// Theme-aware card surface color.
+  static Color cardSurfaceOf(BuildContext context) =>
+      isDark(context) ? cardSurface : lightCardSurface;
+
+  /// Theme-aware elevated card color.
+  static Color cardElevatedOf(BuildContext context) =>
+      isDark(context) ? cardElevated : lightCardElevated;
+
+  /// Theme-aware border color.
+  static Color borderOf(BuildContext context) =>
+      isDark(context) ? border : lightBorder;
+
+  /// Theme-aware primary text color.
+  static Color textPrimaryOf(BuildContext context) =>
+      isDark(context) ? textPrimary : lightTextPrimary;
+
+  /// Theme-aware secondary text color.
+  static Color textSecondaryOf(BuildContext context) =>
+      isDark(context) ? textSecondary : lightTextSecondary;
+
+  /// Theme-aware disabled text color.
+  static Color textDisabledOf(BuildContext context) =>
+      isDark(context) ? textDisabled : lightTextDisabled;
+
+  /// Theme-aware success status color.
+  static Color successOf(BuildContext context) =>
+      isDark(context) ? success : lightSuccess;
+
+  /// Theme-aware error status color.
+  static Color errorOf(BuildContext context) =>
+      isDark(context) ? error : lightError;
+
+  /// Theme-aware warning status color.
+  static Color warningOf(BuildContext context) =>
+      isDark(context) ? warning : lightWarning;
+
+  /// Theme-aware info status color.
+  static Color infoOf(BuildContext context) =>
+      isDark(context) ? info : lightInfo;
+
+  /// Theme-aware success surface tint.
+  static Color successSurfaceOf(BuildContext context) =>
+      isDark(context) ? successSurface : lightSuccessSurface;
+
+  /// Theme-aware error surface tint.
+  static Color errorSurfaceOf(BuildContext context) =>
+      isDark(context) ? errorSurface : lightErrorSurface;
+
+  /// Theme-aware warning surface tint.
+  static Color warningSurfaceOf(BuildContext context) =>
+      isDark(context) ? warningSurface : lightWarningSurface;
+
+  /// Theme-aware info surface tint.
+  static Color infoSurfaceOf(BuildContext context) =>
+      isDark(context) ? infoSurface : lightInfoSurface;
 }

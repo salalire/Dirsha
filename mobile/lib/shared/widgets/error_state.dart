@@ -38,24 +38,24 @@ class ErrorState extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: AppColors.errorSurface,
+                color: AppColors.errorSurfaceOf(context),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppColors.error.withValues(alpha: 0.3),
+                  color: AppColors.errorOf(context).withValues(alpha: 0.3),
                 ),
               ),
-              child: Icon(icon, size: 32, color: AppColors.error),
+              child: Icon(icon, size: 32, color: AppColors.errorOf(context)),
             ),
             const SizedBox(height: 20),
             Text(
               title,
-              style: AppTextStyles.emptyStateTitle,
+              style: AppTextStyles.emptyStateTitleOf(context),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               message,
-              style: AppTextStyles.emptyStateBody,
+              style: AppTextStyles.emptyStateBodyOf(context),
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...[

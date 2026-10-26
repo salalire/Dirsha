@@ -27,10 +27,14 @@ class ApiIpoRepository implements IpoRepository {
   }
 
   @override
-  Future<void> approveApplication(String id, {String? notes}) async {
+  Future<void> approveApplication(String id,
+      {String? notes, bool openImmediately = false}) async {
     final body = <String, dynamic>{};
     if (notes != null && notes.isNotEmpty) {
       body['notes'] = notes;
+    }
+    if (openImmediately) {
+      body['open_immediately'] = true;
     }
     await _apiClient.post('/admin/ipos/$id/approve', body);
   }
@@ -40,6 +44,15 @@ class ApiIpoRepository implements IpoRepository {
     await _apiClient.post('/admin/ipos/$id/reject', {
       'reason': reason,
     });
+  }
+
+  @override
+  Future<void> openIpo(String id, {String? reason}) async {
+    final body = <String, dynamic>{};
+    if (reason != null && reason.isNotEmpty) {
+      body['reason'] = reason;
+    }
+    await _apiClient.post('/admin/ipos/$id/open', body);
   }
 
   @override
@@ -54,5 +67,14 @@ class ApiIpoRepository implements IpoRepository {
   @override
   Future<void> allocateIpo(String id) async {
     await _apiClient.post('/admin/ipos/$id/allocate', {});
+  }
+
+  @override
+  Future<void> listIpo(String id, {String? reason}) async {
+    final body = <String, dynamic>{};
+    if (reason != null && reason.isNotEmpty) {
+      body['reason'] = reason;
+    }
+    await _apiClient.post('/admin/ipos/$id/list', body);
   }
 }

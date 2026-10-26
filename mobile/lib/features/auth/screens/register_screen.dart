@@ -129,7 +129,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(
         title: const Text('Create account'),
         leading: BackButton(onPressed: () => context.pop()),
@@ -151,7 +150,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 8),
                     Text(
                       'Start your investment journey.',
-                      style: AppTextStyles.authSubtitle,
+                      style: AppTextStyles.authSubtitleOf(context),
                     ),
                     const SizedBox(height: 32),
                     _buildForm(),
@@ -259,7 +258,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Min 8 characters, one uppercase letter, one number.',
-                  style: AppTextStyles.labelSmall,
+                  style: AppTextStyles.labelSmallOf(context),
                 ),
               ),
               const SizedBox(height: 16),
@@ -285,22 +284,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.errorSurface,
+        color: AppColors.errorSurfaceOf(context),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
+        border: Border.all(color: AppColors.errorOf(context).withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline_rounded,
             size: 18,
-            color: AppColors.error,
+            color: AppColors.errorOf(context),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+              style: AppTextStyles.bodySmallOf(context).copyWith(color: AppColors.errorOf(context)),
             ),
           ),
         ],
@@ -322,7 +321,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text('Already have an account? ', style: AppTextStyles.bodySmall),
+        Text('Already have an account? ', style: AppTextStyles.bodySmallOf(context)),
         TextButton(
           onPressed: () => context.pop(),
           style: TextButton.styleFrom(
@@ -332,7 +331,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           child: Text(
             'Sign in',
-            style: AppTextStyles.bodySmall.copyWith(
+            style: AppTextStyles.bodySmallOf(context).copyWith(
               color: AppColors.secondaryEmerald,
               fontWeight: FontWeight.w600,
             ),

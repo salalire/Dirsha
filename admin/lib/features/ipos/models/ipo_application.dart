@@ -186,9 +186,15 @@ class IpoApplication {
   /// Returns true if the IPO is currently open and can be closed.
   bool get isClosable => status == IpoStatus.open;
 
+  /// Returns true if the IPO is approved and subscriptions can be opened.
+  bool get isOpenable => status == IpoStatus.approved;
+
   /// Returns true if the IPO can be allocated (status is open or closed).
   bool get isAllocatable =>
       status == IpoStatus.open || status == IpoStatus.closed;
+
+  /// Returns true if the IPO can be listed on the secondary market (status is allocated).
+  bool get isListable => status == IpoStatus.allocated;
 }
 
 class IpoDocumentMetadata {
