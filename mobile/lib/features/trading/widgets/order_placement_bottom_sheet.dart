@@ -27,7 +27,7 @@ class OrderPlacementBottomSheet extends StatefulWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.cardSurface,
+      backgroundColor: AppColors.cardSurfaceOf(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -96,7 +96,7 @@ class _OrderPlacementBottomSheetState extends State<OrderPlacementBottomSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: AppColors.borderOf(context),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -112,20 +112,20 @@ class _OrderPlacementBottomSheetState extends State<OrderPlacementBottomSheet> {
                 children: [
                   Text(
                     widget.security.symbol,
-                    style: AppTextStyles.cardTitle.copyWith(
+                    style: AppTextStyles.cardTitleOf(context).copyWith(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   Text(
                     widget.security.companyName,
-                    style: AppTextStyles.bodySmall.copyWith(fontSize: 12),
+                    style: AppTextStyles.bodySmallOf(context).copyWith(fontSize: 12),
                   ),
                 ],
               ),
               IconButton(
                 onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                icon: Icon(Icons.close, color: AppColors.textSecondaryOf(context)),
               ),
             ],
           ),
@@ -135,9 +135,9 @@ class _OrderPlacementBottomSheetState extends State<OrderPlacementBottomSheet> {
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: AppColors.backgroundPrimary,
+              color: AppColors.backgroundPrimaryOf(context),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: AppColors.borderOf(context)),
             ),
             child: Row(
               children: [
@@ -159,7 +159,7 @@ class _OrderPlacementBottomSheetState extends State<OrderPlacementBottomSheet> {
                         style: TextStyle(
                           color: _side == 'buy'
                               ? Colors.white
-                              : AppColors.textSecondary,
+                              : AppColors.textSecondaryOf(context),
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
                         ),
@@ -175,7 +175,7 @@ class _OrderPlacementBottomSheetState extends State<OrderPlacementBottomSheet> {
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
                         color: _side == 'sell'
-                            ? AppColors.error
+                            ? AppColors.errorOf(context)
                             : AppColors.transparent,
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -185,7 +185,7 @@ class _OrderPlacementBottomSheetState extends State<OrderPlacementBottomSheet> {
                         style: TextStyle(
                           color: _side == 'sell'
                               ? Colors.white
-                              : AppColors.textSecondary,
+                              : AppColors.textSecondaryOf(context),
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
                         ),
@@ -202,9 +202,9 @@ class _OrderPlacementBottomSheetState extends State<OrderPlacementBottomSheet> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.cardElevated,
+              color: AppColors.cardElevatedOf(context),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: AppColors.borderOf(context)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -213,7 +213,7 @@ class _OrderPlacementBottomSheetState extends State<OrderPlacementBottomSheet> {
                   _side == 'buy'
                       ? 'Available Cash Balance'
                       : 'Available Shares to Sell',
-                  style: AppTextStyles.bodySmall.copyWith(fontSize: 12),
+                  style: AppTextStyles.bodySmallOf(context).copyWith(fontSize: 12),
                 ),
                 Text(
                   _side == 'buy'
@@ -224,7 +224,7 @@ class _OrderPlacementBottomSheetState extends State<OrderPlacementBottomSheet> {
                     fontSize: 13,
                     color: _side == 'buy'
                         ? AppColors.secondaryEmerald
-                        : AppColors.warning,
+                        : AppColors.warningOf(context),
                   ),
                 ),
               ],
@@ -233,7 +233,7 @@ class _OrderPlacementBottomSheetState extends State<OrderPlacementBottomSheet> {
           const SizedBox(height: 16),
 
           // Quantity Field
-          Text('Quantity (Shares)', style: AppTextStyles.labelSmall),
+          Text('Quantity (Shares)', style: AppTextStyles.labelSmallOf(context)),
           const SizedBox(height: 6),
           Row(
             children: [
@@ -246,7 +246,7 @@ class _OrderPlacementBottomSheetState extends State<OrderPlacementBottomSheet> {
                   }
                 },
                 icon: const Icon(Icons.remove_circle_outline),
-                color: AppColors.textSecondary,
+                color: AppColors.textSecondaryOf(context),
               ),
               Expanded(
                 child: TextField(
@@ -267,14 +267,14 @@ class _OrderPlacementBottomSheetState extends State<OrderPlacementBottomSheet> {
                   setState(() {});
                 },
                 icon: const Icon(Icons.add_circle_outline),
-                color: AppColors.textSecondary,
+                color: AppColors.textSecondaryOf(context),
               ),
             ],
           ),
           const SizedBox(height: 14),
 
           // Price Field
-          Text('Limit Price per Share (ETB)', style: AppTextStyles.labelSmall),
+          Text('Limit Price per Share (ETB)', style: AppTextStyles.labelSmallOf(context)),
           const SizedBox(height: 6),
           TextField(
             controller: _priceController,
@@ -295,14 +295,14 @@ class _OrderPlacementBottomSheetState extends State<OrderPlacementBottomSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Estimated Total Value',
-                  style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+              Text('Estimated Total Value',
+                  style: TextStyle(fontSize: 14, color: AppColors.textSecondaryOf(context))),
               Text(
                 '${_totalEtb.toStringAsFixed(2)} ETB',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: AppColors.textPrimaryOf(context),
                 ),
               ),
             ],
@@ -313,20 +313,20 @@ class _OrderPlacementBottomSheetState extends State<OrderPlacementBottomSheet> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.errorSurface,
+                color: AppColors.errorSurfaceOf(context),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.error),
+                border: Border.all(color: AppColors.errorOf(context)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline,
-                      size: 16, color: AppColors.error),
+                  Icon(Icons.error_outline,
+                      size: 16, color: AppColors.errorOf(context)),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       _localError ?? tradingProvider.errorMessage!,
-                      style: const TextStyle(
-                          fontSize: 12, color: AppColors.error),
+                      style: TextStyle(
+                          fontSize: 12, color: AppColors.errorOf(context)),
                     ),
                   ),
                 ],

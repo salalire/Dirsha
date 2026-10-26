@@ -51,7 +51,7 @@ class DirshaButton extends StatelessWidget {
   Widget _buildElevated(BuildContext context, bool canTap) {
     return ElevatedButton(
       onPressed: canTap ? onPressed : null,
-      child: _child(AppColors.textPrimary),
+      child: _child(Colors.white),
     );
   }
 
@@ -70,28 +70,29 @@ class DirshaButton extends StatelessWidget {
   }
 
   Widget _buildDanger(BuildContext context, bool canTap) {
+    final errColor = AppColors.errorOf(context);
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.errorSurface,
-        foregroundColor: AppColors.error,
-        side: const BorderSide(color: AppColors.error, width: 1),
+        backgroundColor: AppColors.errorSurfaceOf(context),
+        foregroundColor: errColor,
+        side: BorderSide(color: errColor, width: 1),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         minimumSize: Size(minWidth, height),
         elevation: 0,
       ),
       onPressed: canTap ? onPressed : null,
-      child: _child(AppColors.error),
+      child: _child(errColor),
     );
   }
 
-  Widget _child(Color spinnerColor) {
+  Widget _child(Color textColor) {
     if (isLoading) {
       return SizedBox(
         width: 20,
         height: 20,
         child: CircularProgressIndicator(
           strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation<Color>(spinnerColor),
+          valueColor: AlwaysStoppedAnimation<Color>(textColor),
         ),
       );
     }
@@ -100,13 +101,13 @@ class DirshaButton extends StatelessWidget {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18),
+          Icon(icon, size: 18, color: textColor),
           const SizedBox(width: 8),
-          Text(label, style: AppTextStyles.buttonLabel),
+          Text(label, style: AppTextStyles.buttonLabel.copyWith(color: textColor)),
         ],
       );
     }
 
-    return Text(label, style: AppTextStyles.buttonLabel);
+    return Text(label, style: AppTextStyles.buttonLabel.copyWith(color: textColor));
   }
 }

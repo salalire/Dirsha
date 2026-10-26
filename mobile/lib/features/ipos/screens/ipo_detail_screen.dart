@@ -35,9 +35,9 @@ class _IpoDetailScreenState extends State<IpoDetailScreen> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
       body: Consumer<IpoDetailProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading) {
@@ -71,7 +71,7 @@ class _DetailContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return RefreshIndicator(
       color: AppColors.secondaryEmerald,
-      backgroundColor: AppColors.cardSurface,
+      backgroundColor: AppColors.cardSurfaceOf(context),
       onRefresh: () => context.read<IpoDetailProvider>().refresh(detail.id),
       child: CustomScrollView(
         slivers: [
@@ -88,28 +88,29 @@ class _DetailContent extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildStatusRow(),
+                    _buildStatusRow(context),
                     const SizedBox(height: 20),
-                    _buildOfferingTerms(),
+                    _buildOfferingTerms(context),
                     if (detail.subscriptionStartDate != null ||
                         detail.subscriptionEndDate != null) ...[
                       const SizedBox(height: 16),
-                      _buildDates(),
+                      _buildDates(context),
                     ],
                     if (detail.description != null) ...[
                       const SizedBox(height: 24),
-                      _buildSection('About this offering', detail.description!),
+                      _buildSection(context, 'About this offering', detail.description!),
                     ],
                     if (detail.companyDescription != null) ...[
                       const SizedBox(height: 16),
                       _buildSection(
+                        context,
                         'About the company',
                         detail.companyDescription!,
                       ),
                     ],
                     if (detail.riskDisclosure != null) ...[
                       const SizedBox(height: 16),
-                      _buildRiskDisclosure(),
+                      _buildRiskDisclosure(context),
                     ],
                     const SizedBox(height: 24),
                     _buildSubscriptionButton(context),
@@ -127,19 +128,19 @@ class _DetailContent extends StatelessWidget {
 
   SliverAppBar _buildAppBar(BuildContext context) {
     return SliverAppBar(
-      backgroundColor: AppColors.backgroundPrimary,
-      foregroundColor: AppColors.textPrimary,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      foregroundColor: AppColors.textPrimaryOf(context),
       floating: true,
       snap: true,
       title: Text(
         detail.companyName,
-        style: AppTextStyles.cardTitle,
+        style: AppTextStyles.cardTitleOf(context),
         overflow: TextOverflow.ellipsis,
       ),
     );
   }
 
-  Widget _buildStatusRow() {
+  Widget _buildStatusRow(BuildContext context) {
     return Row(
       children: [
         Container(
@@ -154,7 +155,7 @@ class _DetailContent extends StatelessWidget {
               detail.companyName.isNotEmpty
                   ? detail.companyName[0].toUpperCase()
                   : '?',
-              style: AppTextStyles.sectionHeading,
+              style: AppTextStyles.sectionHeading.copyWith(color: Colors.white),
             ),
           ),
         ),
@@ -163,7 +164,7 @@ class _DetailContent extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(detail.title, style: AppTextStyles.sectionHeading),
+              Text(detail.title, style: AppTextStyles.sectionHeadingOf(context)),
               const SizedBox(height: 4),
               StatusBadge.fromString(detail.status),
             ],
@@ -173,18 +174,18 @@ class _DetailContent extends StatelessWidget {
     );
   }
 
-  Widget _buildOfferingTerms() {
+  Widget _buildOfferingTerms(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardElevated,
+        color: AppColors.cardSurfaceOf(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.borderOf(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Offering terms', style: AppTextStyles.labelSmall),
+          Text('Offering terms', style: AppTextStyles.labelSmallOf(context)),
           const SizedBox(height: 12),
           _TermRow(
             label: 'Price per share',
@@ -232,18 +233,18 @@ class _DetailContent extends StatelessWidget {
     );
   }
 
-  Widget _buildDates() {
+  Widget _buildDates(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardElevated,
+        color: AppColors.cardSurfaceOf(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.borderOf(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Subscription period', style: AppTextStyles.labelSmall),
+          Text('Subscription period', style: AppTextStyles.labelSmallOf(context)),
           const SizedBox(height: 12),
           if (detail.subscriptionStartDate != null)
             _TermRow(
@@ -263,38 +264,42 @@ class _DetailContent extends StatelessWidget {
     );
   }
 
-  Widget _buildSection(String title, String body) {
+  Widget _buildSection(BuildContext context, String title, String body) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(title: title),
         const SizedBox(height: 10),
-        Text(body, style: AppTextStyles.bodyMedium),
+        Text(body, style: AppTextStyles.bodyMediumOf(context)),
       ],
     );
   }
 
-  Widget _buildRiskDisclosure() {
+  Widget _buildRiskDisclosure(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.warningSurface,
+        color: AppColors.warningSurfaceOf(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
+        border: Border.all(
+          color: AppColors.warningOf(context).withValues(alpha: 0.4),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.warning_amber_rounded,
             size: 18,
-            color: AppColors.warning,
+            color: AppColors.warningOf(context),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               detail.riskDisclosure!,
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.warning),
+              style: AppTextStyles.bodySmallOf(context).copyWith(
+                color: AppColors.warningOf(context),
+              ),
             ),
           ),
         ],
@@ -333,7 +338,7 @@ class _DetailContent extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           helperText,
-          style: AppTextStyles.labelSmall,
+          style: AppTextStyles.labelSmallOf(context),
           textAlign: TextAlign.center,
         ),
       ],
@@ -351,8 +356,8 @@ class _TermRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: AppTextStyles.bodySmall),
-        Text(value, style: AppTextStyles.financialSmall),
+        Text(label, style: AppTextStyles.bodySmallOf(context)),
+        Text(value, style: AppTextStyles.financialSmallOf(context)),
       ],
     );
   }

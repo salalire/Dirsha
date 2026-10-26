@@ -48,11 +48,26 @@ class StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (bg, fg) = switch (variant) {
-      BadgeVariant.success => (AppColors.successSurface, AppColors.success),
-      BadgeVariant.error => (AppColors.errorSurface, AppColors.error),
-      BadgeVariant.warning => (AppColors.warningSurface, AppColors.warning),
-      BadgeVariant.info => (AppColors.infoSurface, AppColors.info),
-      BadgeVariant.neutral => (AppColors.cardElevated, AppColors.textSecondary),
+      BadgeVariant.success => (
+          AppColors.successSurfaceOf(context),
+          AppColors.successOf(context),
+        ),
+      BadgeVariant.error => (
+          AppColors.errorSurfaceOf(context),
+          AppColors.errorOf(context),
+        ),
+      BadgeVariant.warning => (
+          AppColors.warningSurfaceOf(context),
+          AppColors.warningOf(context),
+        ),
+      BadgeVariant.info => (
+          AppColors.infoSurfaceOf(context),
+          AppColors.infoOf(context),
+        ),
+      BadgeVariant.neutral => (
+          AppColors.cardElevatedOf(context),
+          AppColors.textSecondaryOf(context),
+        ),
     };
 
     return Container(

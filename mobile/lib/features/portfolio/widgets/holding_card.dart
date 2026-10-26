@@ -20,10 +20,10 @@ class HoldingCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.cardSurface,
+        color: AppColors.cardSurfaceOf(context),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.cardElevated,
+          color: AppColors.borderOf(context),
           width: 1,
         ),
       ),
@@ -70,7 +70,7 @@ class HoldingCard extends StatelessWidget {
                             holding.companyName.isNotEmpty
                                 ? holding.companyName
                                 : holding.title,
-                            style: AppTextStyles.cardTitle.copyWith(
+                            style: AppTextStyles.cardTitleOf(context).copyWith(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                             ),
@@ -80,8 +80,8 @@ class HoldingCard extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             holding.title,
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.textSecondary,
+                            style: AppTextStyles.bodySmallOf(context).copyWith(
+                              color: AppColors.textSecondaryOf(context),
                               fontSize: 12,
                             ),
                             maxLines: 1,
@@ -96,8 +96,7 @@ class HoldingCard extends StatelessWidget {
                       children: [
                         Text(
                           Formatters.money(Money(holding.totalValueMinor)),
-                          style: AppTextStyles.cardTitle.copyWith(
-                            color: AppColors.textPrimary,
+                          style: AppTextStyles.cardTitleOf(context).copyWith(
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
                           ),
@@ -116,22 +115,22 @@ class HoldingCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                const Divider(color: AppColors.cardElevated, height: 1),
+                Divider(color: AppColors.borderOf(context), height: 1),
                 const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       'Price: ${Formatters.money(Money(holding.pricePerShareMinor))} / share',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
+                      style: AppTextStyles.bodySmallOf(context).copyWith(
+                        color: AppColors.textSecondaryOf(context),
                         fontSize: 11,
                       ),
                     ),
                     Text(
                       'Allocated: ${Formatters.dateShort(holding.allocatedAt)}',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
+                      style: AppTextStyles.bodySmallOf(context).copyWith(
+                        color: AppColors.textSecondaryOf(context),
                         fontSize: 11,
                       ),
                     ),

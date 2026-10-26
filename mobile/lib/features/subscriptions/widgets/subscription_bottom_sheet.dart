@@ -26,7 +26,7 @@ class SubscriptionBottomSheet extends StatefulWidget {
     return showModalBottomSheet<SubscriptionModel>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.backgroundSecondary,
+      backgroundColor: AppColors.cardSurfaceOf(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -136,12 +136,12 @@ class _SubscriptionBottomSheetState extends State<SubscriptionBottomSheet> {
                     children: [
                       Text(
                         'Subscribe: ${widget.ipo.title}',
-                        style: AppTextStyles.cardTitle,
+                        style: AppTextStyles.cardTitleOf(context),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         widget.ipo.companyName,
-                        style: AppTextStyles.bodySmall,
+                        style: AppTextStyles.bodySmallOf(context),
                       ),
                     ],
                   ),
@@ -152,15 +152,15 @@ class _SubscriptionBottomSheetState extends State<SubscriptionBottomSheet> {
                 ),
               ],
             ),
-            const Divider(height: 24, color: AppColors.border),
+            Divider(height: 24, color: AppColors.borderOf(context)),
 
             // Share price and constraints summary
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.cardSurface,
+                color: AppColors.cardSurfaceOf(context),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: AppColors.borderOf(context)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -184,7 +184,7 @@ class _SubscriptionBottomSheetState extends State<SubscriptionBottomSheet> {
             const SizedBox(height: 20),
 
             // Quantity selector
-            Text('Number of Shares', style: AppTextStyles.labelSmall),
+            Text('Number of Shares', style: AppTextStyles.labelSmallOf(context)),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -200,7 +200,7 @@ class _SubscriptionBottomSheetState extends State<SubscriptionBottomSheet> {
                     controller: _quantityController,
                     keyboardType: TextInputType.number,
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.financialLarge,
+                    style: AppTextStyles.financialLargeOf(context),
                     decoration: InputDecoration(
                       contentPadding: const EdgeInsets.symmetric(vertical: 12),
                       border: OutlineInputBorder(
@@ -228,13 +228,13 @@ class _SubscriptionBottomSheetState extends State<SubscriptionBottomSheet> {
               const SizedBox(height: 6),
               Text(
                 'Minimum subscription is $_minShares shares',
-                style: AppTextStyles.labelSmall.copyWith(color: AppColors.error),
+                style: AppTextStyles.labelSmallOf(context).copyWith(color: AppColors.errorOf(context)),
               ),
             ] else if (!isWithinMax) ...[
               const SizedBox(height: 6),
               Text(
                 'Maximum subscription is $_maxShares shares',
-                style: AppTextStyles.labelSmall.copyWith(color: AppColors.error),
+                style: AppTextStyles.labelSmallOf(context).copyWith(color: AppColors.errorOf(context)),
               ),
             ],
             const SizedBox(height: 16),
@@ -243,12 +243,12 @@ class _SubscriptionBottomSheetState extends State<SubscriptionBottomSheet> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.cardSurface,
+                color: AppColors.cardSurfaceOf(context),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: hasSufficientFunds
-                      ? AppColors.border
-                      : AppColors.error.withValues(alpha: 0.5),
+                      ? AppColors.borderOf(context)
+                      : AppColors.errorOf(context).withValues(alpha: 0.5),
                 ),
               ),
               child: Column(
@@ -263,7 +263,7 @@ class _SubscriptionBottomSheetState extends State<SubscriptionBottomSheet> {
                     label: 'Available in Wallet',
                     value: Formatters.money(available),
                   ),
-                  const Divider(height: 16, color: AppColors.border),
+                  Divider(height: 16, color: AppColors.borderOf(context)),
                   _BreakdownRow(
                     label: 'Remaining Balance',
                     value: hasSufficientFunds
@@ -281,22 +281,22 @@ class _SubscriptionBottomSheetState extends State<SubscriptionBottomSheet> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.errorSurface,
+                  color: AppColors.errorSurfaceOf(context),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: AppColors.error.withValues(alpha: 0.3),
+                    color: AppColors.errorOf(context).withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.warning_amber_rounded,
-                        color: AppColors.error, size: 20),
+                    Icon(Icons.warning_amber_rounded,
+                        color: AppColors.errorOf(context), size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Insufficient funds. You need ${Formatters.money(Money(_totalAmountMinor - available.santim))} more in available funds.',
-                        style: AppTextStyles.bodySmall
-                            .copyWith(color: AppColors.error),
+                        style: AppTextStyles.bodySmallOf(context)
+                            .copyWith(color: AppColors.errorOf(context)),
                       ),
                     ),
                   ],
@@ -313,7 +313,7 @@ class _SubscriptionBottomSheetState extends State<SubscriptionBottomSheet> {
               activeColor: AppColors.brandEmerald,
               title: Text(
                 'I confirm my subscription request and authorize the immediate reservation of ${Formatters.money(_totalMoney)} from my available balance.',
-                style: AppTextStyles.labelSmall,
+                style: AppTextStyles.labelSmallOf(context).copyWith(color: AppColors.textPrimaryOf(context)),
               ),
               controlAffinity: ListTileControlAffinity.leading,
               onChanged: (val) => setState(() => _termsAccepted = val ?? false),
@@ -323,7 +323,7 @@ class _SubscriptionBottomSheetState extends State<SubscriptionBottomSheet> {
               const SizedBox(height: 8),
               Text(
                 subscriptionProvider.errorMessage!,
-                style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+                style: AppTextStyles.bodySmallOf(context).copyWith(color: AppColors.errorOf(context)),
               ),
             ],
 
@@ -404,9 +404,9 @@ class _InfoItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(label, style: AppTextStyles.labelSmall),
+        Text(label, style: AppTextStyles.labelSmallOf(context)),
         const SizedBox(height: 4),
-        Text(value, style: AppTextStyles.financialMedium),
+        Text(value, style: AppTextStyles.financialMediumOf(context)),
       ],
     );
   }
@@ -433,16 +433,16 @@ class _BreakdownRow extends StatelessWidget {
         Text(
           label,
           style: isBold
-              ? AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.bold)
-              : AppTextStyles.bodySmall,
+              ? AppTextStyles.bodyMediumOf(context).copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimaryOf(context))
+              : AppTextStyles.bodySmallOf(context),
         ),
         Text(
           value,
           style: isBold
-              ? AppTextStyles.financialMedium
+              ? AppTextStyles.financialMediumOf(context)
               : (isDim
-                  ? AppTextStyles.bodySmall
-                  : AppTextStyles.financialSmall),
+                  ? AppTextStyles.bodySmallOf(context)
+                  : AppTextStyles.financialSmallOf(context)),
         ),
       ],
     );

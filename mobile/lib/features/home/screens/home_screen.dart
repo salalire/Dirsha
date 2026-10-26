@@ -58,9 +58,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(
-        title: Text(AppConfig.appName, style: AppTextStyles.cardTitle),
+        title: Text(AppConfig.appName, style: AppTextStyles.cardTitleOf(context)),
         actions: [
           // Theme toggle — sun (switch to light) / moon (switch to dark)
           Consumer<ThemeProvider>(
@@ -131,7 +130,7 @@ class _DashboardTab extends StatelessWidget {
     return SafeArea(
       child: RefreshIndicator(
         color: AppColors.secondaryEmerald,
-        backgroundColor: AppColors.cardSurface,
+        backgroundColor: AppColors.cardSurfaceOf(context),
         onRefresh: () async {
           await Future.wait([
             context.read<WalletProvider>().refresh(),
@@ -169,10 +168,10 @@ class _DashboardTab extends StatelessWidget {
                       icon: const Icon(Icons.pie_chart_outline, size: 16),
                       label: const Text('My Portfolio'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.textPrimary,
-                        side: const BorderSide(color: AppColors.cardElevated),
+                        foregroundColor: AppColors.textPrimaryOf(context),
+                        side: BorderSide(color: AppColors.borderOf(context)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        backgroundColor: AppColors.cardSurface,
+                        backgroundColor: AppColors.cardSurfaceOf(context),
                       ),
                     ),
                   ),
@@ -183,10 +182,10 @@ class _DashboardTab extends StatelessWidget {
                       icon: const Icon(Icons.receipt_long_outlined, size: 16),
                       label: const Text('Subscriptions'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.textPrimary,
-                        side: const BorderSide(color: AppColors.cardElevated),
+                        foregroundColor: AppColors.textPrimaryOf(context),
+                        side: BorderSide(color: AppColors.borderOf(context)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        backgroundColor: AppColors.cardSurface,
+                        backgroundColor: AppColors.cardSurfaceOf(context),
                       ),
                     ),
                   ),
@@ -239,9 +238,9 @@ class _DashboardTab extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: AppColors.cardSurface,
+        color: AppColors.cardSurfaceOf(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.borderOf(context)),
       ),
       child: Row(
         children: [
@@ -250,7 +249,7 @@ class _DashboardTab extends StatelessWidget {
             backgroundColor: AppColors.brandEmerald,
             child: Text(
               name.isNotEmpty ? name[0].toUpperCase() : 'I',
-              style: AppTextStyles.cardTitle.copyWith(color: AppColors.textPrimary),
+              style: AppTextStyles.cardTitle.copyWith(color: Colors.white),
             ),
           ),
           const SizedBox(width: 12),
@@ -263,7 +262,7 @@ class _DashboardTab extends StatelessWidget {
                     Flexible(
                       child: Text(
                         'Hello, $name',
-                        style: AppTextStyles.cardTitle.copyWith(fontSize: 16),
+                        style: AppTextStyles.cardTitleOf(context).copyWith(fontSize: 16),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -271,16 +270,18 @@ class _DashboardTab extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.brandEmerald.withValues(alpha: 0.3),
+                        color: AppColors.brandEmerald.withValues(
+                          alpha: AppColors.isDark(context) ? 0.3 : 0.15,
+                        ),
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(color: AppColors.secondaryEmerald, width: 0.8),
                       ),
                       child: Text(
                         role,
-                        style: AppTextStyles.labelSmall.copyWith(
+                        style: AppTextStyles.labelSmallOf(context).copyWith(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: AppColors.secondaryEmerald,
                         ),
                       ),
                     ),
@@ -289,14 +290,15 @@ class _DashboardTab extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   'Here is your investment overview.',
-                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                  style: AppTextStyles.bodySmallOf(context)
+                      .copyWith(color: AppColors.textSecondaryOf(context)),
                 ),
               ],
             ),
           ),
           IconButton(
             icon: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
-            color: AppColors.textSecondary,
+            color: AppColors.textSecondaryOf(context),
             tooltip: 'View Profile',
             onPressed: () {
               final homeState = context.findAncestorStateOfType<_HomeScreenState>();
@@ -328,25 +330,25 @@ class _WalletSummaryCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.errorSurface,
+                color: AppColors.errorSurfaceOf(context),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: AppColors.error.withValues(alpha: 0.3),
+                  color: AppColors.errorOf(context).withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.error_outline_rounded,
-                    color: AppColors.error,
+                    color: AppColors.errorOf(context),
                     size: 20,
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'Could not load wallet balance. Tap to retry.',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.error,
+                      style: AppTextStyles.bodySmallOf(context).copyWith(
+                        color: AppColors.errorOf(context),
                       ),
                     ),
                   ),
@@ -518,9 +520,9 @@ class _CompactIpoRow extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.cardSurface,
+          color: AppColors.cardSurfaceOf(context),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: AppColors.borderOf(context)),
         ),
         child: Row(
           children: [
@@ -537,7 +539,7 @@ class _CompactIpoRow extends StatelessWidget {
                       ? ipo.companyName[0].toUpperCase()
                       : '?',
                   style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textPrimary,
+                    color: Colors.white,
                   ),
                 ),
               ),
@@ -549,26 +551,24 @@ class _CompactIpoRow extends StatelessWidget {
                 children: [
                   Text(
                     ipo.companyName,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textPrimary,
-                    ),
+                    style: AppTextStyles.bodyMediumOf(context),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
                   Text(
                     Formatters.money(ipo.pricePerShare, symbol: ipo.currency),
-                    style: AppTextStyles.financialSmall,
+                    style: AppTextStyles.financialSmallOf(context),
                   ),
                 ],
               ),
             ),
             StatusBadge.fromString(ipo.status),
             const SizedBox(width: 8),
-            const Icon(
+            Icon(
               Icons.arrow_forward_ios_rounded,
               size: 12,
-              color: AppColors.textSecondary,
+              color: AppColors.textSecondaryOf(context),
             ),
           ],
         ),
@@ -631,7 +631,7 @@ class _IposTabState extends State<_IposTab> {
                 }
                 return RefreshIndicator(
                   color: AppColors.secondaryEmerald,
-                  backgroundColor: AppColors.cardSurface,
+                  backgroundColor: AppColors.cardSurfaceOf(context),
                   onRefresh: provider.refresh,
                   child: ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -644,9 +644,9 @@ class _IposTabState extends State<_IposTab> {
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: AppColors.cardSurface,
+                            color: AppColors.cardSurfaceOf(context),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.border),
+                            border: Border.all(color: AppColors.borderOf(context)),
                           ),
                           child: Row(
                             children: [
@@ -662,7 +662,7 @@ class _IposTabState extends State<_IposTab> {
                                     ipo.companyName.isNotEmpty
                                         ? ipo.companyName[0].toUpperCase()
                                         : '?',
-                                    style: AppTextStyles.cardTitle,
+                                    style: AppTextStyles.cardTitle.copyWith(color: Colors.white),
                                   ),
                                 ),
                               ),
@@ -673,7 +673,7 @@ class _IposTabState extends State<_IposTab> {
                                   children: [
                                     Text(
                                       ipo.companyName,
-                                      style: AppTextStyles.cardTitle,
+                                      style: AppTextStyles.cardTitleOf(context),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -683,17 +683,17 @@ class _IposTabState extends State<_IposTab> {
                                         ipo.pricePerShare,
                                         symbol: ipo.currency,
                                       ),
-                                      style: AppTextStyles.financialSmall,
+                                      style: AppTextStyles.financialSmallOf(context),
                                     ),
                                   ],
                                 ),
                               ),
                               StatusBadge.fromString(ipo.status),
                               const SizedBox(width: 8),
-                              const Icon(
+                              Icon(
                                 Icons.arrow_forward_ios_rounded,
                                 size: 12,
-                                color: AppColors.textSecondary,
+                                color: AppColors.textSecondaryOf(context),
                               ),
                             ],
                           ),
@@ -755,7 +755,7 @@ class _InlineWalletView extends StatelessWidget {
               builder: (context, provider, _) {
                 return RefreshIndicator(
                   color: AppColors.secondaryEmerald,
-                  backgroundColor: AppColors.cardSurface,
+                  backgroundColor: AppColors.cardSurfaceOf(context),
                   onRefresh: provider.refresh,
                   child: CustomScrollView(
                     slivers: [
@@ -948,7 +948,7 @@ class _BalancePair extends StatelessWidget {
         Text(
           amount,
           style: AppTextStyles.financialSmall.copyWith(
-            color: AppColors.textPrimary,
+            color: Colors.white,
           ),
         ),
       ],
@@ -994,15 +994,15 @@ class _TransactionSliverList extends StatelessWidget {
       delegate: SliverChildBuilderDelegate((context, index) {
         final tx = provider.transactions[index];
         final amountSign = tx.isDebit ? '-' : '+';
-        final amountColor = tx.isDebit ? AppColors.error : AppColors.success;
+        final amountColor = tx.isDebit ? AppColors.errorOf(context) : AppColors.successOf(context);
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
           child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.cardSurface,
+              color: AppColors.cardSurfaceOf(context),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: AppColors.borderOf(context)),
             ),
             child: Row(
               children: [
@@ -1011,8 +1011,8 @@ class _TransactionSliverList extends StatelessWidget {
                   height: 40,
                   decoration: BoxDecoration(
                     color: tx.isDebit
-                        ? AppColors.errorSurface
-                        : AppColors.successSurface,
+                        ? AppColors.errorSurfaceOf(context)
+                        : AppColors.successSurfaceOf(context),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
@@ -1030,9 +1030,7 @@ class _TransactionSliverList extends StatelessWidget {
                     children: [
                       Text(
                         tx.description ?? tx.type,
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.textPrimary,
-                        ),
+                        style: AppTextStyles.bodyMediumOf(context),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -1044,7 +1042,7 @@ class _TransactionSliverList extends StatelessWidget {
                           Flexible(
                             child: Text(
                               Formatters.relativeDate(tx.createdAt),
-                              style: AppTextStyles.labelSmall,
+                              style: AppTextStyles.labelSmallOf(context),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -1057,7 +1055,7 @@ class _TransactionSliverList extends StatelessWidget {
                 Flexible(
                   child: Text(
                     '$amountSign${Formatters.money(tx.amount, symbol: tx.currency)}',
-                    style: AppTextStyles.financialSmall.copyWith(
+                    style: AppTextStyles.financialSmallOf(context).copyWith(
                       color: amountColor,
                     ),
                     textAlign: TextAlign.end,

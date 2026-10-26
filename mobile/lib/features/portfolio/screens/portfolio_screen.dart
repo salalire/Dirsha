@@ -32,14 +32,12 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
 
     if (provider.isLoading && provider.portfolio == null) {
       return const Scaffold(
-        backgroundColor: AppColors.backgroundPrimary,
         body: LoadingIndicator.fullScreen(message: 'Loading portfolio…'),
       );
     }
 
     if (provider.error != null && provider.portfolio == null) {
       return Scaffold(
-        backgroundColor: AppColors.backgroundPrimary,
         body: SafeArea(
           child: ErrorState(
             error: provider.error!,
@@ -53,11 +51,10 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
     final holdings = provider.holdings;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
       body: SafeArea(
         child: RefreshIndicator(
           color: AppColors.secondaryEmerald,
-          backgroundColor: AppColors.cardSurface,
+          backgroundColor: AppColors.cardSurfaceOf(context),
           onRefresh: () => context.read<PortfolioProvider>().refresh(),
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),

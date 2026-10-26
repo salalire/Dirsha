@@ -58,8 +58,8 @@ class ConfirmationDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(title, style: AppTextStyles.sectionHeading),
-      content: Text(message, style: AppTextStyles.bodyMedium),
+      title: Text(title, style: AppTextStyles.sectionHeadingOf(context)),
+      content: Text(message, style: AppTextStyles.bodyMediumOf(context)),
       actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       actionsAlignment: MainAxisAlignment.end,
       actions: [

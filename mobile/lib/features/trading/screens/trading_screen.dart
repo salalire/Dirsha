@@ -40,14 +40,13 @@ class _TradingScreenState extends State<TradingScreen>
     final provider = context.watch<TradingProvider>();
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(
         title: const Text('Secondary Trading'),
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: AppColors.secondaryEmerald,
-          labelColor: AppColors.textPrimary,
-          unselectedLabelColor: AppColors.textSecondary,
+          labelColor: AppColors.textPrimaryOf(context),
+          unselectedLabelColor: AppColors.textSecondaryOf(context),
           tabs: const [
             Tab(text: 'Securities'),
             Tab(text: 'Holdings'),
@@ -62,17 +61,17 @@ class _TradingScreenState extends State<TradingScreen>
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: AppColors.cardElevated,
+              color: AppColors.cardElevatedOf(context),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline,
-                      size: 16, color: AppColors.warning),
+                  Icon(Icons.info_outline,
+                      size: 16, color: AppColors.warningOf(context)),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Simulated ETB matching engine with dual-settlement.',
-                      style: AppTextStyles.bodySmall
-                          .copyWith(fontSize: 11, color: AppColors.warning),
+                      style: AppTextStyles.bodySmallOf(context)
+                          .copyWith(fontSize: 11, color: AppColors.warningOf(context)),
                     ),
                   ),
                 ],
@@ -160,9 +159,9 @@ class _SecuritiesTab extends StatelessWidget {
           return Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.cardSurface,
+              color: AppColors.cardSurfaceOf(context),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: AppColors.borderOf(context)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,11 +174,11 @@ class _SecuritiesTab extends StatelessWidget {
                       children: [
                         Text(
                           s.symbol,
-                          style: AppTextStyles.cardTitle.copyWith(fontSize: 18),
+                          style: AppTextStyles.cardTitleOf(context).copyWith(fontSize: 18),
                         ),
                         Text(
                           s.companyName,
-                          style: AppTextStyles.bodySmall
+                          style: AppTextStyles.bodySmallOf(context)
                               .copyWith(fontSize: 12),
                         ),
                       ],
@@ -188,14 +187,14 @@ class _SecuritiesTab extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.successSurface,
+                        color: AppColors.successSurfaceOf(context),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: AppColors.success),
+                        border: Border.all(color: AppColors.successOf(context)),
                       ),
-                      child: const Text(
+                      child: Text(
                         'LISTED',
                         style: TextStyle(
-                          color: AppColors.success,
+                          color: AppColors.successOf(context),
                           fontWeight: FontWeight.w700,
                           fontSize: 10,
                         ),
@@ -210,15 +209,15 @@ class _SecuritiesTab extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Market Ref Price',
+                        Text('Market Ref Price',
                             style: TextStyle(
-                                fontSize: 11, color: AppColors.textSecondary)),
+                                fontSize: 11, color: AppColors.textSecondaryOf(context))),
                         Text(
                           '${s.referencePriceEtb.toStringAsFixed(2)} ETB',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
+                            color: AppColors.textPrimaryOf(context),
                           ),
                         ),
                       ],
@@ -226,14 +225,14 @@ class _SecuritiesTab extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text('Market Activity',
+                        Text('Market Activity',
                             style: TextStyle(
-                                fontSize: 11, color: AppColors.textSecondary)),
+                                fontSize: 11, color: AppColors.textSecondaryOf(context))),
                         Text(
                           '${s.totalTrades} trades · ${s.openOrdersCount} orders',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.textSecondary,
+                            color: AppColors.textSecondaryOf(context),
                           ),
                         ),
                       ],
@@ -344,9 +343,9 @@ class _HoldingsTab extends StatelessWidget {
           return Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.cardSurface,
+              color: AppColors.cardSurfaceOf(context),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: AppColors.borderOf(context)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -358,19 +357,19 @@ class _HoldingsTab extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(h.symbol,
-                            style: AppTextStyles.cardTitle
+                            style: AppTextStyles.cardTitleOf(context)
                                 .copyWith(fontSize: 18)),
                         Text(h.companyName,
-                            style: AppTextStyles.bodySmall
+                            style: AppTextStyles.bodySmallOf(context)
                                 .copyWith(fontSize: 12)),
                       ],
                     ),
                     Text(
                       '${h.quantity} shares',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
+                        color: AppColors.textPrimaryOf(context),
                       ),
                     ),
                   ],
@@ -384,8 +383,8 @@ class _HoldingsTab extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         color: h.reservedQuantity > 0
-                            ? AppColors.warning
-                            : AppColors.textSecondary,
+                            ? AppColors.warningOf(context)
+                            : AppColors.textSecondaryOf(context),
                       ),
                     ),
                     Text(
@@ -467,12 +466,12 @@ class _OrdersAndTradesTab extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           if (orders.isNotEmpty) ...[
-            const Text(
+            Text(
               'ORDERS',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textSecondary,
+                color: AppColors.textSecondaryOf(context),
                 letterSpacing: 0.05,
               ),
             ),
@@ -481,12 +480,12 @@ class _OrdersAndTradesTab extends StatelessWidget {
             const SizedBox(height: 20),
           ],
           if (trades.isNotEmpty) ...[
-            const Text(
+            Text(
               'EXECUTED TRADES',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textSecondary,
+                color: AppColors.textSecondaryOf(context),
                 letterSpacing: 0.05,
               ),
             ),
@@ -509,16 +508,16 @@ class _OrderCard extends StatelessWidget {
     final statusColor = order.status == 'filled'
         ? AppColors.secondaryEmerald
         : order.status == 'open'
-            ? AppColors.warning
-            : AppColors.textSecondary;
+            ? AppColors.warningOf(context)
+            : AppColors.textSecondaryOf(context);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.cardSurface,
+        color: AppColors.cardSurfaceOf(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.borderOf(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -533,8 +532,8 @@ class _OrderCard extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: isBuy
-                          ? AppColors.successSurface
-                          : AppColors.errorSurface,
+                          ? AppColors.successSurfaceOf(context)
+                          : AppColors.errorSurfaceOf(context),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -542,17 +541,17 @@ class _OrderCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
-                        color: isBuy ? AppColors.success : AppColors.error,
+                        color: isBuy ? AppColors.successOf(context) : AppColors.errorOf(context),
                       ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     order.symbol,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
-                      color: AppColors.textPrimary,
+                      color: AppColors.textPrimaryOf(context),
                     ),
                   ),
                 ],
@@ -573,12 +572,12 @@ class _OrderCard extends StatelessWidget {
             children: [
               Text(
                 '${order.filledQuantity}/${order.quantity} shares @ ${order.pricePerShareEtb.toStringAsFixed(2)} ETB',
-                style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 13, color: AppColors.textSecondaryOf(context)),
               ),
               if (order.isCancellable)
                 TextButton(
                   style: TextButton.styleFrom(
-                    foregroundColor: AppColors.error,
+                    foregroundColor: AppColors.errorOf(context),
                     padding: EdgeInsets.zero,
                     minimumSize: const Size(50, 24),
                   ),
@@ -615,9 +614,9 @@ class _TradeCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.cardSurface,
+        color: AppColors.cardSurfaceOf(context),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.borderOf(context)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -627,15 +626,15 @@ class _TradeCard extends StatelessWidget {
             children: [
               Text(
                 '${trade.quantity} ${trade.symbol} @ ${trade.pricePerShareEtb.toStringAsFixed(2)} ETB',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: AppColors.textPrimaryOf(context),
                 ),
               ),
               Text(
                 '${trade.executedAt.toLocal()}'.split('.')[0],
-                style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 11, color: AppColors.textSecondaryOf(context)),
               ),
             ],
           ),

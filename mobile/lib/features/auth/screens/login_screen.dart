@@ -86,7 +86,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
       body: SafeArea(
         child: Column(
           children: [
@@ -139,23 +138,23 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               child: const Icon(
                 Icons.trending_up_rounded,
-                color: AppColors.textPrimary,
+                color: Colors.white,
                 size: 20,
               ),
             ),
             const SizedBox(width: 10),
             Text(
               AppConfig.appName,
-              style: AppTextStyles.authHeadline.copyWith(fontSize: 22),
+              style: AppTextStyles.authHeadlineOf(context).copyWith(fontSize: 22),
             ),
           ],
         ),
         const SizedBox(height: 32),
-        Text('Welcome back', style: AppTextStyles.authHeadline),
+        Text('Welcome back', style: AppTextStyles.authHeadlineOf(context)),
         const SizedBox(height: 8),
         Text(
           'Sign in to your Dirsha account.',
-          style: AppTextStyles.authSubtitle,
+          style: AppTextStyles.authSubtitleOf(context),
         ),
       ],
     );
@@ -212,22 +211,22 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.errorSurface,
+        color: AppColors.errorSurfaceOf(context),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
+        border: Border.all(color: AppColors.errorOf(context).withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline_rounded,
             size: 18,
-            color: AppColors.error,
+            color: AppColors.errorOf(context),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+              style: AppTextStyles.bodySmallOf(context).copyWith(color: AppColors.errorOf(context)),
             ),
           ),
         ],
@@ -249,7 +248,7 @@ class _LoginScreenState extends State<LoginScreen> {
         },
         child: Text(
           'Forgot password?',
-          style: AppTextStyles.labelSmall.copyWith(
+          style: AppTextStyles.labelSmallOf(context).copyWith(
             color: AppColors.secondaryEmerald,
             fontWeight: FontWeight.w600,
           ),
@@ -274,7 +273,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text("Don't have an account? ", style: AppTextStyles.bodySmall),
+        Text("Don't have an account? ", style: AppTextStyles.bodySmallOf(context)),
         TextButton(
           onPressed: () => context.push(AppRoutes.roleSelection),
           style: TextButton.styleFrom(
@@ -284,7 +283,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           child: Text(
             'Create account',
-            style: AppTextStyles.bodySmall.copyWith(
+            style: AppTextStyles.bodySmallOf(context).copyWith(
               color: AppColors.secondaryEmerald,
               fontWeight: FontWeight.w600,
             ),

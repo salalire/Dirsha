@@ -35,22 +35,22 @@ class EmptyState extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: AppColors.cardSurface,
+                color: AppColors.cardSurfaceOf(context),
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: AppColors.borderOf(context)),
               ),
-              child: Icon(icon, size: 32, color: AppColors.textSecondary),
+              child: Icon(icon, size: 32, color: AppColors.textSecondaryOf(context)),
             ),
             const SizedBox(height: 20),
             Text(
               title,
-              style: AppTextStyles.emptyStateTitle,
+              style: AppTextStyles.emptyStateTitleOf(context),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               message,
-              style: AppTextStyles.emptyStateBody,
+              style: AppTextStyles.emptyStateBodyOf(context),
               textAlign: TextAlign.center,
             ),
             if (actionLabel != null && onAction != null) ...[

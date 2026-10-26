@@ -27,7 +27,6 @@ class BrokerPortalScreen extends StatelessWidget {
     final portalAvailable = AppConfig.brokerPortalUrl.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(
         title: const Text('Broker registration'),
         leading: BackButton(onPressed: () => context.pop()),
@@ -39,14 +38,14 @@ class BrokerPortalScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 32),
-              _buildHeader(),
+              _buildHeader(context),
               const SizedBox(height: 28),
-              _buildInfoCard(),
+              _buildInfoCard(context),
               const SizedBox(height: 28),
               if (portalAvailable)
                 _buildPortalButton(context)
               else
-                _buildUnavailableState(),
+                _buildUnavailableState(context),
               const SizedBox(height: 24),
               _buildBackToLogin(context),
             ],
@@ -56,7 +55,7 @@ class BrokerPortalScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Row(
       children: [
         Container(
@@ -68,7 +67,7 @@ class BrokerPortalScreen extends StatelessWidget {
           ),
           child: const Icon(
             Icons.handshake_outlined,
-            color: AppColors.textPrimary,
+            color: Colors.white,
             size: 28,
           ),
         ),
@@ -77,9 +76,9 @@ class BrokerPortalScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Broker registration', style: AppTextStyles.sectionHeading),
+              Text('Broker registration', style: AppTextStyles.sectionHeadingOf(context)),
               const SizedBox(height: 4),
-              Text('For licensed brokers', style: AppTextStyles.bodySmall),
+              Text('For licensed brokers', style: AppTextStyles.bodySmallOf(context)),
             ],
           ),
         ),
@@ -87,30 +86,30 @@ class BrokerPortalScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoCard() {
+  Widget _buildInfoCard(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardElevated,
+        color: AppColors.cardSurfaceOf(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.borderOf(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('What to expect', style: AppTextStyles.labelSmall),
+          Text('What to expect', style: AppTextStyles.labelSmallOf(context)),
           const SizedBox(height: 12),
-          _InfoRow(
+          const _InfoRow(
             icon: Icons.badge_outlined,
             text: 'Submit your broker profile and licensing documentation.',
           ),
           const SizedBox(height: 10),
-          _InfoRow(
+          const _InfoRow(
             icon: Icons.admin_panel_settings_outlined,
             text: 'An administrator will review and approve your application.',
           ),
           const SizedBox(height: 10),
-          _InfoRow(
+          const _InfoRow(
             icon: Icons.people_outline_rounded,
             text:
                 'Once approved, eligible investors can establish a '
@@ -120,17 +119,17 @@ class BrokerPortalScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.infoSurface,
+              color: AppColors.infoSurfaceOf(context),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
+              border: Border.all(color: AppColors.infoOf(context).withValues(alpha: 0.3)),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
+                Icon(
                   Icons.info_outline_rounded,
                   size: 15,
-                  color: AppColors.info,
+                  color: AppColors.infoOf(context),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -139,8 +138,8 @@ class BrokerPortalScreen extends StatelessWidget {
                     'web portal. Only approved brokers may perform '
                     'broker-only actions. All permissions are enforced '
                     'by the backend.',
-                    style: AppTextStyles.labelSmall.copyWith(
-                      color: AppColors.info,
+                    style: AppTextStyles.labelSmallOf(context).copyWith(
+                      color: AppColors.infoOf(context),
                     ),
                   ),
                 ),
@@ -168,26 +167,26 @@ class BrokerPortalScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUnavailableState() {
+  Widget _buildUnavailableState(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.warningSurface,
+        color: AppColors.warningSurfaceOf(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
+        border: Border.all(color: AppColors.warningOf(context).withValues(alpha: 0.4)),
       ),
       child: Column(
         children: [
-          const Icon(
+          Icon(
             Icons.schedule_rounded,
             size: 36,
-            color: AppColors.warning,
+            color: AppColors.warningOf(context),
           ),
           const SizedBox(height: 12),
           Text(
             'Broker portal not yet available',
-            style: AppTextStyles.emptyStateTitle,
+            style: AppTextStyles.emptyStateTitleOf(context),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
@@ -195,7 +194,7 @@ class BrokerPortalScreen extends StatelessWidget {
             'The broker registration portal is being prepared. '
             'Please check back later or contact the Dirsha team '
             'for registration assistance.',
-            style: AppTextStyles.emptyStateBody,
+            style: AppTextStyles.emptyStateBodyOf(context),
             textAlign: TextAlign.center,
           ),
         ],
@@ -209,7 +208,7 @@ class BrokerPortalScreen extends StatelessWidget {
         onPressed: () => context.go('/login'),
         child: Text(
           'Back to sign in',
-          style: AppTextStyles.bodySmall.copyWith(
+          style: AppTextStyles.bodySmallOf(context).copyWith(
             color: AppColors.secondaryEmerald,
             fontWeight: FontWeight.w600,
           ),
@@ -231,7 +230,7 @@ class _InfoRow extends StatelessWidget {
       children: [
         Icon(icon, size: 16, color: AppColors.secondaryEmerald),
         const SizedBox(width: 10),
-        Expanded(child: Text(text, style: AppTextStyles.bodySmall)),
+        Expanded(child: Text(text, style: AppTextStyles.bodySmallOf(context))),
       ],
     );
   }

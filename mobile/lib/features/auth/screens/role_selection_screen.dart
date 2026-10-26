@@ -26,7 +26,6 @@ class RoleSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(
         title: const Text('Create account'),
         leading: BackButton(onPressed: () => context.pop()),
@@ -38,12 +37,12 @@ class RoleSelectionScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 24),
-              Text('Who are you joining as?', style: AppTextStyles.screenTitle),
+              Text('Who are you joining as?', style: AppTextStyles.screenTitleOf(context)),
               const SizedBox(height: 8),
               Text(
                 'Choose the account type that matches your role. '
                 'Each type has a different registration process.',
-                style: AppTextStyles.bodyMedium,
+                style: AppTextStyles.bodyMediumOf(context),
               ),
               const SizedBox(height: 32),
               _RoleCard(
@@ -78,7 +77,7 @@ class RoleSelectionScreen extends StatelessWidget {
                 children: [
                   Text(
                     'Already have an account? ',
-                    style: AppTextStyles.bodySmall,
+                    style: AppTextStyles.bodySmallOf(context),
                   ),
                   TextButton(
                     onPressed: () => context.pop(),
@@ -89,7 +88,7 @@ class RoleSelectionScreen extends StatelessWidget {
                     ),
                     child: Text(
                       'Sign in',
-                      style: AppTextStyles.bodySmall.copyWith(
+                      style: AppTextStyles.bodySmallOf(context).copyWith(
                         color: AppColors.secondaryEmerald,
                         fontWeight: FontWeight.w600,
                       ),
@@ -127,9 +126,9 @@ class _RoleCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: AppColors.cardSurface,
+          color: AppColors.cardSurfaceOf(context),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: AppColors.borderOf(context)),
         ),
         child: Row(
           children: [
@@ -140,18 +139,18 @@ class _RoleCard extends StatelessWidget {
                 color: AppColors.brandEmerald,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: AppColors.textPrimary, size: 24),
+              child: Icon(icon, color: Colors.white, size: 24),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: AppTextStyles.cardTitle),
+                  Text(title, style: AppTextStyles.cardTitleOf(context)),
                   const SizedBox(height: 4),
                   Text(
                     description,
-                    style: AppTextStyles.bodySmall,
+                    style: AppTextStyles.bodySmallOf(context),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -159,10 +158,10 @@ class _RoleCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(
+            Icon(
               Icons.arrow_forward_ios_rounded,
               size: 14,
-              color: AppColors.textSecondary,
+              color: AppColors.textSecondaryOf(context),
             ),
           ],
         ),

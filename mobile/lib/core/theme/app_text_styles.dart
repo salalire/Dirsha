@@ -18,7 +18,7 @@ abstract final class AppTextStyles {
   static TextStyle _base({
     required double size,
     FontWeight weight = FontWeight.w400,
-    Color color = AppColors.textPrimary,
+    Color? color = AppColors.textPrimary,
     double? height,
     double? letterSpacing,
     List<FontFeature>? fontFeatures,
@@ -117,9 +117,10 @@ abstract final class AppTextStyles {
   // Buttons
   // ---------------------------------------------------------------------------
 
-  /// Primary / secondary button label
+  /// Primary / secondary button label — color is null so it inherits
+  /// from the active button theme (ElevatedButton, OutlinedButton, TextButton).
   static TextStyle get buttonLabel =>
-      _base(size: 15, weight: FontWeight.w600, letterSpacing: 0.1);
+      _base(size: 15, weight: FontWeight.w600, letterSpacing: 0.1, color: null);
 
   // ---------------------------------------------------------------------------
   // Form inputs
@@ -153,4 +154,65 @@ abstract final class AppTextStyles {
 
   static TextStyle get emptyStateBody =>
       _base(size: 14, color: AppColors.textSecondary, height: 1.5);
+
+  // ---------------------------------------------------------------------------
+  // Theme-aware styles (dynamically adjust to Light and Dark modes)
+  // ---------------------------------------------------------------------------
+
+  static TextStyle screenTitleOf(BuildContext context) =>
+      screenTitle.copyWith(color: AppColors.textPrimaryOf(context));
+
+  static TextStyle sectionHeadingOf(BuildContext context) =>
+      sectionHeading.copyWith(color: AppColors.textPrimaryOf(context));
+
+  static TextStyle cardTitleOf(BuildContext context) =>
+      cardTitle.copyWith(color: AppColors.textPrimaryOf(context));
+
+  static TextStyle bodyLargeOf(BuildContext context) =>
+      bodyLarge.copyWith(color: AppColors.textPrimaryOf(context));
+
+  static TextStyle bodyMediumOf(BuildContext context) =>
+      bodyMedium.copyWith(color: AppColors.textSecondaryOf(context));
+
+  static TextStyle bodySmallOf(BuildContext context) =>
+      bodySmall.copyWith(color: AppColors.textSecondaryOf(context));
+
+  static TextStyle balanceHeroOf(BuildContext context) =>
+      balanceHero.copyWith(color: AppColors.textPrimaryOf(context));
+
+  static TextStyle financialLargeOf(BuildContext context) =>
+      financialLarge.copyWith(color: AppColors.textPrimaryOf(context));
+
+  static TextStyle financialMediumOf(BuildContext context) =>
+      financialMedium.copyWith(color: AppColors.textPrimaryOf(context));
+
+  static TextStyle financialSmallOf(BuildContext context) =>
+      financialSmall.copyWith(color: AppColors.textPrimaryOf(context));
+
+  static TextStyle badgeLabelOf(BuildContext context, [Color? color]) =>
+      badgeLabel.copyWith(color: color ?? AppColors.textPrimaryOf(context));
+
+  static TextStyle labelSmallOf(BuildContext context) =>
+      labelSmall.copyWith(color: AppColors.textSecondaryOf(context));
+
+  static TextStyle buttonLabelOf(BuildContext context, [Color? color]) =>
+      buttonLabel.copyWith(color: color);
+
+  static TextStyle inputTextOf(BuildContext context) =>
+      inputText.copyWith(color: AppColors.textPrimaryOf(context));
+
+  static TextStyle inputHintOf(BuildContext context) =>
+      inputHint.copyWith(color: AppColors.textDisabledOf(context));
+
+  static TextStyle authHeadlineOf(BuildContext context) =>
+      authHeadline.copyWith(color: AppColors.textPrimaryOf(context));
+
+  static TextStyle authSubtitleOf(BuildContext context) =>
+      authSubtitle.copyWith(color: AppColors.textSecondaryOf(context));
+
+  static TextStyle emptyStateTitleOf(BuildContext context) =>
+      emptyStateTitle.copyWith(color: AppColors.textPrimaryOf(context));
+
+  static TextStyle emptyStateBodyOf(BuildContext context) =>
+      emptyStateBody.copyWith(color: AppColors.textSecondaryOf(context));
 }

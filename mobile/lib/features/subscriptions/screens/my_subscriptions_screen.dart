@@ -42,10 +42,8 @@ class _MySubscriptionsScreenState extends State<MySubscriptionsScreen> {
     final provider = context.watch<SubscriptionProvider>();
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(
-        title: Text('My Subscriptions', style: AppTextStyles.cardTitle),
-        backgroundColor: AppColors.backgroundPrimary,
+        title: Text('My Subscriptions', style: AppTextStyles.cardTitleOf(context)),
         elevation: 0,
       ),
       body: SafeArea(
@@ -70,18 +68,18 @@ class _MySubscriptionsScreenState extends State<MySubscriptionsScreen> {
                       }
                     },
                     selectedColor: AppColors.brandEmerald,
-                    backgroundColor: AppColors.cardSurface,
+                    backgroundColor: AppColors.cardSurfaceOf(context),
                     labelStyle: TextStyle(
                       color: isSelected
-                          ? AppColors.textPrimary
-                          : AppColors.textSecondary,
+                          ? Colors.white
+                          : AppColors.textSecondaryOf(context),
                       fontSize: 12,
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                     ),
                     side: BorderSide(
                       color: isSelected
                           ? AppColors.secondaryEmerald
-                          : AppColors.cardElevated,
+                          : AppColors.borderOf(context),
                     ),
                   );
                 },
@@ -129,7 +127,7 @@ class _MySubscriptionsScreenState extends State<MySubscriptionsScreen> {
                   if (list.isEmpty) {
                     return RefreshIndicator(
                       color: AppColors.secondaryEmerald,
-                      backgroundColor: AppColors.cardSurface,
+                      backgroundColor: AppColors.cardSurfaceOf(context),
                       onRefresh: () =>
                           context.read<SubscriptionProvider>().refresh(),
                       child: ListView(
@@ -159,7 +157,7 @@ class _MySubscriptionsScreenState extends State<MySubscriptionsScreen> {
 
                   return RefreshIndicator(
                     color: AppColors.secondaryEmerald,
-                    backgroundColor: AppColors.cardSurface,
+                    backgroundColor: AppColors.cardSurfaceOf(context),
                     onRefresh: () =>
                         context.read<SubscriptionProvider>().refresh(),
                     child: ListView.separated(
@@ -209,10 +207,10 @@ class _SubscriptionListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.cardSurface,
+        color: AppColors.cardSurfaceOf(context),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.cardElevated,
+          color: AppColors.borderOf(context),
           width: 1,
         ),
       ),
@@ -237,7 +235,7 @@ class _SubscriptionListItem extends StatelessWidget {
                             subscription.companyName ??
                                 subscription.ipoTitle ??
                                 'IPO Subscription',
-                            style: AppTextStyles.cardTitle.copyWith(
+                            style: AppTextStyles.cardTitleOf(context).copyWith(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                             ),
@@ -247,8 +245,8 @@ class _SubscriptionListItem extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             'Requested: ${subscription.quantity} shares • ${Formatters.money(Money(subscription.amountMinor))}',
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.textSecondary,
+                            style: AppTextStyles.bodySmallOf(context).copyWith(
+                              color: AppColors.textSecondaryOf(context),
                               fontSize: 12,
                             ),
                           ),
@@ -260,7 +258,7 @@ class _SubscriptionListItem extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                const Divider(color: AppColors.cardElevated, height: 1),
+                Divider(color: AppColors.borderOf(context), height: 1),
                 const SizedBox(height: 10),
 
                 // Allocation outcome row
@@ -272,13 +270,13 @@ class _SubscriptionListItem extends StatelessWidget {
                         Icon(
                           _getAllocationIcon(subscription.status),
                           size: 15,
-                          color: _getAllocationColor(subscription.status),
+                          color: _getAllocationColor(context, subscription.status),
                         ),
                         const SizedBox(width: 6),
                         Text(
                           _getAllocationSummary(subscription),
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: _getAllocationColor(subscription.status),
+                          style: AppTextStyles.bodySmallOf(context).copyWith(
+                            color: _getAllocationColor(context, subscription.status),
                             fontWeight: FontWeight.w600,
                             fontSize: 12,
                           ),
@@ -287,8 +285,8 @@ class _SubscriptionListItem extends StatelessWidget {
                     ),
                     Text(
                       Formatters.dateShort(subscription.createdAt),
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
+                      style: AppTextStyles.bodySmallOf(context).copyWith(
+                        color: AppColors.textSecondaryOf(context),
                         fontSize: 11,
                       ),
                     ),
@@ -318,19 +316,20 @@ class _SubscriptionListItem extends StatelessWidget {
     }
   }
 
-  Color _getAllocationColor(SubscriptionStatus status) {
+  Color _getAllocationColor(BuildContext context, SubscriptionStatus status) {
+    final isDark = AppColors.isDark(context);
     switch (status) {
       case SubscriptionStatus.allocated:
-        return AppColors.secondaryEmerald;
+        return isDark ? AppColors.secondaryEmerald : const Color(0xFF15803D);
       case SubscriptionStatus.partiallyAllocated:
-        return Colors.tealAccent;
+        return isDark ? Colors.tealAccent : const Color(0xFF0F766E);
       case SubscriptionStatus.released:
-        return AppColors.gold;
+        return isDark ? AppColors.gold : const Color(0xFFB45309);
       case SubscriptionStatus.cancelled:
-        return Colors.redAccent;
+        return isDark ? Colors.redAccent : const Color(0xFFDC2626);
       case SubscriptionStatus.reserved:
       case SubscriptionStatus.unknown:
-        return Colors.amber;
+        return isDark ? Colors.amber : const Color(0xFFB45309);
     }
   }
 
@@ -363,35 +362,36 @@ class _StatusBadge extends StatelessWidget {
     Color fg;
     String label;
 
+    final isDark = AppColors.isDark(context);
     switch (status) {
       case SubscriptionStatus.reserved:
-        bg = Colors.amber.withAlpha(30);
-        fg = Colors.amber;
+        bg = isDark ? Colors.amber.withAlpha(30) : const Color(0xFFFEF3C7);
+        fg = isDark ? Colors.amber : const Color(0xFFB45309);
         label = 'Reserved';
         break;
       case SubscriptionStatus.allocated:
-        bg = AppColors.secondaryEmerald.withAlpha(35);
-        fg = AppColors.secondaryEmerald;
+        bg = isDark ? AppColors.secondaryEmerald.withAlpha(35) : const Color(0xFFDCFCE7);
+        fg = isDark ? AppColors.secondaryEmerald : const Color(0xFF15803D);
         label = 'Allocated';
         break;
       case SubscriptionStatus.partiallyAllocated:
-        bg = Colors.teal.withAlpha(35);
-        fg = Colors.tealAccent;
+        bg = isDark ? Colors.teal.withAlpha(35) : const Color(0xFFCCFBF1);
+        fg = isDark ? Colors.tealAccent : const Color(0xFF0F766E);
         label = 'Partial';
         break;
       case SubscriptionStatus.released:
-        bg = Colors.blueGrey.withAlpha(40);
-        fg = Colors.blueGrey.shade200;
+        bg = isDark ? Colors.blueGrey.withAlpha(40) : const Color(0xFFF1F5F9);
+        fg = isDark ? Colors.blueGrey.shade200 : const Color(0xFF475569);
         label = 'Released';
         break;
       case SubscriptionStatus.cancelled:
-        bg = Colors.red.withAlpha(30);
-        fg = Colors.redAccent;
+        bg = isDark ? Colors.red.withAlpha(30) : const Color(0xFFFEE2E2);
+        fg = isDark ? Colors.redAccent : const Color(0xFFDC2626);
         label = 'Cancelled';
         break;
       case SubscriptionStatus.unknown:
-        bg = AppColors.cardElevated;
-        fg = AppColors.textSecondary;
+        bg = AppColors.cardElevatedOf(context);
+        fg = AppColors.textSecondaryOf(context);
         label = 'Unknown';
         break;
     }
@@ -401,7 +401,7 @@ class _StatusBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: fg.withAlpha(90), width: 0.8),
+        border: Border.all(color: fg.withAlpha(isDark ? 90 : 120), width: 0.8),
       ),
       child: Text(
         label,

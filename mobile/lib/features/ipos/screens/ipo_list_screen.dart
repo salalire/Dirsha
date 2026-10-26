@@ -30,7 +30,6 @@ class _IpoListScreenState extends State<IpoListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(title: const Text('IPO Offerings')),
       body: Column(
         children: [
@@ -61,7 +60,7 @@ class _IpoListScreenState extends State<IpoListScreen> {
         }
         return RefreshIndicator(
           color: AppColors.secondaryEmerald,
-          backgroundColor: AppColors.cardSurface,
+          backgroundColor: AppColors.cardSurfaceOf(context),
           onRefresh: provider.refresh,
           child: ListView.separated(
             padding: const EdgeInsets.all(16),
@@ -101,9 +100,9 @@ class _IpoCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.cardSurface,
+          color: AppColors.cardSurfaceOf(context),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: AppColors.borderOf(context)),
         ),
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -125,7 +124,7 @@ class _IpoCard extends StatelessWidget {
                           ? ipo.companyName[0].toUpperCase()
                           : '?',
                       style: AppTextStyles.cardTitle.copyWith(
-                        color: AppColors.textPrimary,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -137,14 +136,14 @@ class _IpoCard extends StatelessWidget {
                     children: [
                       Text(
                         ipo.companyName,
-                        style: AppTextStyles.cardTitle,
+                        style: AppTextStyles.cardTitleOf(context),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
                       Text(
                         ipo.title,
-                        style: AppTextStyles.bodySmall,
+                        style: AppTextStyles.bodySmallOf(context),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -158,7 +157,7 @@ class _IpoCard extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 ipo.shortDescription!,
-                style: AppTextStyles.bodySmall,
+                style: AppTextStyles.bodySmallOf(context),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -180,10 +179,10 @@ class _IpoCard extends StatelessWidget {
                     value: Formatters.dateShort(ipo.subscriptionEndDate!),
                   ),
                 const Spacer(),
-                const Icon(
+                Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 14,
-                  color: AppColors.textSecondary,
+                  color: AppColors.textSecondaryOf(context),
                 ),
               ],
             ),
@@ -204,9 +203,9 @@ class _InfoChip extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTextStyles.labelSmall),
+        Text(label, style: AppTextStyles.labelSmallOf(context)),
         const SizedBox(height: 2),
-        Text(value, style: AppTextStyles.financialSmall),
+        Text(value, style: AppTextStyles.financialSmallOf(context)),
       ],
     );
   }

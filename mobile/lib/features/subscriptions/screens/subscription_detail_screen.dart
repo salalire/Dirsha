@@ -52,10 +52,8 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(
-        title: Text('Allocation Result', style: AppTextStyles.cardTitle),
-        backgroundColor: AppColors.backgroundPrimary,
+        title: Text('Allocation Result', style: AppTextStyles.cardTitleOf(context)),
         elevation: 0,
       ),
       body: SafeArea(
@@ -65,8 +63,8 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
                 ? Center(
                     child: Text(
                       'Subscription not found.',
-                      style: AppTextStyles.bodyMedium
-                          .copyWith(color: AppColors.textSecondary),
+                      style: AppTextStyles.bodyMediumOf(context)
+                          .copyWith(color: AppColors.textSecondaryOf(context)),
                     ),
                   )
                 : SingleChildScrollView(
@@ -96,31 +94,32 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
     String title;
     String description;
 
+    final isDark = AppColors.isDark(context);
     switch (sub.status) {
       case SubscriptionStatus.allocated:
         icon = Icons.check_circle_rounded;
-        color = AppColors.secondaryEmerald;
+        color = isDark ? AppColors.secondaryEmerald : const Color(0xFF15803D);
         title = 'Allocation Successful';
         description =
             'You were fully allocated ${sub.allocatedQuantity} shares in ${sub.companyName ?? sub.ipoTitle ?? "this offering"}. Shares are reflected in your portfolio.';
         break;
       case SubscriptionStatus.partiallyAllocated:
         icon = Icons.pie_chart_rounded;
-        color = Colors.tealAccent;
+        color = isDark ? Colors.tealAccent : const Color(0xFF0F766E);
         title = 'Partially Allocated';
         description =
             'Due to high demand, you received ${sub.allocatedQuantity} of ${sub.quantity} requested shares. The unallocated amount of ${Formatters.money(Money(sub.unallocatedRefundMinor))} was refunded to your available balance.';
         break;
       case SubscriptionStatus.released:
         icon = Icons.replay_rounded;
-        color = AppColors.gold;
+        color = isDark ? AppColors.gold : const Color(0xFFB45309);
         title = 'Not Allocated • 100% Refunded';
         description =
             'No shares were allocated for this subscription. Your entire reservation of ${Formatters.money(Money(sub.amountMinor))} was released back to your available balance.';
         break;
       case SubscriptionStatus.cancelled:
         icon = Icons.cancel_rounded;
-        color = Colors.redAccent;
+        color = isDark ? Colors.redAccent : const Color(0xFFDC2626);
         title = 'Subscription Cancelled';
         description =
             'This subscription was cancelled. All reserved funds have been returned to your wallet.';
@@ -128,7 +127,7 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
       case SubscriptionStatus.reserved:
       case SubscriptionStatus.unknown:
         icon = Icons.hourglass_top_rounded;
-        color = Colors.amber;
+        color = isDark ? Colors.amber : const Color(0xFFB45309);
         title = 'Awaiting Allocation';
         description =
             'Your subscription of ${sub.quantity} shares is confirmed. Simulated funds (${Formatters.money(Money(sub.amountMinor))}) are reserved. Final allocation will take place when the IPO subscription window closes.';
@@ -139,9 +138,9 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: color.withAlpha(25),
+        color: color.withAlpha(isDark ? 25 : 20),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withAlpha(90), width: 1.2),
+        border: Border.all(color: color.withAlpha(isDark ? 90 : 120), width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,7 +152,7 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
               Expanded(
                 child: Text(
                   title,
-                  style: AppTextStyles.cardTitle.copyWith(
+                  style: AppTextStyles.cardTitleOf(context).copyWith(
                     color: color,
                     fontWeight: FontWeight.w700,
                     fontSize: 18,
@@ -165,8 +164,8 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
           const SizedBox(height: 12),
           Text(
             description,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textPrimary,
+            style: AppTextStyles.bodyMediumOf(context).copyWith(
+              color: AppColors.textPrimaryOf(context),
               height: 1.4,
             ),
           ),
@@ -180,39 +179,39 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardSurface,
+        color: AppColors.cardSurfaceOf(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardElevated),
+        border: Border.all(color: AppColors.borderOf(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'SHARES BREAKDOWN',
-            style: AppTextStyles.labelSmall.copyWith(
-              color: AppColors.textSecondary,
+            style: AppTextStyles.labelSmallOf(context).copyWith(
+              color: AppColors.textSecondaryOf(context),
               letterSpacing: 1.1,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 14),
           _detailRow('Requested Quantity', '${sub.quantity} shares'),
-          const Divider(color: AppColors.cardElevated, height: 16),
+          Divider(color: AppColors.borderOf(context), height: 16),
           _detailRow(
             'Allocated Quantity',
             '${sub.allocatedQuantity} shares',
             valueColor: sub.allocatedQuantity > 0
-                ? AppColors.secondaryEmerald
-                : AppColors.textSecondary,
+                ? (AppColors.isDark(context) ? AppColors.secondaryEmerald : const Color(0xFF15803D))
+                : AppColors.textSecondaryOf(context),
             isBold: true,
           ),
-          const Divider(color: AppColors.cardElevated, height: 16),
+          Divider(color: AppColors.borderOf(context), height: 16),
           _detailRow(
             'Unallocated Quantity',
             '${sub.unallocatedQuantity} shares',
             valueColor: sub.unallocatedQuantity > 0
-                ? AppColors.gold
-                : AppColors.textSecondary,
+                ? (AppColors.isDark(context) ? AppColors.gold : const Color(0xFFB45309))
+                : AppColors.textSecondaryOf(context),
           ),
         ],
       ),
@@ -224,17 +223,17 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardSurface,
+        color: AppColors.cardSurfaceOf(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardElevated),
+        border: Border.all(color: AppColors.borderOf(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'SIMULATED FINANCIAL SETTLEMENT',
-            style: AppTextStyles.labelSmall.copyWith(
-              color: AppColors.textSecondary,
+            style: AppTextStyles.labelSmallOf(context).copyWith(
+              color: AppColors.textSecondaryOf(context),
               letterSpacing: 1.1,
               fontWeight: FontWeight.w700,
             ),
@@ -244,20 +243,20 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
             'Initial Reserved Amount',
             Formatters.money(Money(sub.amountMinor)),
           ),
-          const Divider(color: AppColors.cardElevated, height: 16),
+          Divider(color: AppColors.borderOf(context), height: 16),
           _detailRow(
             'Settled Amount (Invested)',
             Formatters.money(Money(sub.allocatedAmountMinor)),
-            valueColor: AppColors.secondaryEmerald,
+            valueColor: AppColors.isDark(context) ? AppColors.secondaryEmerald : const Color(0xFF15803D),
             isBold: true,
           ),
-          const Divider(color: AppColors.cardElevated, height: 16),
+          Divider(color: AppColors.borderOf(context), height: 16),
           _detailRow(
             'Refunded to Available Balance',
             Formatters.money(Money(sub.unallocatedRefundMinor)),
             valueColor: sub.unallocatedRefundMinor > 0
-                ? AppColors.gold
-                : AppColors.textSecondary,
+                ? (AppColors.isDark(context) ? AppColors.gold : const Color(0xFFB45309))
+                : AppColors.textSecondaryOf(context),
             isBold: sub.unallocatedRefundMinor > 0,
           ),
         ],
@@ -270,33 +269,33 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardSurface,
+        color: AppColors.cardSurfaceOf(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardElevated),
+        border: Border.all(color: AppColors.borderOf(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'AUDIT & REFERENCE DETAILS',
-            style: AppTextStyles.labelSmall.copyWith(
-              color: AppColors.textSecondary,
+            style: AppTextStyles.labelSmallOf(context).copyWith(
+              color: AppColors.textSecondaryOf(context),
               letterSpacing: 1.1,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 14),
           _detailRow('Subscription ID', sub.id, isMonospace: true),
-          const Divider(color: AppColors.cardElevated, height: 16),
+          Divider(color: AppColors.borderOf(context), height: 16),
           _detailRow('IPO ID', sub.ipoId, isMonospace: true),
           if (sub.reservationLedgerEntryId != null) ...[
-            const Divider(color: AppColors.cardElevated, height: 16),
+            Divider(color: AppColors.borderOf(context), height: 16),
             _detailRow('Ledger Entry ID', sub.reservationLedgerEntryId!,
                 isMonospace: true),
           ],
-          const Divider(color: AppColors.cardElevated, height: 16),
+          Divider(color: AppColors.borderOf(context), height: 16),
           _detailRow('Created At', Formatters.dateMedium(sub.createdAt)),
-          const Divider(color: AppColors.cardElevated, height: 16),
+          Divider(color: AppColors.borderOf(context), height: 16),
           _detailRow('Updated At', Formatters.dateMedium(sub.updatedAt)),
         ],
       ),
@@ -307,20 +306,22 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.cardSurface,
+        color: AppColors.cardSurfaceOf(context),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.gold.withAlpha(60)),
+        border: Border.all(
+          color: (AppColors.isDark(context) ? AppColors.gold : const Color(0xFFB45309)).withAlpha(60),
+        ),
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline_rounded,
-              color: AppColors.gold, size: 20),
+          Icon(Icons.info_outline_rounded,
+              color: AppColors.isDark(context) ? AppColors.gold : const Color(0xFFB45309), size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               'Simulated Funds Prototype: No real money was debited or credited. All share allocations and refunds are part of the Dirsha investment sandbox.',
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondary,
+              style: AppTextStyles.bodySmallOf(context).copyWith(
+                color: AppColors.textSecondaryOf(context),
                 fontSize: 12,
               ),
             ),
@@ -342,8 +343,8 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
       children: [
         Text(
           label,
-          style: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.textSecondary,
+          style: AppTextStyles.bodySmallOf(context).copyWith(
+            color: AppColors.textSecondaryOf(context),
             fontSize: 13,
           ),
         ),
@@ -356,10 +357,10 @@ class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
                 ? TextStyle(
                     fontFamily: 'monospace',
                     fontSize: 11,
-                    color: valueColor ?? AppColors.textPrimary,
+                    color: valueColor ?? AppColors.textPrimaryOf(context),
                   )
-                : AppTextStyles.bodyMedium.copyWith(
-                    color: valueColor ?? AppColors.textPrimary,
+                : AppTextStyles.bodyMediumOf(context).copyWith(
+                    color: valueColor ?? AppColors.textPrimaryOf(context),
                     fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
                     fontSize: 13,
                   ),

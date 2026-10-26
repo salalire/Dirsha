@@ -95,9 +95,9 @@ class _SkeletonCardState extends State<SkeletonCard>
       child: Container(
         height: widget.height,
         decoration: BoxDecoration(
-          color: AppColors.cardSurface,
+          color: AppColors.cardSurfaceOf(context),
           borderRadius: BorderRadius.circular(widget.borderRadius),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: AppColors.borderOf(context)),
         ),
       ),
     );

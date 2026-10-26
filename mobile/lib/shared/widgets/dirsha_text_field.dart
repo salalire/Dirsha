@@ -75,20 +75,24 @@ class _DirshaTextFieldState extends State<DirshaTextField> {
       inputFormatters: widget.inputFormatters,
       focusNode: widget.focusNode,
       autofocus: widget.autofocus,
-      style: AppTextStyles.inputText,
+      style: AppTextStyles.inputTextOf(context),
       decoration: InputDecoration(
         labelText: widget.label,
         hintText: widget.hint,
-        hintStyle: AppTextStyles.inputHint,
+        hintStyle: AppTextStyles.inputHintOf(context),
         prefixIcon: widget.prefixIcon != null
-            ? Icon(widget.prefixIcon, size: 20, color: AppColors.textSecondary)
+            ? Icon(
+                widget.prefixIcon,
+                size: 20,
+                color: AppColors.textSecondaryOf(context),
+              )
             : null,
         suffixIcon: widget.obscureText
             ? IconButton(
                 icon: Icon(
                   _obscured ? Icons.visibility_off : Icons.visibility,
                   size: 20,
-                  color: AppColors.textSecondary,
+                  color: AppColors.textSecondaryOf(context),
                 ),
                 onPressed: () => setState(() => _obscured = !_obscured),
                 tooltip: _obscured ? 'Show password' : 'Hide password',
