@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../features/auth/providers/auth_provider.dart';
+import '../features/ai/screens/ai_chat_screen.dart';
 import '../features/auth/screens/broker_portal_screen.dart';
 import '../features/auth/screens/company_portal_screen.dart';
 import '../features/auth/screens/login_screen.dart';
@@ -30,12 +31,15 @@ abstract final class AppRoutes {
   static const subscriptions = '/subscriptions';
   static const subscriptionDetail = '/subscriptions/:id';
   static const profile = '/profile';
+  static const ai = '/ai';
 
   /// Builds the ipoDetail path for a given [id].
   static String ipoDetailPath(String id) => '/ipos/$id';
 
   /// Builds the subscriptionDetail path for a given [id].
   static String subscriptionDetailPath(String id) => '/subscriptions/$id';
+  static String aiPath({String? ipoId}) =>
+      ipoId == null ? ai : '$ai?ipoId=$ipoId';
 }
 
 /// Builds the application router.
@@ -125,6 +129,11 @@ GoRouter buildAppRouter(AuthProvider authProvider) {
       // Main app shell — all tabs live inside HomeScreen.
       // ------------------------------------------------------------------
       GoRoute(path: AppRoutes.home, builder: (_, _) => const HomeScreen()),
+      GoRoute(
+        path: AppRoutes.ai,
+        builder: (_, state) =>
+            AiChatScreen(ipoId: state.uri.queryParameters['ipoId']),
+      ),
 
       // ------------------------------------------------------------------
       // IPO detail — navigated to from any tab via context.push('/ipos/:id')

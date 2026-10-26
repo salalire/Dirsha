@@ -56,7 +56,7 @@ abstract final class AppConfig {
   /// falls back to mock data after a live network failure.
   static const bool useMockRepositories = bool.fromEnvironment(
     'DIRSHA_USE_MOCKS',
-    defaultValue: true, // Default to mocks until API contract is confirmed
+    defaultValue: false,
   );
 
   // ---------------------------------------------------------------------------

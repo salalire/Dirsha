@@ -16,6 +16,7 @@ import '../../portfolio/screens/portfolio_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../subscriptions/providers/subscription_provider.dart';
 import '../../wallet/providers/wallet_provider.dart';
+import '../../../router/app_router.dart';
 
 /// Investor dashboard — the main landing screen after sign-in.
 ///
@@ -105,6 +106,15 @@ class _HomeScreenState extends State<HomeScreen> {
           ProfileScreen(),
         ],
       ),
+      floatingActionButton: _selectedIndex == 0 || _selectedIndex == 1
+          ? FloatingActionButton.extended(
+              onPressed: () => context.push(AppRoutes.aiPath()),
+              backgroundColor: AppColors.brandEmerald,
+              foregroundColor: AppColors.gold,
+              icon: const Icon(Icons.auto_awesome_rounded),
+              label: const Text('Ask AI'),
+            )
+          : null,
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (i) => setState(() => _selectedIndex = i),
@@ -214,7 +224,8 @@ class _DashboardTab extends StatelessWidget {
   }
 
   Widget _buildGreeting(BuildContext context, dynamic user) {
-    final name = (user?.firstName != null && (user.firstName as String).isNotEmpty)
+    final name =
+        (user?.firstName != null && (user.firstName as String).isNotEmpty)
         ? user.firstName as String
         : 'Investor';
     final role = (user?.role != null) ? (user.role as String) : 'INVESTOR';
@@ -233,7 +244,9 @@ class _DashboardTab extends StatelessWidget {
             backgroundColor: AppColors.brandEmerald,
             child: Text(
               name.isNotEmpty ? name[0].toUpperCase() : 'I',
-              style: AppTextStyles.cardTitle.copyWith(color: AppColors.textPrimary),
+              style: AppTextStyles.cardTitle.copyWith(
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -252,11 +265,17 @@ class _DashboardTab extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.brandEmerald.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: AppColors.secondaryEmerald, width: 0.8),
+                        border: Border.all(
+                          color: AppColors.secondaryEmerald,
+                          width: 0.8,
+                        ),
                       ),
                       child: Text(
                         role,
@@ -272,7 +291,9 @@ class _DashboardTab extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   'Here is your investment overview.',
-                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -282,7 +303,8 @@ class _DashboardTab extends StatelessWidget {
             color: AppColors.textSecondary,
             tooltip: 'View Profile',
             onPressed: () {
-              final homeState = context.findAncestorStateOfType<_HomeScreenState>();
+              final homeState = context
+                  .findAncestorStateOfType<_HomeScreenState>();
               homeState?.switchTab(4);
             },
           ),

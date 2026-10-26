@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/config/app_config.dart';
@@ -9,6 +10,7 @@ import '../../../shared/widgets/widgets.dart';
 import '../../subscriptions/widgets/subscription_bottom_sheet.dart';
 import '../models/ipo_models.dart';
 import '../providers/ipo_provider.dart';
+import '../../../router/app_router.dart';
 
 /// Detailed view of a single IPO offering.
 ///
@@ -109,6 +111,16 @@ class _DetailContent extends StatelessWidget {
                     ],
                     const SizedBox(height: 24),
                     _buildSubscriptionButton(context),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () =>
+                            context.push(AppRoutes.aiPath(ipoId: detail.id)),
+                        icon: const Icon(Icons.auto_awesome_rounded),
+                        label: const Text('Ask AI about this IPO'),
+                      ),
+                    ),
                     const SizedBox(height: 40),
                   ],
                 ),
