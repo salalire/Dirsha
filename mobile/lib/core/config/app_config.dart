@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// Dirsha mobile application configuration.
 ///
 /// The API base URL is read from the compile-time `--dart-define` flag
@@ -18,22 +20,28 @@
 /// IMPORTANT: Do NOT hardcode a developer's local IP address here.
 /// IMPORTANT: Never put real secrets or credentials inside this file.
 ///
-/// If no `--dart-define` value is provided the app defaults to the
-/// development placeholder below, which will result in network errors
-/// until the actual URL is supplied.  This is intentional: the app
-/// must not silently substitute mock data when a real URL was expected.
+/// If no `--dart-define` value is provided, Android uses localhost. The debug
+/// Android build automatically creates an ADB reverse tunnel to the backend,
+/// so this works for both emulators and USB-connected physical phones.
 abstract final class AppConfig {
   // ---------------------------------------------------------------------------
   // Compile-time values injected via --dart-define
   // ---------------------------------------------------------------------------
 
-  /// Backend API base URL. Injected at build time; has no default that
-  /// points at any real server.
-  static const String apiBaseUrl = String.fromEnvironment(
+  /// Backend API base URL override, injected at build time.
+  static const String _configuredApiBaseUrl = String.fromEnvironment(
     'DIRSHA_API_BASE_URL',
-    // Default points to Member 2's local backend at root path
-    defaultValue: 'http://localhost:3000',
+    defaultValue: '',
   );
+
+  /// Backend URL used by the HTTP client.
+  static String get apiBaseUrl {
+    if (_configuredApiBaseUrl.isNotEmpty) return _configuredApiBaseUrl;
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://127.0.0.1:3000';
+    }
+    return 'http://127.0.0.1:3000';
+  }
 
   /// Current environment name: "development", "staging", or "production".
   static const String environment = String.fromEnvironment(
@@ -56,7 +64,8 @@ abstract final class AppConfig {
   /// falls back to mock data after a live network failure.
   static const bool useMockRepositories = bool.fromEnvironment(
     'DIRSHA_USE_MOCKS',
-    defaultValue: false, // Default to live API now that API contract is confirmed
+    defaultValue:
+        false, // Default to live API now that API contract is confirmed
   );
 
   // ---------------------------------------------------------------------------

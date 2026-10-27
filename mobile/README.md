@@ -39,21 +39,29 @@ flutter run
 
 # 3. Run against a local backend (replace URL with Member 2's address)
 flutter run \
-  --dart-define=DIRSHA_API_BASE_URL=http://10.0.2.2:3000/api \
+  --dart-define=DIRSHA_API_BASE_URL=http://10.0.2.2:3000 \
   --dart-define=DIRSHA_ENV=development \
   --dart-define=DIRSHA_USE_MOCKS=false
 ```
 
-> **Android emulator note:** `10.0.2.2` is the Android emulator's alias for `localhost` on the host machine. Use the actual IP address for a physical device.
+> **Android note:** debug builds automatically run `adb reverse tcp:3000 tcp:3000` and use `http://127.0.0.1:3000`, so both an emulator and a USB-connected physical phone can connect with plain `flutter run -d <device_id>`.
+
+> **Physical Android device:** use the workstation's LAN IPv4 address, for example:
+>
+> ```bash
+> flutter run --dart-define=DIRSHA_API_BASE_URL=http://192.168.1.10:3000 --dart-define=DIRSHA_USE_MOCKS=false
+> ```
+>
+> Or connect over USB and run `adb reverse tcp:3000 tcp:3000`, then use `--dart-define=DIRSHA_API_BASE_URL=http://127.0.0.1:3000`.
 
 ### Mock login credentials
 
 When running with mock repositories (default), use:
 
-| Field    | Value                  |
-|----------|------------------------|
-| Email    | `investor@dirsha.dev`  |
-| Password | `Demo1234!`            |
+| Field    | Value                 |
+| -------- | --------------------- |
+| Email    | `investor@dirsha.dev` |
+| Password | `Demo1234!`           |
 
 These credentials only work against the mock repository. They are not real account credentials.
 
@@ -63,17 +71,17 @@ These credentials only work against the mock repository. They are not real accou
 
 Configuration is injected at compile time via `--dart-define`. No secrets are stored in source code.
 
-| Variable               | Default                        | Description                                      |
-|------------------------|--------------------------------|--------------------------------------------------|
-| `DIRSHA_API_BASE_URL`  | `http://localhost:3000/api`    | Backend API base URL. Must be set for live mode. |
-| `DIRSHA_ENV`           | `development`                  | `development`, `staging`, or `production`.       |
-| `DIRSHA_USE_MOCKS`     | `true`                         | `true` = mock repos; `false` = live API.         |
+| Variable              | Default                  | Description                                                                                                                 |
+| --------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `DIRSHA_API_BASE_URL` | Platform-aware local URL | Backend API base URL. Android emulator defaults to `http://10.0.2.2:3000`; web/desktop defaults to `http://127.0.0.1:3000`. |
+| `DIRSHA_ENV`          | `development`            | `development`, `staging`, or `production`.                                                                                  |
+| `DIRSHA_USE_MOCKS`    | `true`                   | `true` = mock repos; `false` = live API.                                                                                    |
 
 **Production build example:**
 
 ```bash
 flutter build apk \
-  --dart-define=DIRSHA_API_BASE_URL=https://api.dirsha.com/api \
+  --dart-define=DIRSHA_API_BASE_URL=https://api.dirsha.com \
   --dart-define=DIRSHA_ENV=production \
   --dart-define=DIRSHA_USE_MOCKS=false
 ```
@@ -132,15 +140,16 @@ Member 2 has confirmed the backend represents all ETB amounts as **integer santi
 
 **1 ETB = 100 santim.**
 
-| Backend value | Correct display | Wrong display |
-|---|---|---|
-| `700000` | ETB 7,000.00 | ~~ETB 700,000.00~~ |
-| `10000` | ETB 100.00 | ~~ETB 10,000.00~~ |
-| `300000` | ETB 3,000.00 | ~~ETB 300,000.00~~ |
+| Backend value | Correct display | Wrong display      |
+| ------------- | --------------- | ------------------ |
+| `700000`      | ETB 7,000.00    | ~~ETB 700,000.00~~ |
+| `10000`       | ETB 100.00      | ~~ETB 10,000.00~~  |
+| `300000`      | ETB 3,000.00    | ~~ETB 300,000.00~~ |
 
 ### Implementation
 
 `lib/core/money/money.dart` — `Money` value class:
+
 - Stores the authoritative value as `int santim`.
 - `Money.fromJson(dynamic)` accepts integer santim (live API) and decimal ETB strings (legacy mock format).
 - `money.etb` (double) is computed only for display formatting. Never used for calculations.
@@ -148,15 +157,15 @@ Member 2 has confirmed the backend represents all ETB amounts as **integer santi
 
 ### JSON field names (pending final confirmation from Member 2)
 
-| Field | Live API key | Legacy mock key |
-|---|---|---|
-| Wallet available balance | `available_minor` | `availableBalance` |
-| Wallet reserved balance | `reserved_minor` | `reservedBalance` |
-| Wallet total balance | `total_minor` | `totalBalance` |
-| Transaction amount | `amount_minor` | `amount` |
-| IPO price per share | `price_per_share_minor` | `pricePerShare` |
-| IPO min investment | `min_investment_minor` | `minInvestment` |
-| IPO max investment | `max_investment_minor` | `maxInvestment` |
+| Field                    | Live API key            | Legacy mock key    |
+| ------------------------ | ----------------------- | ------------------ |
+| Wallet available balance | `available_minor`       | `availableBalance` |
+| Wallet reserved balance  | `reserved_minor`        | `reservedBalance`  |
+| Wallet total balance     | `total_minor`           | `totalBalance`     |
+| Transaction amount       | `amount_minor`          | `amount`           |
+| IPO price per share      | `price_per_share_minor` | `pricePerShare`    |
+| IPO min investment       | `min_investment_minor`  | `minInvestment`    |
+| IPO max investment       | `max_investment_minor`  | `maxInvestment`    |
 
 `fromJson` accepts both key formats so the mock UI continues to work while the live API field names are being finalised.
 
@@ -245,23 +254,23 @@ The default theme is **Dark Emerald Fintech**. All values are defined in `lib/co
 
 ### Color palette
 
-| Token                  | Hex       | Usage                                      |
-|------------------------|-----------|--------------------------------------------|
-| `brandEmerald`         | `#064E3B` | Primary brand — gradients, avatars         |
-| `secondaryEmerald`     | `#047857` | Primary actions, focused borders           |
-| `deepForest`           | `#022C22` | Deep background gradients                  |
-| `backgroundPrimary`    | `#080B09` | Screen background                          |
-| `backgroundSecondary`  | `#101612` | Navigation bar, sections                   |
-| `cardSurface`          | `#141A16` | Default card background                    |
-| `cardElevated`         | `#1B241D` | Elevated card, dialog background           |
-| `gold`                 | `#D4A72C` | Ethiopian gold accent — use sparingly      |
-| `textPrimary`          | `#F5F7F5` | Main readable text                         |
-| `textSecondary`        | `#A7B3AA` | Supporting text, labels                    |
-| `border`               | `#2A352D` | Card borders, input borders                |
-| `success`              | `#22C55E` | Open IPOs, completed transactions          |
-| `error`                | `#F87171` | Failures, closed offerings                 |
-| `warning`              | `#FBBF24` | Pending, reserved funds                    |
-| `info`                 | `#60A5FA` | Draft, informational badges                |
+| Token                 | Hex       | Usage                                 |
+| --------------------- | --------- | ------------------------------------- |
+| `brandEmerald`        | `#064E3B` | Primary brand — gradients, avatars    |
+| `secondaryEmerald`    | `#047857` | Primary actions, focused borders      |
+| `deepForest`          | `#022C22` | Deep background gradients             |
+| `backgroundPrimary`   | `#080B09` | Screen background                     |
+| `backgroundSecondary` | `#101612` | Navigation bar, sections              |
+| `cardSurface`         | `#141A16` | Default card background               |
+| `cardElevated`        | `#1B241D` | Elevated card, dialog background      |
+| `gold`                | `#D4A72C` | Ethiopian gold accent — use sparingly |
+| `textPrimary`         | `#F5F7F5` | Main readable text                    |
+| `textSecondary`       | `#A7B3AA` | Supporting text, labels               |
+| `border`              | `#2A352D` | Card borders, input borders           |
+| `success`             | `#22C55E` | Open IPOs, completed transactions     |
+| `error`               | `#F87171` | Failures, closed offerings            |
+| `warning`             | `#FBBF24` | Pending, reserved funds               |
+| `info`                | `#60A5FA` | Draft, informational badges           |
 
 ### Typography
 
@@ -272,6 +281,7 @@ Inter (Google Fonts) is used throughout. Financial figures use tabular figures f
 `DirshaButton`, `DirshaTextField`, `StatusBadge`, `LoadingIndicator`, `SkeletonCard`, `EmptyState`, `ErrorState`, `SectionHeader`, `ConfirmationDialog`, `MockDataBanner`.
 
 Import all at once:
+
 ```dart
 import 'package:dirsha_mobile/shared/widgets/widgets.dart';
 ```
@@ -288,13 +298,13 @@ import 'package:dirsha_mobile/shared/widgets/widgets.dart';
 
 ### Navigation routes
 
-| Path          | Screen           | Guard        |
-|---------------|------------------|--------------|
-| `/`           | Splash           | Redirect only|
-| `/login`      | Login            | Unauthenticated only |
-| `/register`   | Register         | Unauthenticated only |
-| `/home`       | Dashboard shell  | Authenticated only |
-| `/ipos/:id`   | IPO detail       | Authenticated only |
+| Path        | Screen          | Guard                |
+| ----------- | --------------- | -------------------- |
+| `/`         | Splash          | Redirect only        |
+| `/login`    | Login           | Unauthenticated only |
+| `/register` | Register        | Unauthenticated only |
+| `/home`     | Dashboard shell | Authenticated only   |
+| `/ipos/:id` | IPO detail      | Authenticated only   |
 
 ### Auth flow
 
@@ -307,13 +317,13 @@ import 'package:dirsha_mobile/shared/widgets/widgets.dart';
 
 ## Mock vs live data
 
-| Repository         | Current mode | Switch condition                                     |
-|--------------------|--------------|------------------------------------------------------|
-| Auth               | **MOCK**     | `DIRSHA_USE_MOCKS=false` + Member 2 API confirmed    |
-| IPO listing        | **MOCK**     | `DIRSHA_USE_MOCKS=false` + `GET /ipos` available     |
-| IPO detail         | **MOCK**     | `DIRSHA_USE_MOCKS=false` + `GET /ipos/:id` available |
-| Wallet summary     | **MOCK**     | `DIRSHA_USE_MOCKS=false` + `GET /wallets/me` available |
-| Wallet transactions| **MOCK**     | `DIRSHA_USE_MOCKS=false` + `GET /wallets/me/transactions` available |
+| Repository          | Current mode | Switch condition                                                    |
+| ------------------- | ------------ | ------------------------------------------------------------------- |
+| Auth                | **MOCK**     | `DIRSHA_USE_MOCKS=false` + Member 2 API confirmed                   |
+| IPO listing         | **MOCK**     | `DIRSHA_USE_MOCKS=false` + `GET /ipos` available                    |
+| IPO detail          | **MOCK**     | `DIRSHA_USE_MOCKS=false` + `GET /ipos/:id` available                |
+| Wallet summary      | **MOCK**     | `DIRSHA_USE_MOCKS=false` + `GET /wallets/me` available              |
+| Wallet transactions | **MOCK**     | `DIRSHA_USE_MOCKS=false` + `GET /wallets/me/transactions` available |
 
 **Rule:** A network failure is never silently replaced by mock data. The `ErrorState` widget is shown with a retry action. Mock data is only active when explicitly configured.
 
@@ -323,24 +333,25 @@ Mock IPO companies are labeled `[MOCK]` in their names. Mock wallet balances are
 
 ## Authentication status
 
-| Aspect                          | Status in Phase 1               |
-|---------------------------------|---------------------------------|
-| Login UI + client validation    | ✅ Implemented                  |
-| Registration UI + validation    | ✅ Implemented                  |
-| Role selection (Option C)       | ✅ Implemented                  |
-| Company portal entry point      | ✅ Implemented (unavailable state) |
-| Broker portal entry point       | ✅ Implemented (unavailable state) |
-| Token storage (secure)          | ✅ FlutterSecureStorage          |
-| Token refresh on 401            | ✅ AuthInterceptor (see below)   |
-| Connected to real backend       | ❌ Pending Member 2 API         |
-| Forgot password flow            | ❌ Out of scope for Phase 1     |
-| KYC / identity verification     | ❌ Out of scope for Phase 1     |
+| Aspect                       | Status in Phase 1                  |
+| ---------------------------- | ---------------------------------- |
+| Login UI + client validation | ✅ Implemented                     |
+| Registration UI + validation | ✅ Implemented                     |
+| Role selection (Option C)    | ✅ Implemented                     |
+| Company portal entry point   | ✅ Implemented (unavailable state) |
+| Broker portal entry point    | ✅ Implemented (unavailable state) |
+| Token storage (secure)       | ✅ FlutterSecureStorage            |
+| Token refresh on 401         | ✅ AuthInterceptor (see below)     |
+| Connected to real backend    | ❌ Pending Member 2 API            |
+| Forgot password flow         | ❌ Out of scope for Phase 1        |
+| KYC / identity verification  | ❌ Out of scope for Phase 1        |
 
 ---
 
 ## Refresh token status
 
 `AuthInterceptor` implements automatic token refresh on 401 responses. The current implementation assumes:
+
 - Refresh endpoint: `POST /auth/refresh`
 - Request body: `{ "refreshToken": "..." }`
 - Response shape: `{ "accessToken": "...", "refreshToken": "..." }`
@@ -348,6 +359,7 @@ Mock IPO companies are labeled `[MOCK]` in their names. Mock wallet balances are
 **UNRESOLVED DEPENDENCY (Member 2):** The refresh token behavior and rotation strategy have not been finalized. Member 2's backend business-rules document lists this as a proposed Part B decision pending team approval.
 
 The current implementation is preserved and functional against a backend that matches the assumed shape above. It must be reviewed and potentially updated once Member 2 confirms:
+
 - Whether refresh tokens rotate on each use.
 - The exact refresh endpoint path and request/response schema.
 - The token expiry durations.
@@ -360,19 +372,20 @@ Do not treat the current refresh implementation as confirmed against the product
 
 All paths below are relative to `DIRSHA_API_BASE_URL`.
 
-| Method | Path                        | Feature         | Status in Phase 1    |
-|--------|-----------------------------|-----------------|----------------------|
-| POST   | `/auth/register`            | Auth            | ❌ Mock only         |
-| POST   | `/auth/login`               | Auth            | ❌ Mock only         |
-| POST   | `/auth/logout`              | Auth            | ❌ Mock only         |
-| POST   | `/auth/refresh`             | Auth interceptor| ❌ Mock only         |
-| GET    | `/users/me`                 | Auth startup    | ❌ Mock only         |
-| GET    | `/ipos`                     | IPO listing     | ❌ Mock only         |
-| GET    | `/ipos/:id`                 | IPO detail      | ❌ Mock only         |
-| GET    | `/wallets/me`               | Wallet balance  | ❌ Mock only         |
-| GET    | `/wallets/me/transactions`  | Wallet history  | ❌ Mock only         |
+| Method | Path                       | Feature          | Status in Phase 1 |
+| ------ | -------------------------- | ---------------- | ----------------- |
+| POST   | `/auth/register`           | Auth             | ❌ Mock only      |
+| POST   | `/auth/login`              | Auth             | ❌ Mock only      |
+| POST   | `/auth/logout`             | Auth             | ❌ Mock only      |
+| POST   | `/auth/refresh`            | Auth interceptor | ❌ Mock only      |
+| GET    | `/users/me`                | Auth startup     | ❌ Mock only      |
+| GET    | `/ipos`                    | IPO listing      | ❌ Mock only      |
+| GET    | `/ipos/:id`                | IPO detail       | ❌ Mock only      |
+| GET    | `/wallets/me`              | Wallet balance   | ❌ Mock only      |
+| GET    | `/wallets/me/transactions` | Wallet history   | ❌ Mock only      |
 
 **Awaiting confirmation from Member 2:**
+
 - Exact JSON field names for all responses.
 - Error response envelope shape: `{ message, error, statusCode }`.
 - Monetary field representation: string vs integer minor units.
@@ -387,12 +400,12 @@ All paths below are relative to `DIRSHA_API_BASE_URL`.
 
 All checks run from the `mobile/` directory.
 
-| Command           | Result  | Notes                              |
-|-------------------|---------|------------------------------------|
-| `flutter pub get` | ✅ PASS | All dependencies resolved          |
-| `dart format .`   | ✅ PASS | 56 files formatted                 |
-| `flutter analyze` | ✅ PASS | 0 issues                           |
-| `flutter test`    | ✅ PASS | 147 tests passed, 0 failed         |
+| Command           | Result  | Notes                      |
+| ----------------- | ------- | -------------------------- |
+| `flutter pub get` | ✅ PASS | All dependencies resolved  |
+| `dart format .`   | ✅ PASS | 56 files formatted         |
+| `flutter analyze` | ✅ PASS | 0 issues                   |
+| `flutter test`    | ✅ PASS | 147 tests passed, 0 failed |
 
 **Runtime test:** Cannot be confirmed in this environment (no connected device or emulator). The app must be verified on an Android emulator or physical device before any integration checkpoint.
 

@@ -1,0 +1,3 @@
+FINDSTR: Cannot open ANDROID_HOME ANDROID_SDK_ROOT
+FINDSTR: Cannot open C:Usershpflutterbinflutter.bat
+FINDSTR: Cannot open C:Usershpflutterpackagesflutter_toolslibsrcandroidandroid_sdk.dart
