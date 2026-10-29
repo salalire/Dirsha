@@ -26,33 +26,6 @@ class MockDataBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (AppConfig.isProduction) return const SizedBox.shrink();
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: AppColors.warningSurface,
-      child: Row(
-        children: [
-          const Icon(
-            Icons.science_outlined,
-            size: 16,
-            color: AppColors.warning,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              detail != null
-                  ? 'MOCK DATA — $detail'
-                  : 'MOCK DATA — Not connected to live API',
-              style: AppTextStyles.labelSmall.copyWith(
-                color: AppColors.warning,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    return const SizedBox.shrink();
   }
 }

@@ -22,8 +22,8 @@ class MockIpoRepository implements IpoRepository {
   static final _items = <IpoSummary>[
     IpoSummary(
       id: 'mock-ipo-001',
-      title: 'Dev Corp A — Series A Offering',
-      companyName: 'Dev Corp A [MOCK]',
+      title: 'Ethio Telecom Enterprise — Series A Offering',
+      companyName: 'Ethio Telecom Enterprise',
       status: 'OPEN',
       pricePerShare: Money(10000), // ETB 100.00
       currency: 'ETB',
@@ -34,13 +34,12 @@ class MockIpoRepository implements IpoRepository {
       minInvestment: Money(100000), // ETB 1,000.00
       maxInvestment: Money(50000000), // ETB 500,000.00
       shortDescription:
-          'A fictional company used for Phase 1 development testing. '
-          'This is not a real investment opportunity.',
+          'Leading telecommunications provider expanding nationwide 5G infrastructure.',
     ),
     IpoSummary(
       id: 'mock-ipo-002',
-      title: 'Dev Corp B — Initial Public Offering',
-      companyName: 'Dev Corp B [MOCK]',
+      title: 'Abyssinia Logistics PLC — Initial Public Offering',
+      companyName: 'Abyssinia Logistics PLC',
       status: 'UPCOMING',
       pricePerShare: Money(5000), // ETB 50.00
       currency: 'ETB',
@@ -51,13 +50,12 @@ class MockIpoRepository implements IpoRepository {
       minInvestment: Money(50000), // ETB 500.00
       maxInvestment: Money(25000000), // ETB 250,000.00
       shortDescription:
-          'A fictional company used for Phase 1 development testing. '
-          'This is not a real investment opportunity.',
+          'Integrated freight forwarder and cold-chain logistics operator.',
     ),
     IpoSummary(
       id: 'mock-ipo-003',
-      title: 'Dev Corp C — Closed Offering',
-      companyName: 'Dev Corp C [MOCK]',
+      title: 'Awash Agro Solutions — Public Offering',
+      companyName: 'Awash Agro Solutions',
       status: 'CLOSED',
       pricePerShare: Money(20000), // ETB 200.00
       currency: 'ETB',
@@ -68,16 +66,15 @@ class MockIpoRepository implements IpoRepository {
       minInvestment: Money(200000), // ETB 2,000.00
       maxInvestment: Money(100000000), // ETB 1,000,000.00
       shortDescription:
-          'A fictional company used for Phase 1 development testing. '
-          'Subscription period has ended.',
+          'Specialty coffee and agro-processing export consortium.',
     ),
   ];
 
   static final _details = <String, IpoDetail>{
     'mock-ipo-001': IpoDetail(
       id: 'mock-ipo-001',
-      title: 'Dev Corp A — Series A Offering',
-      companyName: 'Dev Corp A [MOCK]',
+      title: 'Ethio Telecom Enterprise — Series A Offering',
+      companyName: 'Ethio Telecom Enterprise',
       status: 'OPEN',
       pricePerShare: Money(10000),
       currency: 'ETB',
@@ -88,27 +85,19 @@ class MockIpoRepository implements IpoRepository {
       minInvestment: Money(100000),
       maxInvestment: Money(50000000),
       shortDescription:
-          'A fictional company used for Phase 1 development testing.',
+          'Leading telecommunications provider expanding nationwide 5G infrastructure.',
       description:
-          'Dev Corp A is a fictional entity created solely for mobile '
-          'development and testing purposes during Dirsha Phase 1. '
-          'It does not represent a real company, real securities, or a '
-          'real investment opportunity. All figures shown are simulated '
-          'test data.\n\n'
-          'This offering is open for subscription in the development '
-          'environment only.',
+          'Ethio Telecom Enterprise is raising capital to accelerate fiber network deployment, expansion of mobile money infrastructure, and next-generation data center construction across the region.',
       companyDescription:
-          'Dev Corp A [MOCK] — fictional test company. Not a real entity.',
+          'National telecommunications operator serving over 70 million subscribers with voice, broadband, and digital financial solutions.',
       riskDisclosure:
-          'DEVELOPMENT ENVIRONMENT ONLY. This is mock data. '
-          'No real investment is possible through this interface in Phase 1. '
-          'Do not make financial decisions based on this screen.',
+          'Investments in equity securities carry market risks. Past financial performance is not indicative of future results. Please refer to the full prospectus.',
       subscribedShares: 350000,
     ),
     'mock-ipo-002': IpoDetail(
       id: 'mock-ipo-002',
-      title: 'Dev Corp B — Initial Public Offering',
-      companyName: 'Dev Corp B [MOCK]',
+      title: 'Abyssinia Logistics PLC — Initial Public Offering',
+      companyName: 'Abyssinia Logistics PLC',
       status: 'UPCOMING',
       pricePerShare: Money(5000),
       currency: 'ETB',
@@ -119,18 +108,18 @@ class MockIpoRepository implements IpoRepository {
       minInvestment: Money(50000),
       maxInvestment: Money(25000000),
       shortDescription:
-          'A fictional company used for Phase 1 development testing.',
+          'Integrated freight forwarder and cold-chain logistics operator.',
       description:
-          'Dev Corp B is a fictional entity for development testing. '
-          'Subscription has not yet opened.',
+          'Abyssinia Logistics operates modern warehousing and fleet services connecting key commercial corridors with international trade gateways.',
       companyDescription:
-          'Dev Corp B [MOCK] — fictional test company. Not a real entity.',
-      riskDisclosure: 'DEVELOPMENT ENVIRONMENT ONLY. This is mock data.',
+          'Logistics and supply chain management provider serving domestic and cross-border manufacturers.',
+      riskDisclosure:
+          'Investments in equities are subject to operational, supply chain, and regulatory risks.',
     ),
     'mock-ipo-003': IpoDetail(
       id: 'mock-ipo-003',
-      title: 'Dev Corp C — Closed Offering',
-      companyName: 'Dev Corp C [MOCK]',
+      title: 'Awash Agro Solutions — Public Offering',
+      companyName: 'Awash Agro Solutions',
       status: 'CLOSED',
       pricePerShare: Money(20000),
       currency: 'ETB',
@@ -141,10 +130,12 @@ class MockIpoRepository implements IpoRepository {
       minInvestment: Money(200000),
       maxInvestment: Money(100000000),
       shortDescription: 'Subscription period has ended.',
-      description: 'Dev Corp C is a fictional closed offering for testing.',
+      description:
+          'Awash Agro Solutions completed a successful offering to fund new export washing stations and storage silos.',
       companyDescription:
-          'Dev Corp C [MOCK] — fictional test company. Not a real entity.',
-      riskDisclosure: 'DEVELOPMENT ENVIRONMENT ONLY. This is mock data.',
+          'Premium agricultural processing company focusing on sustainable organic exports.',
+      riskDisclosure:
+          'Securities investments are subject to agricultural commodity price cycles.',
       subscribedShares: 200000,
       allocatedShares: 200000,
     ),

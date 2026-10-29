@@ -45,8 +45,16 @@ class MockAuthRepository implements AuthRepository {
   Future<AuthResult> login(LoginRequest request) async {
     await Future.delayed(_delay);
 
-    if (request.email.trim().toLowerCase() != _mockEmail ||
-        request.password != _mockPassword) {
+    final cleanEmail = request.email.trim().toLowerCase();
+    final isAllowedEmail = cleanEmail == 'investor@dirsha.dev' ||
+        cleanEmail == 'demo@dirsha.dev' ||
+        cleanEmail == 'admin@dirsha.dev' ||
+        cleanEmail == 'company@dirsha.dev' ||
+        cleanEmail == 'broker@dirsha.dev';
+    final isAllowedPassword =
+        request.password == 'demo1234' || request.password == 'Demo1234!';
+
+    if (!isAllowedEmail || !isAllowedPassword) {
       throw const ApiException(
         statusCode: 401,
         message: 'Incorrect email or password.',

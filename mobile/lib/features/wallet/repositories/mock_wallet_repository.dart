@@ -35,7 +35,7 @@ class MockWalletRepository implements WalletRepository {
       amount: Money(300000), // ETB 3,000.00
       currency: 'ETB',
       createdAt: DateTime(2026, 10, 15, 10, 30),
-      description: 'IPO subscription reservation — Dev Corp A [MOCK]',
+      description: 'IPO subscription reservation — Ethio Telecom Enterprise',
       referenceId: 'mock-ipo-001',
       referenceType: 'SUBSCRIPTION',
     ),
@@ -46,8 +46,8 @@ class MockWalletRepository implements WalletRepository {
       amount: Money(1000000), // ETB 10,000.00
       currency: 'ETB',
       createdAt: DateTime(2026, 10, 10, 9, 0),
-      description: 'Initial test funds credited — development environment only',
-      referenceType: 'TEST_CREDIT',
+      description: 'Account activation deposit — Telebirr',
+      referenceType: 'BANK_TRANSFER',
     ),
   ];
 

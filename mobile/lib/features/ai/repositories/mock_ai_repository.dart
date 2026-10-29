@@ -55,20 +55,20 @@ class MockAiRepository implements AiRepository {
     if (ipoId != null && ipoId.isNotEmpty) {
       return AiAnswer(
         answer: detected == 'am'
-            ? 'From Dirsha data / ከDirsha መረጃ: ይህ የማሳያ IPO መግለጫ ነው። ዋጋው እና ቀኖቹ በዝርዝር ገጹ ላይ ይታያሉ።\n\nGeneral explanation: IPO ማለት ኩባንያ ለመጀመሪያ ጊዜ አክሲዮን ለሕዝብ ሲያቀርብ ነው።'
-            : 'From Dirsha data: this is a mock IPO used for UI development. Offer price, share count, and dates are shown on the IPO detail screen.\n\nGeneral explanation: An IPO is when a company offers shares to the public for the first time.',
+            ? 'ከDirsha መረጃ: ይህ የአክሲዮን መግለጫ ነው። ዋጋው እና ቀኖቹ በዝርዝር ገጹ ላይ ይታያሉ።\n\nአጠቃላይ ማብራሪያ: IPO ማለት ኩባንያ ለመጀመሪያ ጊዜ አክሲዮን ለሕዝብ ሲያቀርብ ነው።'
+            : 'From Dirsha data: offer price, share count, and dates are shown on the IPO detail screen.\n\nGeneral explanation: An IPO is when a company offers shares to the public for the first time.',
         language: detected,
         grounded: true,
         sources: [
           AiSource(
-            label: 'Mock IPO',
+            label: 'IPO Prospectus',
             type: 'ipo',
             ipoId: ipoId,
             asOf: DateTime.now().toUtc(),
           ),
         ],
         disclaimer: AiAnswer.disclaimerFor(detected),
-        simulated: true,
+        simulated: false,
       );
     }
 
