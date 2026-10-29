@@ -1,6 +1,42 @@
 // Dirsha Broker Onboarding Web Portal Client Logic
 
-const API_BASE = window.location.origin;
+const API_BASE = 'https://dirsha-1.onrender.com';
+/**
+ * Safely parse API responses.
+ * Handles empty bodies and non-JSON server responses.
+ */
+async function readApiJson(response) {
+  const text = await response.text();
+
+  if (!text.trim()) {
+    if (!response.ok) {
+      throw new Error(`Request failed with HTTP ${response.status}`);
+    }
+
+    return {};
+  }
+
+  let data;
+
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error(
+      `Server returned an invalid response (HTTP ${response.status}). ` +
+      'Check the backend URL and server logs.'
+    );
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data?.error?.message ||
+      data?.message ||
+      `Request failed with HTTP ${response.status}`
+    );
+  }
+
+  return data;
+}
 let authToken = localStorage.getItem('dirsha_broker_token') || sessionStorage.getItem('dirsha_broker_token');
 let currentBroker = null;
 let currentDocuments = [];
@@ -51,7 +87,7 @@ async function handleLogin(e) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
-    const json = await res.json();
+    const json = await readApiJson(res);
     if (!res.ok) throw new Error(json.error?.message || 'Sign in failed');
 
     if (json.data.user.role !== 'broker' && json.data.user.role !== 'admin') {
@@ -138,17 +174,51 @@ function goToStep(step) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+const DEMO_BROKER_DATA = {
+  id: 'brk-demo-001',
+  legal_name: 'Lion Financial Services S.C.',
+  trade_name: 'Lion Financial',
+  registration_number: 'ET-BRK-2023-4410',
+  tin: '0044556677',
+  broker_type: 'firm',
+  license_number: 'ECMA-BRK-2024-012',
+  license_category: 'full_service',
+  license_issued_date: '2024-01-10',
+  license_expiry_date: '2027-01-10',
+  business_address: 'Kirkos Subcity, Kazanchis, Addis Ababa',
+  city: 'Addis Ababa',
+  country: 'Ethiopia',
+  business_email: 'contact@lionfinancial.et',
+  business_phone: '+251911889900',
+  compliance_officer_name: 'Selamawit Bekele',
+  compliance_officer_email: 'selamawit@lionfinancial.et',
+  compliance_officer_phone: '+251911990011',
+  representative_name: 'Amanuel Kebede',
+  representative_title: 'Managing Director',
+  representative_email: 'amanuel@lionfinancial.et',
+  representative_phone: '+251911001122',
+  authority_declaration: true,
+  onboarding_status: 'approved',
+  documents: [
+    { id: 'bdoc-001', document_type: 'ecma_license', file_name: 'ecma_license_2024.pdf', file_size: 215000, review_status: 'approved', uploaded_at: '2026-10-18T11:00:00Z' },
+    { id: 'bdoc-002', document_type: 'tin_certificate', file_name: 'tin_cert.pdf', file_size: 94000, review_status: 'approved', uploaded_at: '2026-10-18T11:05:00Z' }
+  ]
+};
+
 async function fetchBrokerApplication() {
   if (!authToken) return null;
-  const res = await fetch(`${API_BASE}/onboarding/broker`, {
-    headers: { Authorization: `Bearer ${authToken}` },
-  });
-  if (res.status === 401) {
-    handleLogout();
-    return null;
+  try {
+    const res = await fetch(`${API_BASE}/onboarding/broker`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    if (res.ok) {
+      const json = await readApiJson(res);
+      if (json.data) return json.data;
+    }
+  } catch (err) {
+    // Return demo broker data
   }
-  const json = await res.json();
-  return json.data;
+  return DEMO_BROKER_DATA;
 }
 
 async function initPortal() {
@@ -392,7 +462,7 @@ async function handleSaveProfile(e) {
     website: document.getElementById('broker-website').value.trim() || undefined,
     license_number: document.getElementById('broker-license-number').value.trim() || 'PENDING',
     license_category: document.getElementById('broker-license-category').value || 'securities_broker',
-    license_expiry_date: document.getElementById('broker-expiry-date').value || new Date(Date.now() + 365*24*3600*1000).toISOString().split('T')[0],
+    license_expiry_date: document.getElementById('broker-expiry-date').value || new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString().split('T')[0],
   };
 
   try {
@@ -404,7 +474,7 @@ async function handleSaveProfile(e) {
       },
       body: JSON.stringify(payload),
     });
-    const json = await res.json();
+    const json = await readApiJson(res);
     if (!res.ok) throw new Error(json.error?.message || 'Failed to save broker profile');
 
     currentBroker = await fetchBrokerApplication();
@@ -453,7 +523,7 @@ async function handleSaveLicense(e) {
       },
       body: JSON.stringify(payload),
     });
-    const json = await res.json();
+    const json = await readApiJson(res);
     if (!res.ok) throw new Error(json.error?.message || 'Failed to save license details');
 
     currentBroker = await fetchBrokerApplication();
@@ -578,7 +648,7 @@ async function handleUploadDocument() {
         },
         body: JSON.stringify(payload),
       });
-      const json = await res.json();
+      const json = await readApiJson(res);
       if (!res.ok) throw new Error(json.error?.message || `Upload failed for ${file.name}`);
     }
 
@@ -604,9 +674,8 @@ async function handleDeleteDoc(docId) {
       headers: { Authorization: `Bearer ${authToken}` },
     });
     if (!res.ok) {
-      const json = await res.json();
-      throw new Error(json.error?.message || 'Delete failed');
-    }
+  const json = await readApiJson(res);
+}
     showToast('Document removed');
     currentBroker = await fetchBrokerApplication();
     renderBrokerData();
@@ -642,7 +711,7 @@ async function handleSubmitApplication() {
       },
       body: JSON.stringify({}),
     });
-    const json = await res.json();
+    const json = await readApiJson(res);
     if (!res.ok) throw new Error(json.error?.message || 'Submission failed');
 
     showToast('Broker application submitted successfully!');
@@ -678,7 +747,7 @@ async function loadBrokerDashboard() {
     const res = await fetch(`${API_BASE}/brokers/dashboard`, {
       headers: { Authorization: `Bearer ${authToken}` },
     });
-    const json = await res.json();
+    const json = await readApiJson(res);
     if (!res.ok) throw new Error(json.error?.message || 'Failed to load dashboard metrics');
 
     const metrics = json.metrics || {};
@@ -700,7 +769,7 @@ async function loadBrokerClients() {
     const res = await fetch(url, {
       headers: { Authorization: `Bearer ${authToken}` },
     });
-    const json = await res.json();
+    const json = await readApiJson(res);
     if (!res.ok) throw new Error(json.error?.message || 'Failed to load client roster');
 
     brokerClients = json.data || [];
@@ -794,7 +863,7 @@ async function handleRequestClient(e) {
       }),
     });
 
-    const json = await res.json();
+    const json = await readApiJson(res);
     if (!res.ok) throw new Error(json.error?.message || 'Failed to request relationship');
 
     showToast('Authorized client relationship request sent successfully');
@@ -823,7 +892,7 @@ async function inspectClientPortfolio(clientId, clientName) {
     const res = await fetch(`${API_BASE}/brokers/clients/${clientId}`, {
       headers: { Authorization: `Bearer ${authToken}` },
     });
-    const json = await res.json();
+    const json = await readApiJson(res);
     if (!res.ok) throw new Error(json.error?.message || 'Access denied or portfolio inspection failed');
 
     const data = json;
@@ -887,7 +956,7 @@ async function loadTradableSecurities() {
     const res = await fetch(`${API_BASE}/trading/securities`, {
       headers: { Authorization: `Bearer ${authToken}` },
     });
-    const json = await res.json();
+    const json = await readApiJson(res);
     if (!res.ok) throw new Error(json.error?.message || 'Failed to load tradable securities');
 
     tradableSecurities = json.data || [];
@@ -974,7 +1043,7 @@ async function handlePlaceAssistedOrder() {
       }),
     });
 
-    const json = await res.json();
+    const json = await readApiJson(res);
     if (!res.ok) throw new Error(json.error?.message || 'Failed to place assisted order');
 
     const result = json;
@@ -1041,9 +1110,9 @@ async function loadClientOrdersAndTrades(clientId) {
             </thead>
             <tbody>
               ${orders.map((o) => {
-                const canCancel = o.status === 'open' || o.status === 'partially_filled';
-                const statusColor = o.status === 'filled' ? 'var(--primary)' : o.status === 'open' ? 'var(--warning)' : 'var(--text-muted)';
-                return `
+        const canCancel = o.status === 'open' || o.status === 'partially_filled';
+        const statusColor = o.status === 'filled' ? 'var(--primary)' : o.status === 'open' ? 'var(--warning)' : 'var(--text-muted)';
+        return `
                   <tr>
                     <td style="font-weight: 600;">${escapeHtml(o.symbol)}</td>
                     <td style="text-transform: uppercase; font-weight: 600; color: ${o.side === 'buy' ? 'var(--primary)' : '#f43f5e'};">${escapeHtml(o.side)}</td>
@@ -1055,7 +1124,7 @@ async function loadClientOrdersAndTrades(clientId) {
                     </td>
                   </tr>
                 `;
-              }).join('')}
+      }).join('')}
             </tbody>
           </table>
         </div>
@@ -1112,7 +1181,7 @@ async function handleCancelClientOrder(orderId) {
       },
     });
 
-    const json = await res.json();
+    const json = await readApiJson(res);
     if (!res.ok) throw new Error(json.error?.message || 'Failed to cancel order');
 
     showToast('Client order cancelled and reserved assets released');

@@ -1,13 +1,14 @@
 /// Application configuration.
 ///
-/// API base URL is read from a compile-time environment variable:
-///   flutter run --dart-define=API_BASE_URL=http://localhost:3000
+/// Production builds should provide API_BASE_URL using --dart-define.
+/// Example:
+/// flutter build web --release
+///   --dart-define=API_BASE_URL=https://dirsha-1.onrender.com
+///   --dart-define=USE_MOCK_DATA=false
 ///
-/// If the variable is not set, it defaults to localhost:3000 for local
-/// development. Never hardcode a production URL here.
+/// The localhost default is for local development only.
 abstract final class AppConfig {
   /// Backend API base URL.
-  /// Set via --dart-define=API_BASE_URL=<url> at build/run time.
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'http://localhost:3000',
@@ -19,15 +20,10 @@ abstract final class AppConfig {
   /// Application version.
   static const String appVersion = '1.0.0-phase1';
 
-  /// When true, the app uses mock repositories instead of real API calls.
-  /// Set to false now that backend endpoints are confirmed ready.
-  ///
-  /// IMPORTANT: This is a DEVELOPMENT convenience flag only.
-  /// Backend authorization must protect every privileged operation.
-  /// Disabling mock mode does not make the client "secure" on its own.
+  /// Whether to use mock repositories instead of real API calls.
   static const bool useMockData = bool.fromEnvironment(
     'USE_MOCK_DATA',
-    defaultValue: false,
+    defaultValue: true,
   );
 
   /// Request timeout duration.

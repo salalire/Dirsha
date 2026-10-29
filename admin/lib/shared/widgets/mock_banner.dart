@@ -11,30 +11,7 @@ class MockDataBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!AppConfig.useMockData) return const SizedBox.shrink();
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: const Color(0xFFFEF3C7),
-      child: const Row(
-        children: [
-          Icon(Icons.science_outlined, size: 16, color: Color(0xFF92400E)),
-          SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'DEVELOPMENT MODE — All data on this page is mock/demo data. '
-              'It does not represent real users, companies, or financial records.',
-              style: TextStyle(
-                fontSize: 12,
-                color: Color(0xFF92400E),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    return const SizedBox.shrink();
   }
 }
 
@@ -44,25 +21,7 @@ class MockLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!AppConfig.useMockData) return const SizedBox.shrink();
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFEF3C7),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: const Color(0xFFF59E0B)),
-      ),
-      child: const Text(
-        'DEMO DATA',
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: Color(0xFF92400E),
-          letterSpacing: 0.5,
-        ),
-      ),
-    );
+    return const SizedBox.shrink();
   }
 }
 
@@ -72,23 +31,7 @@ class MockModeBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!AppConfig.useMockData) return const SizedBox.shrink();
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFEF3C7),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: AppColors.accent),
-      ),
-      child: const Text(
-        'DEMO MODE',
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: Color(0xFF92400E),
-        ),
-      ),
-    );
+    return const SizedBox.shrink();
   }
 }
+

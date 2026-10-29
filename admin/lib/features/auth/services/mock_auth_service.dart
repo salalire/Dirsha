@@ -39,17 +39,22 @@ class MockAuthService implements AuthService {
     // Simulate network delay
     await Future.delayed(const Duration(milliseconds: 800));
 
-    if (email.trim().toLowerCase() == _demoEmail &&
-        password == _demoPassword) {
+    final cleanEmail = email.trim().toLowerCase();
+    final isAllowedEmail = cleanEmail == 'admin@dirsha.dev' ||
+        cleanEmail == 'demo@dirsha.dev' ||
+        cleanEmail == 'investor@dirsha.dev' ||
+        cleanEmail == 'company@dirsha.dev' ||
+        cleanEmail == 'broker@dirsha.dev';
+    final isAllowedPassword = password == 'demo1234' || password == 'Demo1234!';
+
+    if (isAllowedEmail && isAllowedPassword) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_sessionKey, true);
       return _mockUser;
     }
 
-    // Return a clear error — do NOT give hints about which field is wrong.
     throw Exception(
-      'Invalid credentials. '
-      '\n\n[DEMO MODE] Use: $_demoEmail / $_demoPassword',
+      'Invalid credentials. Please check your email and password.',
     );
   }
 

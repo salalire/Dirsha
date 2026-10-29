@@ -6,7 +6,7 @@ rules: [`../docs/BUSINESS_RULES.md`](../docs/BUSINESS_RULES.md).
 
 ## Stack (proposed for team agreement, SRS §15)
 
-| Concern | Choice |
+| Concern | Choice |test
 |---|---|
 | HTTP | Express 5 |
 | Validation | Zod (strict objects: unknown fields are rejected) |

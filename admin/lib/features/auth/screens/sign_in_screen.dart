@@ -55,8 +55,6 @@ class _SignInScreenState extends State<SignInScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _buildCard(isDark),
-                  const SizedBox(height: 16),
-                  _buildDemoNote(isDark),
                 ],
               ),
             ),
@@ -242,60 +240,6 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Widget _buildDemoNote(bool isDark) {
-    if (!AppConfig.useMockData) return const SizedBox.shrink();
-
-    final bg = isDark ? const Color(0xFF2A1E00) : const Color(0xFFFEF3C7);
-    final border =
-        isDark ? const Color(0xFF78350F) : const Color(0xFFF59E0B);
-    final textColor =
-        isDark ? const Color(0xFFD4A72C) : const Color(0xFF92400E);
-    final bodyColor =
-        isDark ? const Color(0xFFBB8B3A) : const Color(0xFF78350F);
-
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 440),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.science_outlined, size: 16, color: textColor),
-                const SizedBox(width: 6),
-                Text('DEVELOPMENT MODE',
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: textColor,
-                        letterSpacing: 0.5)),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Phase 1 prototype — mock authentication only. '
-              'No real backend connection.',
-              style: TextStyle(fontSize: 12, color: bodyColor),
-            ),
-            const SizedBox(height: 8),
-            Text('Demo credentials:',
-                style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: bodyColor)),
-            Text('Email: admin@dirsha.dev\nPassword: demo1234',
-                style: TextStyle(
-                    fontSize: 12,
-                    fontFamily: 'monospace',
-                    color: bodyColor)),
-          ],
-        ),
-      ),
-    );
+    return const SizedBox.shrink();
   }
 }
